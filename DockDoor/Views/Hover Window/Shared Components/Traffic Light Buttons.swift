@@ -79,6 +79,38 @@ struct TrafficLightButtons: View {
     }
 
     private func buttonFor(action: WindowAction, symbol: String, color: Color, fillColor: Color) -> some View {
+        TrafficLightButton(
+            action: action,
+            symbol: symbol,
+            color: color,
+            fillColor: fillColor,
+            onWindowAction: onWindowAction
+        )
+    }
+}
+
+private struct TrafficLightButton: View {
+    let action: WindowAction
+    let symbol: String
+    let color: Color
+    let fillColor: Color
+    let onWindowAction: (WindowAction) -> Void
+
+    @State private var isHovering = false
+
+    private var tooltipText: String {
+        switch action {
+        case .quit: String(localized: "Quit application")
+        case .close: String(localized: "Close window")
+        case .minimize: String(localized: "Minimize window")
+        case .toggleFullScreen: String(localized: "Toggle fullscreen")
+        case .maximize: String(localized: "Maximize window")
+        case .openNewWindow: String(localized: "Open new window")
+        default: ""
+        }
+    }
+
+    var body: some View {
         ZStack {
             Image(systemName: "circle.fill")
                 .foregroundStyle(.secondary)
@@ -86,7 +118,30 @@ struct TrafficLightButtons: View {
         }
         .foregroundStyle(color, fillColor)
         .font(.headline)
+        .overlay {
+            if isHovering {
+                Circle()
+                    .fill(Color.black.opacity(0.25))
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if isHovering {
+                Text(tooltipText)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 6))
+                    .fixedSize()
+                    .offset(y: 24)
+            }
+        }
         .contentShape(Rectangle())
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isHovering = hovering
+            }
+        }
         .onTapGesture {
             onWindowAction(action)
         }

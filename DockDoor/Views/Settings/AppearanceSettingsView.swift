@@ -109,6 +109,7 @@ struct AppearanceSettingsView: View {
     @Default(.showAppIconOnly) var showAppIconOnly
     @Default(.globalPaddingMultiplier) var globalPaddingMultiplier
     @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
+    @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
     @Default(.disableDockStyleTrafficLights) var disableDockStyleTrafficLights
     @Default(.disableDockStyleTitles) var disableDockStyleTitles
     @Default(.showMinimizedHiddenLabels) var showMinimizedHiddenLabels
@@ -542,6 +543,17 @@ struct AppearanceSettingsView: View {
 
             Divider().padding(.vertical, 2)
             Text("Preview Layout (Switcher)").font(.headline).padding(.bottom, -2)
+
+            VStack(alignment: .leading) {
+                Toggle(isOn: $useEmbeddedWindowSwitcherElements) {
+                    Text("Embed controls in preview frames")
+                }
+                Text("Places traffic light buttons inside the preview frames. Buttons appear on mouse hover for a cleaner look.")
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.leading, 20)
+            }
+
             VStack(alignment: .leading, spacing: 4) {
                 let switcherMaxRowsBinding = Binding<Double>(
                     get: { Double(switcherMaxRows) },
