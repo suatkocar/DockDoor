@@ -98,6 +98,7 @@ struct MainSettingsView: View {
     @Default(.enableCmdTabEnhancements) var enableCmdTabEnhancements
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
     @Default(.includeHiddenWindowsInSwitcher) var includeHiddenWindowsInSwitcher
+    @Default(.showTabsAsWindows) var showTabsAsWindows
     @Default(.useClassicWindowOrdering) var useClassicWindowOrdering
     @Default(.limitSwitcherToFrontmostApp) var limitSwitcherToFrontmostApp
     @Default(.fullscreenAppBlacklist) var fullscreenAppBlacklist
@@ -444,6 +445,7 @@ struct MainSettingsView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.leading, 20)
                             Toggle(isOn: $includeHiddenWindowsInSwitcher) { Text("Include hidden/minimized windows in Switcher") }
+                            Toggle(isOn: $showTabsAsWindows) { Text("Show standard tabs as windows") }
                             Toggle(isOn: $enableWindowSwitcherSearch) { Text("Enable search while using Window Switcher") }
                             if enableWindowSwitcherSearch {
                                 HStack {
@@ -918,6 +920,7 @@ struct MainSettingsView: View {
                 enableWindowSwitcher = Defaults.Keys.enableWindowSwitcher.defaultValue
                 instantWindowSwitcher = Defaults.Keys.instantWindowSwitcher.defaultValue
                 includeHiddenWindowsInSwitcher = Defaults.Keys.includeHiddenWindowsInSwitcher.defaultValue
+                showTabsAsWindows = Defaults.Keys.showTabsAsWindows.defaultValue
                 useClassicWindowOrdering = Defaults.Keys.useClassicWindowOrdering.defaultValue
                 limitSwitcherToFrontmostApp = Defaults.Keys.limitSwitcherToFrontmostApp.defaultValue
                 fullscreenAppBlacklist = Defaults.Keys.fullscreenAppBlacklist.defaultValue

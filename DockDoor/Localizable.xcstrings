@@ -95815,6 +95815,9 @@
         }
       }
     },
+    "Show standard tabs as windows" : {
+
+    },
     "Show window previews when hovering over Dock icons." : {
       "localizations" : {
         "af" : {
