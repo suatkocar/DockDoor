@@ -512,9 +512,9 @@ enum LivePreviewQuality: String, CaseIterable, Defaults.Serializable, Identifiab
         switch self {
         case .thumbnail: 320
         case .low: 480
-        case .standard: 640
-        case .high: 960
-        case .retina: 1280
+        case .standard: 720
+        case .high: 1440
+        case .retina: 2560
         case .native: 0 // No limit
         }
     }
@@ -526,13 +526,13 @@ enum LivePreviewQuality: String, CaseIterable, Defaults.Serializable, Identifiab
         case .low:
             String(localized: "Low (480px)")
         case .standard:
-            String(localized: "Standard (640px)")
+            String(localized: "Standard (720px)")
         case .high:
-            String(localized: "High (960px)")
+            String(localized: "High (1440px)")
         case .retina:
-            String(localized: "Retina (1280px)")
+            String(localized: "Retina (2560px)")
         case .native:
-            String(localized: "Native (Best)")
+            String(localized: "Native (1:1 Pixel)")
         }
     }
 }

@@ -52029,6 +52029,7 @@
       }
     },
     "High (960px)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -52217,6 +52218,9 @@
           }
         }
       }
+    },
+    "High (1440px)" : {
+
     },
     "Higher quality and frame rate use more CPU/GPU resources. Use lower settings for Window Switcher if you experience lag." : {
       "localizations" : {
@@ -65189,7 +65193,11 @@
         }
       }
     },
+    "Native (1:1 Pixel)" : {
+
+    },
     "Native (Best)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -86346,6 +86354,7 @@
       }
     },
     "Retina (1280px)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -86534,6 +86543,9 @@
           }
         }
       }
+    },
+    "Retina (2560px)" : {
+
     },
     "Return" : {
       "localizations" : {
@@ -100840,6 +100852,7 @@
       }
     },
     "Standard (640px)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -101028,6 +101041,9 @@
           }
         }
       }
+    },
+    "Standard (720px)" : {
+
     },
     "Start on second window in Switcher" : {
       "localizations" : {

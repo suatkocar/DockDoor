@@ -42,6 +42,10 @@ extension SharedPreviewWindowCoordinator {
         window.becomesKeyOnlyIfNeeded = true
         window.isMovableByWindowBackground = true
 
+        if let p3ColorSpace = CGColorSpace(name: CGColorSpace.displayP3) {
+            window.colorSpace = NSColorSpace(cgColorSpace: p3ColorSpace)
+        }
+
         let contentView = switch type {
         case .media:
             AnyView(

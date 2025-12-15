@@ -57,6 +57,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .transient, .fullScreenAuxiliary]
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = true
+
+        if let p3ColorSpace = CGColorSpace(name: CGColorSpace.displayP3) {
+            colorSpace = NSColorSpace(cgColorSpace: p3ColorSpace)
+        }
     }
 
     private func setupSearchWindow() {
@@ -252,6 +256,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             fullPreviewWindow?.collectionBehavior = [.canJoinAllSpaces, .transient, .fullScreenAuxiliary]
             fullPreviewWindow?.hidesOnDeactivate = false
             fullPreviewWindow?.becomesKeyOnlyIfNeeded = true
+
+            if let p3ColorSpace = CGColorSpace(name: CGColorSpace.displayP3) {
+                fullPreviewWindow?.colorSpace = NSColorSpace(cgColorSpace: p3ColorSpace)
+            }
         }
 
         let windowSize = (try? windowInfo.axElement.size()) ?? CGSize(width: screen.frame.width, height: screen.frame.height)

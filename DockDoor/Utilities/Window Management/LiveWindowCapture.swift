@@ -1,4 +1,5 @@
 import Cocoa
+import CoreImage
 import Defaults
 import ScreenCaptureKit
 import SwiftUI
@@ -41,6 +42,8 @@ private struct LivePreviewImageCached: View {
         Group {
             if let image = capture.capturedImage ?? capture.lastFrame ?? fallbackImage {
                 Image(decorative: image, scale: 1.0)
+                    .interpolation(.high)
+                    .antialiased(true)
                     .resizable()
             }
         }
@@ -70,6 +73,8 @@ private struct LivePreviewImageFresh: View {
         Group {
             if let image = capture.capturedImage ?? fallbackImage {
                 Image(decorative: image, scale: 1.0)
+                    .interpolation(.high)
+                    .antialiased(true)
                     .resizable()
             }
         }
@@ -181,54 +186,75 @@ final class WindowLiveCapture: ObservableObject {
 
         let config = SCStreamConfiguration()
 
-        let backingScaleFactor = Int(NSScreen.main?.backingScaleFactor ?? 2.0)
-        let windowWidth = Int(window.frame.width)
-        let windowHeight = Int(window.frame.height)
+        let nativeWidth: Int
+        let nativeHeight: Int
+        if #available(macOS 14.0, *) {
+            let pixelScale = CGFloat(filter.pointPixelScale)
+            nativeWidth = Int(filter.contentRect.width * pixelScale)
+            nativeHeight = Int(filter.contentRect.height * pixelScale)
+        } else {
+            let pixelScale = NSScreen.main?.backingScaleFactor ?? 2.0
+            nativeWidth = Int(window.frame.width * pixelScale)
+            nativeHeight = Int(window.frame.height * pixelScale)
+        }
         let maxDim = quality.maxDimension
 
-        if quality.useFullResolution {
-            let effectiveScale = quality.scaleFactor == 2 ? 2 : backingScaleFactor
-            var targetWidth = windowWidth * effectiveScale
-            var targetHeight = windowHeight * effectiveScale
+        if quality == .native {
+            config.width = nativeWidth
+            config.height = nativeHeight
+            config.scalesToFit = false
+        } else if quality.useFullResolution {
+            var targetWidth = nativeWidth
+            var targetHeight = nativeHeight
 
             if maxDim > 0 {
                 let aspectRatio = Double(targetWidth) / Double(targetHeight)
                 if targetWidth > targetHeight {
-                    targetWidth = min(targetWidth, maxDim * effectiveScale)
-                    targetHeight = Int(Double(targetWidth) / aspectRatio)
+                    if targetWidth > maxDim {
+                        targetWidth = maxDim
+                        targetHeight = Int(Double(targetWidth) / aspectRatio)
+                    }
                 } else {
-                    targetHeight = min(targetHeight, maxDim * effectiveScale)
-                    targetWidth = Int(Double(targetHeight) * aspectRatio)
+                    if targetHeight > maxDim {
+                        targetHeight = maxDim
+                        targetWidth = Int(Double(targetHeight) * aspectRatio)
+                    }
                 }
             }
 
             config.width = targetWidth
             config.height = targetHeight
+            config.scalesToFit = maxDim > 0 && (nativeWidth > maxDim || nativeHeight > maxDim)
         } else {
-            let aspectRatio = Double(windowWidth) / Double(windowHeight)
+            let aspectRatio = Double(nativeWidth) / Double(nativeHeight)
             let limitDim = maxDim > 0 ? maxDim : 640
             if aspectRatio > 1 {
-                config.width = min(limitDim, windowWidth * backingScaleFactor)
+                config.width = min(limitDim, nativeWidth)
                 config.height = Int(Double(config.width) / aspectRatio)
             } else {
-                config.height = min(limitDim, windowHeight * backingScaleFactor)
+                config.height = min(limitDim, nativeHeight)
                 config.width = Int(Double(config.height) * aspectRatio)
             }
+            config.scalesToFit = true
         }
 
         config.minimumFrameInterval = CMTime(value: 1, timescale: frameRate.frameRate)
-        config.pixelFormat = kCVPixelFormatType_32BGRA
         config.showsCursor = false
-        config.queueDepth = quality.scaleFactor == 2 ? 5 : 3
-        config.scalesToFit = true
+        config.queueDepth = quality == .native || quality == .retina ? 5 : 3
 
         if #available(macOS 14.0, *) {
             config.captureResolution = .best
         }
 
         if #available(macOS 15.0, *) {
+            config.pixelFormat = kCVPixelFormatType_ARGB2101010LEPacked
             config.captureDynamicRange = .hdrLocalDisplay
             config.colorSpaceName = CGColorSpace.displayP3 as CFString
+        } else if #available(macOS 14.0, *) {
+            config.pixelFormat = kCVPixelFormatType_32BGRA
+            config.colorSpaceName = CGColorSpace.displayP3 as CFString
+        } else {
+            config.pixelFormat = kCVPixelFormatType_32BGRA
         }
 
         do {
@@ -304,9 +330,14 @@ final class WindowLiveCapture: ObservableObject {
 
 private class StreamOutput: NSObject, SCStreamOutput {
     private let onFrame: (CGImage) -> Void
+    private let ciContext: CIContext
 
     init(onFrame: @escaping (CGImage) -> Void) {
         self.onFrame = onFrame
+        ciContext = CIContext(options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
+            .outputColorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
+        ])
         super.init()
     }
 
@@ -314,11 +345,16 @@ private class StreamOutput: NSObject, SCStreamOutput {
         guard type == .screen else { return }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
-        var cgImage: CGImage?
-        VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImage)
+        let sourceColorSpace: CGColorSpace = if let unmanagedColorSpace = CVImageBufferGetColorSpace(pixelBuffer) {
+            unmanagedColorSpace.takeUnretainedValue()
+        } else {
+            CGColorSpace(name: CGColorSpace.displayP3)!
+        }
 
-        if let image = cgImage {
-            onFrame(image)
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+
+        if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent, format: .RGBAh, colorSpace: sourceColorSpace) {
+            onFrame(cgImage)
         }
     }
 }
