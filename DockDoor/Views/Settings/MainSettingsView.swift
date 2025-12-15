@@ -97,6 +97,7 @@ struct MainSettingsView: View {
     @Default(.keepPreviewOnAppTerminate) var keepPreviewOnAppTerminate
     @Default(.enableCmdTabEnhancements) var enableCmdTabEnhancements
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
+    @Default(.scrollOnMouseHoverInSwitcher) var scrollOnMouseHoverInSwitcher
     @Default(.includeHiddenWindowsInSwitcher) var includeHiddenWindowsInSwitcher
     @Default(.showTabsAsWindows) var showTabsAsWindows
     @Default(.useClassicWindowOrdering) var useClassicWindowOrdering
@@ -476,10 +477,18 @@ struct MainSettingsView: View {
                                 set: { preventSwitcherHide = !$0 }
                             )) { Text("Release initializer key to select window in Switcher") }
                             Toggle(isOn: $enableMouseHoverInSwitcher) { Text("Enable mouse hover selection") }
-                            Text("Select and scroll to windows when hovering with mouse. Disable for keyboard-only navigation.")
+                            Text("Select windows when hovering with mouse. Disable for keyboard-only navigation.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.leading, 20)
+                            if enableMouseHoverInSwitcher {
+                                Toggle(isOn: $scrollOnMouseHoverInSwitcher) { Text("Scroll to window on mouse hover") }
+                                    .padding(.leading, 20)
+                                Text("Automatically scrolls the window switcher when hovering over windows with the mouse.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading, 40)
+                            }
                             Toggle(isOn: $useClassicWindowOrdering) { Text("Start on second window in Switcher") }
                             Text("When opening the window switcher, highlight the second window instead of the first.")
                                 .font(.caption)

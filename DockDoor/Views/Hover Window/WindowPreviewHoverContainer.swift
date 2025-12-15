@@ -174,7 +174,7 @@ struct WindowPreviewHoverContainer: View {
         guard previewStateCoordinator.hasMovedSinceOpen else { return false }
 
         if let hoveredIndex, hoveredIndex != previewStateCoordinator.currIndex {
-            previewStateCoordinator.setIndex(to: hoveredIndex, shouldScroll: true, fromKeyboard: false)
+            previewStateCoordinator.setIndex(to: hoveredIndex, shouldScroll: Defaults[.scrollOnMouseHoverInSwitcher], fromKeyboard: false)
         }
         return true
     }
