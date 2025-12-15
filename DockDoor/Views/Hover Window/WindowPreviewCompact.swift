@@ -10,14 +10,30 @@ struct WindowPreviewCompact: View {
     let currIndex: Int
     let windowSwitcherActive: Bool
     let mockPreviewActive: Bool
+    let disableActions: Bool
     let onTap: (() -> Void)?
     let onHoverIndexChange: ((Int?, CGPoint?) -> Bool)?
 
     @Default(.previewWidth) private var previewWidth
     @Default(.compactModeTitleFormat) private var titleFormat
     @Default(.compactModeItemSize) private var itemSize
-    @Default(.trafficLightButtonsVisibility) private var trafficLightButtonsVisibility
     @Default(.selectionOpacity) private var selectionOpacity
+
+    // Dock traffic light settings
+    @Default(.dockTrafficLightButtonsVisibility) private var dockTrafficLightButtonsVisibility
+    @Default(.dockEnabledTrafficLightButtons) private var dockEnabledTrafficLightButtons
+    @Default(.dockUseMonochromeTrafficLights) private var dockUseMonochromeTrafficLights
+    @Default(.dockDisableButtonHoverEffects) private var dockDisableButtonHoverEffects
+
+    // Switcher traffic light settings
+    @Default(.switcherTrafficLightButtonsVisibility) private var switcherTrafficLightButtonsVisibility
+    @Default(.switcherEnabledTrafficLightButtons) private var switcherEnabledTrafficLightButtons
+    @Default(.switcherUseMonochromeTrafficLights) private var switcherUseMonochromeTrafficLights
+    @Default(.switcherDisableButtonHoverEffects) private var switcherDisableButtonHoverEffects
+
+    // Tooltip settings
+    @Default(.dockShowTrafficLightTooltips) private var dockShowTrafficLightTooltips
+    @Default(.switcherShowTrafficLightTooltips) private var switcherShowTrafficLightTooltips
     @Default(.unselectedContentOpacity) private var unselectedContentOpacity
     @Default(.hoverHighlightColor) private var hoverHighlightColor
     @Default(.showMinimizedHiddenLabels) private var showMinimizedHiddenLabels
@@ -110,17 +126,27 @@ struct WindowPreviewCompact: View {
 
             Spacer(minLength: 0)
 
-            // Traffic light buttons
+            // Traffic light buttons - use context-based settings
+            let effectiveVisibility = windowSwitcherActive ? switcherTrafficLightButtonsVisibility : dockTrafficLightButtonsVisibility
+            let effectiveEnabledButtons = windowSwitcherActive ? switcherEnabledTrafficLightButtons : dockEnabledTrafficLightButtons
+            let effectiveMonochrome = windowSwitcherActive ? switcherUseMonochromeTrafficLights : dockUseMonochromeTrafficLights
+            let effectiveDisableHover = windowSwitcherActive ? switcherDisableButtonHoverEffects : dockDisableButtonHoverEffects
+            let effectiveShowTooltips = windowSwitcherActive ? switcherShowTrafficLightTooltips : dockShowTrafficLightTooltips
+
             if windowInfo.closeButton != nil,
-               trafficLightButtonsVisibility != .never,
+               effectiveVisibility != .never,
                !showMinimizedHiddenLabels || (!windowInfo.isMinimized && !windowInfo.isHidden)
             {
                 TrafficLightButtons(
-                    displayMode: trafficLightButtonsVisibility,
+                    displayMode: effectiveVisibility,
                     hoveringOverParentWindow: isSelected || isHovering,
                     onWindowAction: handleWindowAction,
                     pillStyling: true,
-                    mockPreviewActive: mockPreviewActive
+                    mockPreviewActive: mockPreviewActive,
+                    enabledButtons: effectiveEnabledButtons,
+                    useMonochrome: effectiveMonochrome,
+                    disableButtonHoverEffects: effectiveDisableHover,
+                    showTooltips: effectiveShowTooltips
                 )
             }
         }

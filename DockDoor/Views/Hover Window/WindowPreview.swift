@@ -14,17 +14,11 @@ struct WindowPreview: View {
     var currIndex: Int
     var windowSwitcherActive: Bool
     let dimensions: WindowPreviewHoverContainer.WindowDimensions
-    let showAppIconOnly: Bool
     let mockPreviewActive: Bool
+    let disableActions: Bool
     let onHoverIndexChange: ((Int?, CGPoint?) -> Bool)?
     var isEligibleForLivePreview: Bool = true
 
-    @Default(.windowTitlePosition) var windowTitlePosition
-    @Default(.showWindowTitle) var showWindowTitle
-    @Default(.windowTitleDisplayCondition) var windowTitleDisplayCondition
-    @Default(.windowTitleVisibility) var windowTitleVisibility
-    @Default(.trafficLightButtonsVisibility) var trafficLightButtonsVisibility
-    @Default(.trafficLightButtonsPosition) var trafficLightButtonsPosition
     @Default(.windowSwitcherControlPosition) var windowSwitcherControlPosition
     @Default(.dockPreviewControlPosition) var dockPreviewControlPosition
     @Default(.selectionOpacity) var selectionOpacity
@@ -33,10 +27,38 @@ struct WindowPreview: View {
     @Default(.allowDynamicImageSizing) var allowDynamicImageSizing
     @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
     @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
-    @Default(.disableDockStyleTrafficLights) var disableDockStyleTrafficLights
-    @Default(.disableDockStyleTitles) var disableDockStyleTitles
     @Default(.hidePreviewCardBackground) var hidePreviewCardBackground
     @Default(.showMinimizedHiddenLabels) var showMinimizedHiddenLabels
+
+    // Dock embedded mode settings
+    @Default(.dockShowWindowTitle) var dockShowWindowTitle
+    @Default(.dockWindowTitleVisibility) var dockWindowTitleVisibility
+    @Default(.dockTrafficLightButtonsVisibility) var dockTrafficLightButtonsVisibility
+    @Default(.dockEnabledTrafficLightButtons) var dockEnabledTrafficLightButtons
+    @Default(.dockUseMonochromeTrafficLights) var dockUseMonochromeTrafficLights
+    @Default(.dockDisableDockStyleTrafficLights) var dockDisableDockStyleTrafficLights
+    @Default(.dockDisableDockStyleTitles) var dockDisableDockStyleTitles
+    @Default(.dockDisableButtonHoverEffects) var dockDisableButtonHoverEffects
+    @Default(.dockShowTrafficLightTooltips) var dockShowTrafficLightTooltips
+
+    // Window Switcher header settings
+    @Default(.switcherShowHeaderAppIcon) var switcherShowHeaderAppIcon
+    @Default(.switcherShowHeaderAppName) var switcherShowHeaderAppName
+    @Default(.switcherShowHeaderWindowTitle) var switcherShowHeaderWindowTitle
+    @Default(.switcherHeaderAppIconVisibility) var switcherHeaderAppIconVisibility
+    @Default(.switcherHeaderAppNameVisibility) var switcherHeaderAppNameVisibility
+    @Default(.switcherHeaderTitleVisibility) var switcherHeaderTitleVisibility
+
+    // Window Switcher embedded mode settings
+    @Default(.switcherShowWindowTitle) var switcherShowWindowTitle
+    @Default(.switcherWindowTitleVisibility) var switcherWindowTitleVisibility
+    @Default(.switcherTrafficLightButtonsVisibility) var switcherTrafficLightButtonsVisibility
+    @Default(.switcherEnabledTrafficLightButtons) var switcherEnabledTrafficLightButtons
+    @Default(.switcherUseMonochromeTrafficLights) var switcherUseMonochromeTrafficLights
+    @Default(.switcherDisableDockStyleTrafficLights) var switcherDisableDockStyleTrafficLights
+    @Default(.switcherDisableDockStyleTitles) var switcherDisableDockStyleTitles
+    @Default(.switcherDisableButtonHoverEffects) var switcherDisableButtonHoverEffects
+    @Default(.switcherShowTrafficLightTooltips) var switcherShowTrafficLightTooltips
 
     @Default(.tapEquivalentInterval) var tapEquivalentInterval
     @Default(.previewHoverAction) var previewHoverAction
@@ -85,6 +107,95 @@ struct WindowPreview: View {
             true
         default:
             false
+        }
+    }
+
+    /// Calculates opacity based on visibility setting and hover state
+    private func visibilityOpacity(for visibility: WindowTitleVisibility, isHovering: Bool, dimmedOpacity: Double = 0.25) -> Double {
+        switch visibility {
+        case .whenHoveringPreview, .hiddenUntilHover:
+            (isHovering || mockPreviewActive) ? 1.0 : 0.0
+        case .never:
+            0.0
+        case .dimmedUntilHover:
+            (isHovering || mockPreviewActive) ? 1.0 : dimmedOpacity
+        case .alwaysVisible:
+            1.0
+        }
+    }
+
+    /// Reusable position-based layout for embedded controls (title + traffic lights)
+    @ViewBuilder
+    private func positionedControlsLayout(
+        position: WindowSwitcherControlPosition,
+        @ViewBuilder titleContent: () -> some View,
+        @ViewBuilder controlsContent: () -> some View
+    ) -> some View {
+        switch position {
+        case .topLeading, .topTrailing:
+            VStack {
+                HStack(spacing: 4) {
+                    if position == .topLeading {
+                        titleContent()
+                        Spacer()
+                        controlsContent()
+                    } else {
+                        controlsContent()
+                        Spacer()
+                        titleContent()
+                    }
+                }
+                .padding(8)
+                Spacer()
+            }
+        case .bottomLeading, .bottomTrailing:
+            VStack {
+                Spacer()
+                HStack(spacing: 4) {
+                    if position == .bottomLeading {
+                        titleContent()
+                        Spacer()
+                        controlsContent()
+                    } else {
+                        controlsContent()
+                        Spacer()
+                        titleContent()
+                    }
+                }
+                .padding(8)
+            }
+        case .diagonalTopLeftBottomRight:
+            VStack {
+                HStack { titleContent(); Spacer() }
+                    .padding(.leading, 8).padding(.top, 8)
+                Spacer()
+                HStack { Spacer(); controlsContent() }
+                    .padding(.trailing, 8).padding(.bottom, 8)
+            }
+        case .diagonalTopRightBottomLeft:
+            VStack {
+                HStack { Spacer(); titleContent() }
+                    .padding(.trailing, 8).padding(.top, 8)
+                Spacer()
+                HStack { controlsContent(); Spacer() }
+                    .padding(.leading, 8).padding(.bottom, 8)
+            }
+        case .diagonalBottomLeftTopRight:
+            VStack {
+                HStack { Spacer(); controlsContent() }
+                    .padding(.trailing, 8).padding(.top, 8)
+                Spacer()
+                HStack { titleContent(); Spacer() }
+                    .padding(.leading, 8).padding(.bottom, 8)
+            }
+        case .diagonalBottomRightTopLeft:
+            VStack {
+                HStack { controlsContent(); Spacer() }
+                    .padding(.leading, 8).padding(.top, 8)
+                Spacer()
+                HStack { Spacer(); titleContent() }
+                    .padding(.trailing, 8).padding(.bottom, 8)
+            }
         }
     }
 
@@ -138,44 +249,44 @@ struct WindowPreview: View {
 
     @ViewBuilder
     private func embeddedDockPreviewControls(_ selected: Bool) -> some View {
-        let shouldShowTitle = showWindowTitle && (
-            windowTitleDisplayCondition == .all ||
-                windowTitleDisplayCondition == .dockPreviewsOnly
-        )
-
         let titleToShow: String? = if let windowTitle = windowInfo.windowName, !windowTitle.isEmpty {
             windowTitle
         } else {
             windowInfo.app.localizedName
         }
 
-        let hasTitle = shouldShowTitle &&
-            titleToShow != nil &&
-            (windowTitleVisibility == .alwaysVisible || selected)
+        let shouldShowTitle = dockShowWindowTitle && titleToShow != nil && dockWindowTitleVisibility != .never
+        let titleOpacity = visibilityOpacity(for: dockWindowTitleVisibility, isHovering: isHoveringOverDockPeekPreview)
 
         let hasTrafficLights = windowInfo.closeButton != nil &&
-            trafficLightButtonsVisibility != .never &&
+            dockTrafficLightButtonsVisibility != .never &&
             (showMinimizedHiddenLabels ? (!windowInfo.isMinimized && !windowInfo.isHidden) : true)
 
         let titleContent = Group {
-            if hasTitle, let title = titleToShow {
+            if shouldShowTitle, let title = titleToShow {
                 MarqueeText(text: title, startDelay: 1)
                     .font(.subheadline)
                     .padding(4)
-                    .if(!disableDockStyleTitles) { view in
+                    .if(!dockDisableDockStyleTitles) { view in
                         view.materialPill()
                     }
+                    .opacity(titleOpacity)
             }
         }
 
+        let effectiveHoverForControls = disableActions ? isHoveringOverDockPeekPreview : (selected || isHoveringOverDockPeekPreview)
         let controlsContent = Group {
             if hasTrafficLights {
                 TrafficLightButtons(
-                    displayMode: trafficLightButtonsVisibility,
-                    hoveringOverParentWindow: selected || isHoveringOverDockPeekPreview,
+                    displayMode: dockTrafficLightButtonsVisibility,
+                    hoveringOverParentWindow: effectiveHoverForControls,
                     onWindowAction: handleWindowAction,
-                    pillStyling: !disableDockStyleTrafficLights,
-                    mockPreviewActive: mockPreviewActive
+                    pillStyling: !dockDisableDockStyleTrafficLights,
+                    mockPreviewActive: mockPreviewActive,
+                    enabledButtons: dockEnabledTrafficLightButtons,
+                    useMonochrome: dockUseMonochromeTrafficLights,
+                    disableButtonHoverEffects: dockDisableButtonHoverEffects,
+                    showTooltips: dockShowTrafficLightTooltips
                 )
             } else if windowInfo.isMinimized || windowInfo.isHidden, showMinimizedHiddenLabels {
                 Text(windowInfo.isMinimized ? "Minimized" : "Hidden")
@@ -188,223 +299,180 @@ struct WindowPreview: View {
             }
         }
 
-        if hasTitle || hasTrafficLights {
-            switch dockPreviewControlPosition {
-            case .topLeading, .topTrailing:
-                VStack {
-                    HStack(spacing: 4) {
-                        if dockPreviewControlPosition == .topLeading {
-                            titleContent
-                            Spacer()
-                            controlsContent
-                        } else {
-                            controlsContent
-                            Spacer()
-                            titleContent
-                        }
-                    }
-                    .padding(8)
-                    Spacer()
-                }
-            case .bottomLeading, .bottomTrailing:
-                VStack {
-                    Spacer()
-                    HStack(spacing: 4) {
-                        if dockPreviewControlPosition == .bottomLeading {
-                            titleContent
-                            Spacer()
-                            controlsContent
-                        } else {
-                            controlsContent
-                            Spacer()
-                            titleContent
-                        }
-                    }
-                    .padding(8)
-                }
-            case .diagonalTopLeftBottomRight:
-                VStack {
-                    HStack {
-                        titleContent
-                        Spacer()
-                    }
-                    .padding(.leading, 8)
-                    .padding(.top, 8)
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        controlsContent
-                    }
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
-                }
-            case .diagonalTopRightBottomLeft:
-                VStack {
-                    HStack {
-                        Spacer()
-                        titleContent
-                    }
-                    .padding(.trailing, 8)
-                    .padding(.top, 8)
-                    Spacer()
-                    HStack {
-                        controlsContent
-                        Spacer()
-                    }
-                    .padding(.leading, 8)
-                    .padding(.bottom, 8)
-                }
-            case .diagonalBottomLeftTopRight:
-                VStack {
-                    HStack {
-                        Spacer()
-                        controlsContent
-                    }
-                    .padding(.trailing, 8)
-                    .padding(.top, 8)
-                    Spacer()
-                    HStack {
-                        titleContent
-                        Spacer()
-                    }
-                    .padding(.leading, 8)
-                    .padding(.bottom, 8)
-                }
-            case .diagonalBottomRightTopLeft:
-                VStack {
-                    HStack {
-                        controlsContent
-                        Spacer()
-                    }
-                    .padding(.leading, 8)
-                    .padding(.top, 8)
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        titleContent
-                    }
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
-                }
-            }
+        if shouldShowTitle || hasTrafficLights {
+            positionedControlsLayout(
+                position: dockPreviewControlPosition,
+                titleContent: { titleContent },
+                controlsContent: { controlsContent }
+            )
         }
     }
 
     @ViewBuilder
     private func embeddedWindowSwitcherControls() -> some View {
-        let canShowTrafficLights = windowInfo.closeButton != nil &&
-            trafficLightButtonsVisibility != .never &&
+        let selected = isHoveringOverWindowSwitcherPreview || index == currIndex
+
+        let titleToShow: String? = if let windowTitle = windowInfo.windowName, !windowTitle.isEmpty {
+            windowTitle
+        } else {
+            windowInfo.app.localizedName
+        }
+
+        let shouldShowTitle = switcherShowWindowTitle && titleToShow != nil && switcherWindowTitleVisibility != .never
+        let titleOpacity = visibilityOpacity(for: switcherWindowTitleVisibility, isHovering: isHoveringOverWindowSwitcherPreview)
+
+        let hasTrafficLights = windowInfo.closeButton != nil &&
+            switcherTrafficLightButtonsVisibility != .never &&
             (showMinimizedHiddenLabels ? (!windowInfo.isMinimized && !windowInfo.isHidden) : true)
 
-        let showMinimizedLabel = isHoveringOverWindowSwitcherPreview &&
-            (windowInfo.isMinimized || windowInfo.isHidden) &&
-            showMinimizedHiddenLabels
-
-        if isHoveringOverWindowSwitcherPreview, canShowTrafficLights || showMinimizedLabel {
-            VStack {
-                HStack {
-                    if canShowTrafficLights {
-                        TrafficLightButtons(
-                            displayMode: .fullOpacityOnPreviewHover,
-                            hoveringOverParentWindow: true,
-                            onWindowAction: handleWindowAction,
-                            pillStyling: false,
-                            mockPreviewActive: mockPreviewActive
-                        )
-                    } else if showMinimizedLabel {
-                        Text(windowInfo.isMinimized ? "Minimized" : "Hidden")
-                            .font(.caption)
-                            .italic()
-                            .foregroundStyle(.secondary)
+        let titleContent = Group {
+            if shouldShowTitle, let title = titleToShow {
+                MarqueeText(text: title, startDelay: 1)
+                    .font(.subheadline)
+                    .padding(4)
+                    .if(!switcherDisableDockStyleTitles) { view in
+                        view.materialPill()
                     }
-                    Spacer()
-                }
-                .padding(8)
-                Spacer()
+                    .opacity(titleOpacity)
             }
+        }
+
+        let effectiveHoverForSwitcherControls = disableActions ? isHoveringOverWindowSwitcherPreview : selected
+        let controlsContent = Group {
+            if hasTrafficLights {
+                TrafficLightButtons(
+                    displayMode: switcherTrafficLightButtonsVisibility,
+                    hoveringOverParentWindow: effectiveHoverForSwitcherControls,
+                    onWindowAction: handleWindowAction,
+                    pillStyling: !switcherDisableDockStyleTrafficLights,
+                    mockPreviewActive: mockPreviewActive,
+                    enabledButtons: switcherEnabledTrafficLightButtons,
+                    useMonochrome: switcherUseMonochromeTrafficLights,
+                    disableButtonHoverEffects: switcherDisableButtonHoverEffects,
+                    showTooltips: switcherShowTrafficLightTooltips
+                )
+            } else if windowInfo.isMinimized || windowInfo.isHidden, showMinimizedHiddenLabels {
+                Text(windowInfo.isMinimized ? "Minimized" : "Hidden")
+                    .font(.subheadline)
+                    .italic()
+                    .foregroundStyle(.secondary)
+                    .padding(4)
+                    .materialPill()
+                    .frame(height: 34)
+            }
+        }
+
+        if shouldShowTitle || hasTrafficLights {
+            positionedControlsLayout(
+                position: windowSwitcherControlPosition,
+                titleContent: { titleContent },
+                controlsContent: { controlsContent }
+            )
         }
     }
 
     @ViewBuilder
     private func embeddedWindowSwitcherHeader() -> some View {
-        let shouldShowTitle = showWindowTitle && (
-            windowTitleDisplayCondition == .all ||
-                windowTitleDisplayCondition == .windowSwitcherOnly
-        )
-
         let windowTitle = windowInfo.windowName ?? ""
         let appName = windowInfo.app.localizedName ?? "Unknown"
-        let hasWindowTitle = !windowTitle.isEmpty && windowTitle != appName && shouldShowTitle
+        let hasWindowTitleContent = !windowTitle.isEmpty && windowTitle != appName
 
-        HStack(spacing: 6) {
-            if let appIcon = windowInfo.app.icon {
-                Image(nsImage: appIcon)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-            }
+        let iconOpacity = visibilityOpacity(for: switcherHeaderAppIconVisibility, isHovering: isHoveringOverWindowSwitcherPreview, dimmedOpacity: 0.5)
+        let nameOpacity = visibilityOpacity(for: switcherHeaderAppNameVisibility, isHovering: isHoveringOverWindowSwitcherPreview, dimmedOpacity: 0.5)
+        let titleOpacity = visibilityOpacity(for: switcherHeaderTitleVisibility, isHovering: isHoveringOverWindowSwitcherPreview, dimmedOpacity: 0.5)
 
-            if !showAppIconOnly {
-                Text(appName)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+        let showIcon = switcherShowHeaderAppIcon && windowInfo.app.icon != nil && iconOpacity > 0
+        let showName = switcherShowHeaderAppName && nameOpacity > 0
+        let showTitle = switcherShowHeaderWindowTitle && hasWindowTitleContent && titleOpacity > 0
+        let showSeparator = showName && showTitle
 
-                if hasWindowTitle {
-                    Text("—")
-                        .foregroundStyle(.secondary)
-
-                    MarqueeText(text: windowTitle, startDelay: 1)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+        if !(showIcon || showName || showTitle) {
+            EmptyView()
+        } else {
+            HStack(spacing: 6) {
+                if showIcon, let appIcon = windowInfo.app.icon {
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                        .opacity(iconOpacity)
                 }
-            }
 
-            Spacer(minLength: 0)
+                if switcherShowHeaderAppName {
+                    Text(appName)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .opacity(nameOpacity)
+                }
+
+                if showSeparator {
+                    Text(verbatim: "—")
+                        .foregroundStyle(.secondary)
+                }
+
+                if switcherShowHeaderWindowTitle, hasWindowTitleContent {
+                    MarqueeText(text: windowTitle, startDelay: 1)
+                        .foregroundStyle(switcherShowHeaderAppName ? .secondary : .primary)
+                        .lineLimit(1)
+                        .opacity(titleOpacity)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 4)
         }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func windowSwitcherContent(_ selected: Bool, showTitleContent: Bool = true, showControlsContent: Bool = true) -> some View {
-        let shouldShowTitle = showWindowTitle && (
-            windowTitleDisplayCondition == .all ||
-                windowTitleDisplayCondition == .windowSwitcherOnly
-        )
+        let appIconOpacity: Double = switcherHeaderAppIconVisibility == .alwaysVisible || selected ? 1.0 : 0.0
+        let appNameOpacity: Double = switcherHeaderAppNameVisibility == .alwaysVisible || selected ? 1.0 : 0.0
+        let titleOpacity: Double = switcherHeaderTitleVisibility == .alwaysVisible || selected ? 1.0 : 0.0
 
         let titleAndSubtitleContent = VStack(alignment: .leading, spacing: 0) {
-            if !showAppIconOnly {
+            if switcherShowHeaderAppName {
                 Text(windowInfo.app.localizedName ?? "Unknown")
                     .foregroundStyle(.primary)
                     .lineLimit(1)
+                    .opacity(appNameOpacity)
             }
 
-            if let windowTitle = windowInfo.windowName,
+            if switcherShowHeaderWindowTitle,
+               let windowTitle = windowInfo.windowName,
                !windowTitle.isEmpty,
-               windowTitle != windowInfo.app.localizedName,
-               shouldShowTitle
+               windowTitle != windowInfo.app.localizedName
             {
                 MarqueeText(text: windowTitle, startDelay: 1)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .opacity(titleOpacity)
             }
         }
 
         let appIconContent = Group {
-            if let appIcon = windowInfo.app.icon {
+            if switcherShowHeaderAppIcon, let appIcon = windowInfo.app.icon {
                 Image(nsImage: appIcon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 35, height: 35)
+                    .opacity(appIconOpacity)
             }
         }
 
+        let effectiveHoverForNonEmbeddedSwitcher = disableActions ? isHoveringOverWindowSwitcherPreview : (selected || isHoveringOverWindowSwitcherPreview)
         let controlsContent = Group {
-            if windowInfo.closeButton != nil && (showMinimizedHiddenLabels ? (!windowInfo.isMinimized && !windowInfo.isHidden) : true) {
+            if windowInfo.closeButton != nil && switcherTrafficLightButtonsVisibility != .never && (showMinimizedHiddenLabels ? (!windowInfo.isMinimized && !windowInfo.isHidden) : true) {
                 TrafficLightButtons(
-                    displayMode: trafficLightButtonsVisibility,
-                    hoveringOverParentWindow: selected || isHoveringOverWindowSwitcherPreview,
+                    displayMode: switcherTrafficLightButtonsVisibility,
+                    hoveringOverParentWindow: effectiveHoverForNonEmbeddedSwitcher,
                     onWindowAction: handleWindowAction,
-                    pillStyling: true, mockPreviewActive: mockPreviewActive
+                    pillStyling: true,
+                    mockPreviewActive: mockPreviewActive,
+                    enabledButtons: switcherEnabledTrafficLightButtons,
+                    useMonochrome: switcherUseMonochromeTrafficLights,
+                    disableButtonHoverEffects: switcherDisableButtonHoverEffects,
+                    showTooltips: switcherShowTrafficLightTooltips
                 )
             } else if windowInfo.isMinimized || windowInfo.isHidden, showMinimizedHiddenLabels {
                 Text(windowInfo.isMinimized ? "Minimized" : "Hidden")
@@ -453,19 +521,16 @@ struct WindowPreview: View {
                 contentRow(isLeadingControls: false)
             case .bottomTrailing:
                 contentRow(isLeadingControls: true)
-            case .diagonalTopLeftBottomRight, .diagonalBottomRightTopLeft:
+            case .diagonalTopLeftBottomRight, .diagonalBottomLeftTopRight:
                 contentRow(isLeadingControls: false)
-            case .diagonalTopRightBottomLeft, .diagonalBottomLeftTopRight:
+            case .diagonalTopRightBottomLeft, .diagonalBottomRightTopLeft:
                 contentRow(isLeadingControls: true)
             }
         }
     }
 
     private func dockPreviewContent(_ selected: Bool, showTitleContent: Bool = true, showControlsContent: Bool = true) -> some View {
-        let shouldShowTitle = showWindowTitle && (
-            windowTitleDisplayCondition == .all ||
-                windowTitleDisplayCondition == .dockPreviewsOnly
-        )
+        let shouldShowTitle = dockShowWindowTitle
 
         // Determine what title to show: window name first, then app name as fallback
         let titleToShow: String? = if let windowTitle = windowInfo.windowName, !windowTitle.isEmpty {
@@ -474,33 +539,38 @@ struct WindowPreview: View {
             windowInfo.app.localizedName
         }
 
-        let hasTitle = shouldShowTitle &&
-            titleToShow != nil &&
-            (windowTitleVisibility == .alwaysVisible || selected)
+        let showTitleEnabled = shouldShowTitle && titleToShow != nil && dockWindowTitleVisibility != .never
+        let titleOpacity = visibilityOpacity(for: dockWindowTitleVisibility, isHovering: isHoveringOverDockPeekPreview)
 
         let hasTrafficLights = windowInfo.closeButton != nil &&
-            trafficLightButtonsVisibility != .never &&
+            dockTrafficLightButtonsVisibility != .never &&
             (showMinimizedHiddenLabels ? (!windowInfo.isMinimized && !windowInfo.isHidden) : true)
 
         let titleContent = Group {
-            if hasTitle, let title = titleToShow {
+            if showTitleEnabled, let title = titleToShow {
                 MarqueeText(text: title, startDelay: 1)
                     .font(.subheadline)
                     .padding(4)
-                    .if(!disableDockStyleTitles) { view in
+                    .if(!dockDisableDockStyleTitles) { view in
                         view.materialPill()
                     }
+                    .opacity(titleOpacity)
             }
         }
 
+        let effectiveHoverForDockControls = disableActions ? isHoveringOverDockPeekPreview : (selected || isHoveringOverDockPeekPreview)
         let controlsContent = Group {
             if hasTrafficLights {
                 TrafficLightButtons(
-                    displayMode: trafficLightButtonsVisibility,
-                    hoveringOverParentWindow: selected || isHoveringOverDockPeekPreview,
+                    displayMode: dockTrafficLightButtonsVisibility,
+                    hoveringOverParentWindow: effectiveHoverForDockControls,
                     onWindowAction: handleWindowAction,
-                    pillStyling: !disableDockStyleTrafficLights,
-                    mockPreviewActive: mockPreviewActive
+                    pillStyling: !dockDisableDockStyleTrafficLights,
+                    mockPreviewActive: mockPreviewActive,
+                    enabledButtons: dockEnabledTrafficLightButtons,
+                    useMonochrome: dockUseMonochromeTrafficLights,
+                    disableButtonHoverEffects: dockDisableButtonHoverEffects,
+                    showTooltips: dockShowTrafficLightTooltips
                 )
             } else if windowInfo.isMinimized || windowInfo.isHidden, showMinimizedHiddenLabels {
                 Text(windowInfo.isMinimized ? "Minimized" : "Hidden")
@@ -537,7 +607,7 @@ struct WindowPreview: View {
         }
 
         // Only show the toolbar if there's either a title or traffic lights to display
-        if hasTitle || hasTrafficLights {
+        if showTitleEnabled || hasTrafficLights {
             return AnyView(
                 VStack(spacing: 0) {
                     switch dockPreviewControlPosition {
@@ -549,9 +619,9 @@ struct WindowPreview: View {
                         contentRow(isLeadingControls: false)
                     case .bottomTrailing:
                         contentRow(isLeadingControls: true)
-                    case .diagonalTopLeftBottomRight, .diagonalBottomRightTopLeft:
+                    case .diagonalTopLeftBottomRight, .diagonalBottomLeftTopRight:
                         contentRow(isLeadingControls: false)
-                    case .diagonalTopRightBottomLeft, .diagonalBottomLeftTopRight:
+                    case .diagonalTopRightBottomLeft, .diagonalBottomRightTopLeft:
                         contentRow(isLeadingControls: true)
                     }
                 }
@@ -770,6 +840,7 @@ struct WindowPreview: View {
     }
 
     private func handleFullPreviewHover(isHovering: Bool, action: PreviewHoverAction) {
+        guard !disableActions else { return }
         if isHovering, !windowSwitcherActive {
             switch action {
             case .none: break
