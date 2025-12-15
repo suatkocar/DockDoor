@@ -38488,6 +38488,9 @@
         }
       }
     },
+    "Enable edge scroll" : {
+
+    },
     "Enable for Dock Preview" : {
       "localizations" : {
         "af" : {
@@ -52792,6 +52795,9 @@
         }
       }
     },
+    "Hover near the edges of the window switcher to scroll through windows." : {
+
+    },
     "Hover Window Open Delay" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -59664,6 +59670,9 @@
         }
       }
     },
+    "Loading applications..." : {
+
+    },
     "Loading lyrics..." : {
       "localizations" : {
         "af" : {
@@ -66531,6 +66540,7 @@
       }
     },
     "No applications found or scanned yet." : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -66719,6 +66729,9 @@
           }
         }
       }
+    },
+    "No applications found." : {
+
     },
     "No apps in blacklist" : {
       "localizations" : {
@@ -71011,13 +71024,13 @@
             "value" : "Only use delay for initial window opening"
           }
         },
-        "nl" : {
+        "nb" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Only use delay for initial window opening"
           }
         },
-        "no" : {
+        "nl" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Only use delay for initial window opening"
@@ -117163,13 +117176,13 @@
             "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
           }
         },
-        "nl" : {
+        "nb" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
           }
         },
-        "no" : {
+        "nl" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."

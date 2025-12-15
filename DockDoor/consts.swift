@@ -109,6 +109,7 @@ extension Defaults.Keys {
     static let enableCmdTabEnhancements = Key<Bool>("enableCmdTabEnhancements", default: false)
     static let enableMouseHoverInSwitcher = Key<Bool>("enableMouseHoverInSwitcher", default: false)
     static let scrollOnMouseHoverInSwitcher = Key<Bool>("scrollOnMouseHoverInSwitcher", default: true)
+    static let enableEdgeScrollInSwitcher = Key<Bool>("enableEdgeScrollInSwitcher", default: true)
     static let showTabsAsWindows = Key<Bool>("showTabsAsWindows", default: false)
     static let keepPreviewOnAppTerminate = Key<Bool>("keepPreviewOnAppTerminate", default: false)
     static let enableWindowSwitcherSearch = Key<Bool>("enableWindowSwitcherSearch", default: false)

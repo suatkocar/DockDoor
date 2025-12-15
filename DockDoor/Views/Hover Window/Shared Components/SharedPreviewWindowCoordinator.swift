@@ -249,7 +249,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         if fullPreviewWindow == nil {
             let styleMask: NSWindow.StyleMask = [.nonactivatingPanel, .fullSizeContentView, .borderless]
             fullPreviewWindow = NSPanel(contentRect: .zero, styleMask: styleMask, backing: .buffered, defer: false)
-            fullPreviewWindow?.level = .normal
+            fullPreviewWindow?.level = .floating
             fullPreviewWindow?.isOpaque = false
             fullPreviewWindow?.backgroundColor = .clear
             fullPreviewWindow?.hasShadow = true

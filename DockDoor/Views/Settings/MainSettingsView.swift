@@ -98,6 +98,7 @@ struct MainSettingsView: View {
     @Default(.enableCmdTabEnhancements) var enableCmdTabEnhancements
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
     @Default(.scrollOnMouseHoverInSwitcher) var scrollOnMouseHoverInSwitcher
+    @Default(.enableEdgeScrollInSwitcher) var enableEdgeScrollInSwitcher
     @Default(.includeHiddenWindowsInSwitcher) var includeHiddenWindowsInSwitcher
     @Default(.showTabsAsWindows) var showTabsAsWindows
     @Default(.useClassicWindowOrdering) var useClassicWindowOrdering
@@ -486,6 +487,12 @@ struct MainSettingsView: View {
                                 Toggle(isOn: $scrollOnMouseHoverInSwitcher) { Text("Scroll to window on mouse hover") }
                                     .padding(.leading, 20)
                                 Text("Automatically scrolls the window switcher when hovering over windows with the mouse.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.leading, 40)
+                                Toggle(isOn: $enableEdgeScrollInSwitcher) { Text("Enable edge scroll") }
+                                    .padding(.leading, 20)
+                                Text("Hover near the edges of the window switcher to scroll through windows.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 40)

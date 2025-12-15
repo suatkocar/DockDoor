@@ -64,6 +64,7 @@ struct WindowPreviewHoverContainer: View {
     @Default(.gradientColorPalette) var gradientColorPalette
     @Default(.showAnimations) var showAnimations
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
+    @Default(.enableEdgeScrollInSwitcher) var enableEdgeScrollInSwitcher
     @Default(.windowSwitcherLivePreviewScope) var windowSwitcherLivePreviewScope
 
     // Compact mode thresholds (0 = disabled, 1+ = enable when window count >= threshold)
@@ -249,7 +250,7 @@ struct WindowPreviewHoverContainer: View {
                 }
             }
             .overlay {
-                if enableMouseHoverInSwitcher, previewStateCoordinator.windowSwitcherActive {
+                if enableMouseHoverInSwitcher, enableEdgeScrollInSwitcher, previewStateCoordinator.windowSwitcherActive {
                     edgeScrollZones(isHorizontal: orientationIsHorizontal)
                 }
             }
@@ -623,7 +624,7 @@ struct WindowPreviewHoverContainer: View {
               let scrollView = findScrollView(in: window.contentView)
         else { return }
 
-        let scrollAmount: CGFloat = 4.0 * direction
+        let scrollAmount: CGFloat = 16.0 * direction
         let clipView = scrollView.contentView
         var newOrigin = clipView.bounds.origin
 
