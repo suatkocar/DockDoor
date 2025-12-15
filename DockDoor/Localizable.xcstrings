@@ -934,7 +934,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%@"
           }
         },
@@ -1130,7 +1130,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ — %2$@"
           }
         },
@@ -1236,7 +1236,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld"
           }
         },
@@ -1314,13 +1314,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld"
           }
         },
@@ -1427,7 +1427,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld px"
           }
         },
@@ -1505,13 +1505,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld px"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld px"
           }
         },
@@ -1617,8 +1617,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%lld+ windows"
+            "state" : "translated",
+            "value" : "%lld+ finestre"
           }
         },
         "ja" : {
@@ -1695,14 +1695,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%lld+ windows"
+            "state" : "translated",
+            "value" : "%lld+ вікна"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%lld+ windows"
+            "state" : "translated",
+            "value" : "%lld+ cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -3714,7 +3714,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "⌘"
           }
         },
@@ -3792,13 +3792,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "⌘"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "⌘"
           }
         },
@@ -4860,8 +4860,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "2X-Large"
+            "state" : "translated",
+            "value" : "Molto grandi"
           }
         },
         "ja" : {
@@ -4938,14 +4938,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "2X-Large"
+            "state" : "translated",
+            "value" : "Вдвічі більший"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "2X-Large"
+            "state" : "translated",
+            "value" : "2X-Lớn"
           }
         },
         "zh-Hans" : {
@@ -5433,8 +5433,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "3X-Large"
+            "state" : "translated",
+            "value" : "Massime"
           }
         },
         "ja" : {
@@ -5511,14 +5511,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "3X-Large"
+            "state" : "translated",
+            "value" : "Втричі більший"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "3X-Large"
+            "state" : "translated",
+            "value" : "3X-Lớn"
           }
         },
         "zh-Hans" : {
@@ -6005,7 +6005,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "5 FPS"
           }
         },
@@ -6083,13 +6083,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "5 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "5 FPS"
           }
         },
@@ -6195,7 +6195,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "10 FPS"
           }
         },
@@ -6273,13 +6273,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "10 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "10 FPS"
           }
         },
@@ -6385,7 +6385,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "15 FPS"
           }
         },
@@ -6463,13 +6463,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "15 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "15 FPS"
           }
         },
@@ -6575,7 +6575,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "24 FPS"
           }
         },
@@ -6653,13 +6653,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "24 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "24 FPS"
           }
         },
@@ -6765,7 +6765,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "30 FPS"
           }
         },
@@ -6843,13 +6843,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "30 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "30 FPS"
           }
         },
@@ -6955,7 +6955,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "60 FPS"
           }
         },
@@ -7033,13 +7033,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "60 FPS"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "60 FPS"
           }
         },
@@ -7145,7 +7145,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "120 FPS (ProMotion)"
           }
         },
@@ -7223,13 +7223,13 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "120 FPS (ProMotion)"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "120 FPS (ProMotion)"
           }
         },
@@ -8097,8 +8097,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Action performed when middle-clicking on a window preview."
+            "state" : "translated",
+            "value" : "Azione abbinata al clic del tasto centrale."
           }
         },
         "ja" : {
@@ -8175,14 +8175,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Action performed when middle-clicking on a window preview."
+            "state" : "translated",
+            "value" : "Дія, що виконується при натисканні середньої кнопки миші на попередньому перегляді вікна."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Action performed when middle-clicking on a window preview."
+            "state" : "translated",
+            "value" : "Hành động được thực hiện khi nhấp chuột giữa vào bản xem trước cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -8288,8 +8288,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App + Current Space"
+            "state" : "translated",
+            "value" : "Applicazione attiva + Spazio in uso"
           }
         },
         "ja" : {
@@ -8366,14 +8366,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App + Current Space"
+            "state" : "translated",
+            "value" : "Активний застосунок + Поточний простір"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App + Current Space"
+            "state" : "translated",
+            "value" : "Ứng dụng đang hoạt động + Không gian hiện tại"
           }
         },
         "zh-Hans" : {
@@ -8478,8 +8478,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Indicator"
+            "state" : "translated",
+            "value" : "Indicatore applicazione attiva"
           }
         },
         "ja" : {
@@ -8556,14 +8556,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Indicator"
+            "state" : "translated",
+            "value" : "Індикатор активного застосунку"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Indicator"
+            "state" : "translated",
+            "value" : "Chỉ báo ứng dụng đang hoạt động"
           }
         },
         "zh-Hans" : {
@@ -8669,8 +8669,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Only"
+            "state" : "translated",
+            "value" : "Solo applicazione attiva"
           }
         },
         "ja" : {
@@ -8747,14 +8747,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Only"
+            "state" : "translated",
+            "value" : "Тільки активний застосунок"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Active App Only"
+            "state" : "translated",
+            "value" : "Chỉ ứng dụng đang hoạt động"
           }
         },
         "zh-Hans" : {
@@ -11143,8 +11143,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All Windows"
+            "state" : "translated",
+            "value" : "Tutte le finestre"
           }
         },
         "ja" : {
@@ -11221,14 +11221,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All Windows"
+            "state" : "translated",
+            "value" : "Усі вікна"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All Windows"
+            "state" : "translated",
+            "value" : "Tất cả cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -11333,8 +11333,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows from the selected app get live preview"
+            "state" : "translated",
+            "value" : "Anteprima per tutte le finestre dall'app selezionata"
           }
         },
         "ja" : {
@@ -11411,14 +11411,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows from the selected app get live preview"
+            "state" : "translated",
+            "value" : "Усі вікна обраного застосунку отримують попередній перегляд у реальному часі"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows from the selected app get live preview"
+            "state" : "translated",
+            "value" : "Tất cả cửa sổ từ ứng dụng đã chọn có bản xem trước trực tiếp"
           }
         },
         "zh-Hans" : {
@@ -11523,8 +11523,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows get live preview (may cause lag with many windows)"
+            "state" : "translated",
+            "value" : "Anteprima per tutte le finestre (può causare rallentamenti con molte applicazioni aperte)"
           }
         },
         "ja" : {
@@ -11601,14 +11601,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows get live preview (may cause lag with many windows)"
+            "state" : "translated",
+            "value" : "Усі вікна отримують попередній перегляд у реальному часі (може спричиняти затримку з багатьма вікнами)"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "All windows get live preview (may cause lag with many windows)"
+            "state" : "translated",
+            "value" : "Tất cả cửa sổ có bản xem trước trực tiếp (có thể gây giật khi có nhiều cửa sổ)"
           }
         },
         "zh-Hans" : {
@@ -12284,8 +12284,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Alphabetical by title"
+            "state" : "translated",
+            "value" : "Titolo in ordine alfabetico"
           }
         },
         "ja" : {
@@ -12368,8 +12368,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Alphabetical by title"
+            "state" : "translated",
+            "value" : "Theo thứ tự bảng chữ cái của tiêu đề"
           }
         },
         "zh-Hans" : {
@@ -12474,8 +12474,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Alternate Shortcut"
+            "state" : "translated",
+            "value" : "Scorciatoia alternativa"
           }
         },
         "ja" : {
@@ -12552,14 +12552,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Alternate Shortcut"
+            "state" : "translated",
+            "value" : "Альтернативна комбінація"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Alternate Shortcut"
+            "state" : "translated",
+            "value" : "Phím tắt thay thế"
           }
         },
         "zh-Hans" : {
@@ -12856,8 +12856,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Always use compact mode"
+            "state" : "translated",
+            "value" : "Usa sempre la modalità compatta"
           }
         },
         "ja" : {
@@ -12934,14 +12934,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Always use compact mode"
+            "state" : "translated",
+            "value" : "Завжди використовувати компактний режим"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Always use compact mode"
+            "state" : "translated",
+            "value" : "Luôn sử dụng chế độ gọn nhẹ"
           }
         },
         "zh-Hans" : {
@@ -13618,8 +13618,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "An additional trigger key using the same modifier, invoking the switcher with a different filter mode."
+            "state" : "translated",
+            "value" : "Scorciatoia alternativa per invocare il selettore finestre con un filtro diverso."
           }
         },
         "ja" : {
@@ -13696,14 +13696,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "An additional trigger key using the same modifier, invoking the switcher with a different filter mode."
+            "state" : "translated",
+            "value" : "Додаткова тригерна клавіша з використанням того самого модифікатора, що викликає Перемикач з іншим режимом фільтра."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "An additional trigger key using the same modifier, invoking the switcher with a different filter mode."
+            "state" : "translated",
+            "value" : "Một phím kích hoạt bổ sung sử dụng cùng phím bổ trợ, gọi trình chuyển đổi với chế độ lọc khác."
           }
         },
         "zh-Hans" : {
@@ -14004,8 +14004,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name + Window Title"
+            "state" : "translated",
+            "value" : "Nome applicazione + titolo finestra"
           }
         },
         "ja" : {
@@ -14082,14 +14082,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name + Window Title"
+            "state" : "translated",
+            "value" : "Назва застосунку + Заголовок вікна"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name + Window Title"
+            "state" : "translated",
+            "value" : "Tên ứng dụng + Tiêu đề cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -14194,8 +14194,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name Only"
+            "state" : "translated",
+            "value" : "Solo nome dell'applicazione"
           }
         },
         "ja" : {
@@ -14272,14 +14272,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name Only"
+            "state" : "translated",
+            "value" : "Тільки назва застосунку"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "App Name Only"
+            "state" : "translated",
+            "value" : "Chỉ tên ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -17514,8 +17514,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically scrolls the window switcher when hovering over windows with the mouse."
+            "state" : "translated",
+            "value" : "Tự động cuộn trình chuyển đổi cửa sổ khi di chuột qua các cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -17620,8 +17620,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set height and offset"
+            "state" : "translated",
+            "value" : "Imposta automaticamente altezza e offset"
           }
         },
         "ja" : {
@@ -17698,14 +17698,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set height and offset"
+            "state" : "translated",
+            "value" : "Автоматичне встановлення висоти та зміщення"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set height and offset"
+            "state" : "translated",
+            "value" : "Tự động thiết lập chiều cao và độ lệch"
           }
         },
         "zh-Hans" : {
@@ -17810,8 +17810,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set length"
+            "state" : "translated",
+            "value" : "Imposta automaticamente la larghezza"
           }
         },
         "ja" : {
@@ -17888,14 +17888,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set length"
+            "state" : "translated",
+            "value" : "Автоматичне встановлення ​​довжини"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically set length"
+            "state" : "translated",
+            "value" : "Tự động thiết lập độ dài"
           }
         },
         "zh-Hans" : {
@@ -18275,8 +18275,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Best quality (full resolution)"
+            "state" : "translated",
+            "value" : "Chất lượng tốt nhất (độ phân giải đầy đủ)"
           }
         },
         "zh-Hans" : {
@@ -20669,8 +20669,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Center Window"
+            "state" : "translated",
+            "value" : "Centra la finestra"
           }
         },
         "ja" : {
@@ -20747,14 +20747,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Center Window"
+            "state" : "translated",
+            "value" : "Центр вікна"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Center Window"
+            "state" : "translated",
+            "value" : "Căn giữa cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -20943,8 +20943,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Change…"
+            "state" : "translated",
+            "value" : "Thay đổi…"
           }
         },
         "zh-Hans" : {
@@ -21049,8 +21049,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Changes to permissions require an app restart to take effect."
+            "state" : "translated",
+            "value" : "Le modifiche ai permessi richiedono un riavvio dell'app."
           }
         },
         "ja" : {
@@ -21127,14 +21127,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Changes to permissions require an app restart to take effect."
+            "state" : "translated",
+            "value" : "Зміни дозволів потребують перезапуску застосунку, щоб вони набули чинності."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Changes to permissions require an app restart to take effect."
+            "state" : "translated",
+            "value" : "Thay đổi quyền yêu cầu khởi động lại ứng dụng để có hiệu lực."
           }
         },
         "zh-Hans" : {
@@ -21703,8 +21703,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose how windows are sorted in Cmd+Tab previews."
+            "state" : "translated",
+            "value" : "Chọn cách sắp xếp cửa sổ trong bản xem trước Cmd+Tab."
           }
         },
         "zh-Hans" : {
@@ -21893,8 +21893,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose how windows are sorted in the preview."
+            "state" : "translated",
+            "value" : "Chọn cách sắp xếp cửa sổ trong bản xem trước."
           }
         },
         "zh-Hans" : {
@@ -22083,8 +22083,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose how windows are sorted in the window switcher."
+            "state" : "translated",
+            "value" : "Chọn cách sắp xếp cửa sổ trong trình chuyển đổi cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -22189,8 +22189,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose where the window switcher appears on screen."
+            "state" : "translated",
+            "value" : "Scegli la posizione del selettore finestre"
           }
         },
         "ja" : {
@@ -22267,14 +22267,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose where the window switcher appears on screen."
+            "state" : "translated",
+            "value" : "Виберіть, де на екрані буде розташовуватись Перемикач вікон."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose where the window switcher appears on screen."
+            "state" : "translated",
+            "value" : "Chọn vị trí hiển thị trình chuyển đổi cửa sổ trên màn hình."
           }
         },
         "zh-Hans" : {
@@ -22379,8 +22379,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Clear"
+            "state" : "translated",
+            "value" : "Pulisci"
           }
         },
         "ja" : {
@@ -22463,8 +22463,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Clear"
+            "state" : "translated",
+            "value" : "Xóa"
           }
         },
         "zh-Hans" : {
@@ -22653,8 +22653,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Clear Logs"
+            "state" : "translated",
+            "value" : "Xóa nhật ký"
           }
         },
         "zh-Hans" : {
@@ -23335,8 +23335,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Close Window"
+            "state" : "translated",
+            "value" : "Chiudi"
           }
         },
         "ja" : {
@@ -23419,8 +23419,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Close Window"
+            "state" : "translated",
+            "value" : "Đóng cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -23609,8 +23609,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "CMD + Right Click on dock icon to quit app"
+            "state" : "translated",
+            "value" : "CMD + Chuột phải vào biểu tượng Dock để thoát ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -23799,8 +23799,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Cmd+A cycles through previews (Shift+A cycles backward), Left/Right navigate, Down clears selection."
+            "state" : "translated",
+            "value" : "Cmd+A xoay vòng qua các bản xem trước (Shift+A xoay ngược lại), Trái/Phải để điều hướng, Xuống để bỏ chọn."
           }
         },
         "zh-Hans" : {
@@ -23990,8 +23990,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Cmd+A focuses previews, Left/Right navigate, Down clears selection."
+            "state" : "translated",
+            "value" : "Cmd+A lấy tiêu điểm bản xem trước, Trái/Phải để điều hướng, Xuống để bỏ chọn."
           }
         },
         "zh-Hans" : {
@@ -24096,8 +24096,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Cmd+key shortcuts for quick actions on the selected window preview. These work in both the window switcher and Cmd+Tab enhancement mode."
+            "state" : "translated",
+            "value" : "Combinazioni di tasti con ⌘ (Cmd) per azioni rapide sull'anteprima selezionata. Valide sia per il selettore finestre che per il comando di sistema ⌘⇥ (Cmd+Tab) con miglioramenti di DockDoor attivi."
           }
         },
         "ja" : {
@@ -24180,8 +24180,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Cmd+key shortcuts for quick actions on the selected window preview. These work in both the window switcher and Cmd+Tab enhancement mode."
+            "state" : "translated",
+            "value" : "Phím tắt Cmd+phím cho các hành động nhanh trên bản xem trước cửa sổ đã chọn. Các phím này hoạt động trong cả trình chuyển đổi cửa sổ và chế độ nâng cao Cmd+Tab."
           }
         },
         "zh-Hans" : {
@@ -24942,7 +24942,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Command"
           }
         },
@@ -25323,7 +25323,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Command ⌘"
           }
         },
@@ -25619,8 +25619,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact List Mode Only (Window Previews are Disabled)"
+            "state" : "translated",
+            "value" : "Solo modalità compatta (senza anteprime grafiche)"
           }
         },
         "ja" : {
@@ -25703,8 +25703,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact List Mode Only (Window Previews are Disabled)"
+            "state" : "translated",
+            "value" : "Chỉ chế độ danh sách gọn nhẹ (Bản xem trước cửa sổ bị tắt)"
           }
         },
         "zh-Hans" : {
@@ -25809,8 +25809,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact Mode (Titles Only)"
+            "state" : "translated",
+            "value" : "Modalità compatta (solo titoli)"
           }
         },
         "ja" : {
@@ -25893,8 +25893,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact Mode (Titles Only)"
+            "state" : "translated",
+            "value" : "Chế độ gọn nhẹ (Chỉ tiêu đề)"
           }
         },
         "zh-Hans" : {
@@ -25999,8 +25999,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact mode displays windows as a streamlined vertical list with app icons and titles."
+            "state" : "translated",
+            "value" : "La modalità compatta mostra una lista di titoli di finestre in stile minimale, senza anteprima grafica."
           }
         },
         "ja" : {
@@ -26083,8 +26083,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Compact mode displays windows as a streamlined vertical list with app icons and titles."
+            "state" : "translated",
+            "value" : "Chế độ gọn nhẹ hiển thị các cửa sổ dưới dạng danh sách dọc tinh gọn với biểu tượng ứng dụng và tiêu đề."
           }
         },
         "zh-Hans" : {
@@ -27034,7 +27034,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Control"
           }
         },
@@ -27415,7 +27415,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Control ⌃"
           }
         },
@@ -28369,8 +28369,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Creation order (fixed)"
+            "state" : "translated",
+            "value" : "Thứ tự tạo (cố định)"
           }
         },
         "zh-Hans" : {
@@ -28666,8 +28666,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Current Dock Size:"
+            "state" : "translated",
+            "value" : "Attuale dimensione del Dock:"
           }
         },
         "ja" : {
@@ -28750,8 +28750,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Current Dock Size:"
+            "state" : "translated",
+            "value" : "Kích thước Dock hiện tại:"
           }
         },
         "zh-Hans" : {
@@ -29239,8 +29239,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Current Space Only"
+            "state" : "translated",
+            "value" : "Solo spazio corrente"
           }
         },
         "ja" : {
@@ -29323,8 +29323,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Current Space Only"
+            "state" : "translated",
+            "value" : "Chỉ không gian hiện tại"
           }
         },
         "zh-Hans" : {
@@ -30384,7 +30384,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Molto grande"
+            "value" : "Predefinita (media)"
           }
         },
         "ja" : {
@@ -30657,7 +30657,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Delete"
           }
         },
@@ -32186,8 +32186,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Disable dock styling on window titles"
+            "state" : "translated",
+            "value" : "Tắt kiểu dáng Dock trên tiêu đề cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -32292,8 +32292,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Disabled"
+            "state" : "translated",
+            "value" : "Disattivato"
           }
         },
         "ja" : {
@@ -32376,8 +32376,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Disabled"
+            "state" : "translated",
+            "value" : "Đã tắt"
           }
         },
         "zh-Hans" : {
@@ -33054,8 +33054,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Displays a colored line below the currently active application's dock icon."
+            "state" : "translated",
+            "value" : "Mostra un indicatore personalizzato (linea colorata) sotto l'icona del Dock dell'applicazione attiva."
           }
         },
         "ja" : {
@@ -33138,8 +33138,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Displays a colored line below the currently active application's dock icon."
+            "state" : "translated",
+            "value" : "Hiển thị một dòng màu bên dưới biểu tượng Dock của ứng dụng đang hoạt động."
           }
         },
         "zh-Hans" : {
@@ -33328,8 +33328,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Distinguish minimized/hidden windows"
+            "state" : "translated",
+            "value" : "Phân biệt cửa sổ bị thu nhỏ/ẩn"
           }
         },
         "zh-Hans" : {
@@ -33624,8 +33624,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Frame Rate"
+            "state" : "translated",
+            "value" : "Fluidità del Dock (FPS = aggiornamenti al secondo)"
           }
         },
         "ja" : {
@@ -33708,8 +33708,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Frame Rate"
+            "state" : "translated",
+            "value" : "Tốc độ khung hình Dock"
           }
         },
         "zh-Hans" : {
@@ -34004,8 +34004,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Preview Gestures"
+            "state" : "translated",
+            "value" : "Gesti sulle anteprime del Dock"
           }
         },
         "ja" : {
@@ -34088,8 +34088,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Preview Gestures"
+            "state" : "translated",
+            "value" : "Cử chỉ xem trước trên Dock"
           }
         },
         "zh-Hans" : {
@@ -35909,8 +35909,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Quality"
+            "state" : "translated",
+            "value" : "Qualità del Dock"
           }
         },
         "ja" : {
@@ -35993,8 +35993,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Quality"
+            "state" : "translated",
+            "value" : "Chất lượng Dock"
           }
         },
         "zh-Hans" : {
@@ -36943,8 +36943,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Either left or right Command, Option, or Control keys work. You can also hold the modifier while pressing the trigger to capture both."
+            "state" : "translated",
+            "value" : "Phím Command, Option hoặc Control bên trái hoặc phải đều hoạt động. Bạn cũng có thể giữ phím bổ trợ trong khi nhấn phím kích hoạt để chụp cả hai."
           }
         },
         "zh-Hans" : {
@@ -38090,8 +38090,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable Cmd+Tab Enhancements"
+            "state" : "translated",
+            "value" : "Bật các cải tiến Cmd+Tab"
           }
         },
         "zh-Hans" : {
@@ -38386,8 +38386,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable dock scroll gestures"
+            "state" : "translated",
+            "value" : "Abilita i gesti di scorrimento sul Dock"
           }
         },
         "ja" : {
@@ -38470,8 +38470,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable dock scroll gestures"
+            "state" : "translated",
+            "value" : "Bật cử chỉ cuộn trên Dock"
           }
         },
         "zh-Hans" : {
@@ -38576,8 +38576,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable for Dock Preview"
+            "state" : "translated",
+            "value" : "Abilita per le anteprime"
           }
         },
         "ja" : {
@@ -38660,8 +38660,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable for Dock Preview"
+            "state" : "translated",
+            "value" : "Bật cho Xem trước trên Dock"
           }
         },
         "zh-Hans" : {
@@ -38766,8 +38766,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable for Window Switcher"
+            "state" : "translated",
+            "value" : "Abilita per il selettore finestre"
           }
         },
         "ja" : {
@@ -38850,8 +38850,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable for Window Switcher"
+            "state" : "translated",
+            "value" : "Bật cho Trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -38956,8 +38956,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable gestures in window switcher"
+            "state" : "translated",
+            "value" : "Abilita i gesti per il selettore finestre"
           }
         },
         "ja" : {
@@ -39040,8 +39040,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable gestures in window switcher"
+            "state" : "translated",
+            "value" : "Bật cử chỉ trong trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -39146,8 +39146,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable gestures on dock window previews"
+            "state" : "translated",
+            "value" : "Abilita i gesti per le anteprime del Dock"
           }
         },
         "ja" : {
@@ -39230,8 +39230,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable gestures on dock window previews"
+            "state" : "translated",
+            "value" : "Bật cử chỉ trên bản xem trước cửa sổ Dock"
           }
         },
         "zh-Hans" : {
@@ -39527,8 +39527,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable Live Preview (Video)"
+            "state" : "translated",
+            "value" : "Abilita le anteprime in tempo reale (Video)"
           }
         },
         "ja" : {
@@ -39611,8 +39611,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable Live Preview (Video)"
+            "state" : "translated",
+            "value" : "Bật Xem trước trực tiếp (Video)"
           }
         },
         "zh-Hans" : {
@@ -40185,8 +40185,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enable search while using Window Switcher"
+            "state" : "translated",
+            "value" : "Bật tìm kiếm khi sử dụng Trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -41242,8 +41242,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Enter"
+            "state" : "translated",
+            "value" : "Invio"
           }
         },
         "ja" : {
@@ -41326,7 +41326,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Enter"
           }
         },
@@ -41706,7 +41706,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Escape"
           }
         },
@@ -43040,8 +43040,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Export Logs"
+            "state" : "translated",
+            "value" : "Xuất nhật ký"
           }
         },
         "zh-Hans" : {
@@ -43149,7 +43149,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Molto piccola"
+            "value" : "Minuscola"
           }
         },
         "ja" : {
@@ -43341,7 +43341,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Piccola"
+            "value" : "Molto piccola"
           }
         },
         "ja" : {
@@ -43727,8 +43727,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Half"
+            "state" : "translated",
+            "value" : "Riempi la metà inferiore"
           }
         },
         "ja" : {
@@ -43811,8 +43811,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Half"
+            "state" : "translated",
+            "value" : "Lấp đầy nửa dưới"
           }
         },
         "zh-Hans" : {
@@ -43918,8 +43918,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Left"
+            "state" : "translated",
+            "value" : "Riempi il quarto in basso a sinistra"
           }
         },
         "ja" : {
@@ -44002,8 +44002,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Left"
+            "state" : "translated",
+            "value" : "Lấp đầy góc dưới bên trái"
           }
         },
         "zh-Hans" : {
@@ -44109,8 +44109,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Right"
+            "state" : "translated",
+            "value" : "Riempi il quarto in basso a destra"
           }
         },
         "ja" : {
@@ -44193,8 +44193,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Bottom Right"
+            "state" : "translated",
+            "value" : "Lấp đầy góc dưới bên phải"
           }
         },
         "zh-Hans" : {
@@ -44300,8 +44300,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Left Half"
+            "state" : "translated",
+            "value" : "Riempi la metà sinistra"
           }
         },
         "ja" : {
@@ -44384,8 +44384,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Left Half"
+            "state" : "translated",
+            "value" : "Lấp đầy nửa trái"
           }
         },
         "zh-Hans" : {
@@ -44491,8 +44491,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Right Half"
+            "state" : "translated",
+            "value" : "Riempi la metà destra"
           }
         },
         "ja" : {
@@ -44575,8 +44575,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Right Half"
+            "state" : "translated",
+            "value" : "Lấp đầy nửa phải"
           }
         },
         "zh-Hans" : {
@@ -44682,8 +44682,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Half"
+            "state" : "translated",
+            "value" : "Riempi la metà superiore"
           }
         },
         "ja" : {
@@ -44766,8 +44766,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Half"
+            "state" : "translated",
+            "value" : "Lấp đầy nửa trên"
           }
         },
         "zh-Hans" : {
@@ -44873,8 +44873,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Left"
+            "state" : "translated",
+            "value" : "Riempi il quarto in alto a sinistra"
           }
         },
         "ja" : {
@@ -44957,8 +44957,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Left"
+            "state" : "translated",
+            "value" : "Lấp đầy góc trên bên trái"
           }
         },
         "zh-Hans" : {
@@ -45064,8 +45064,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Right"
+            "state" : "translated",
+            "value" : "Riempi il quarto in alto a destra"
           }
         },
         "ja" : {
@@ -45148,8 +45148,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Fill Top Right"
+            "state" : "translated",
+            "value" : "Lấp đầy góc trên bên phải"
           }
         },
         "zh-Hans" : {
@@ -45910,8 +45910,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Focus and use previews"
+            "state" : "translated",
+            "value" : "Lấy tiêu điểm và sử dụng bản xem trước"
           }
         },
         "zh-Hans" : {
@@ -47729,8 +47729,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gesture Sensitivity"
+            "state" : "translated",
+            "value" : "Sensibilità gesti"
           }
         },
         "ja" : {
@@ -47813,8 +47813,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gesture Sensitivity"
+            "state" : "translated",
+            "value" : "Độ nhạy cử chỉ"
           }
         },
         "zh-Hans" : {
@@ -47919,8 +47919,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gesture Settings"
+            "state" : "translated",
+            "value" : "Impostazioni dei gesti"
           }
         },
         "ja" : {
@@ -48003,8 +48003,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gesture Settings"
+            "state" : "translated",
+            "value" : "Cài đặt cử chỉ"
           }
         },
         "zh-Hans" : {
@@ -48110,8 +48110,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gestures & Keybinds"
+            "state" : "translated",
+            "value" : "Gesti e scorciatoie"
           }
         },
         "ja" : {
@@ -48194,8 +48194,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Gestures & Keybinds"
+            "state" : "translated",
+            "value" : "Cử chỉ & Phím tắt"
           }
         },
         "zh-Hans" : {
@@ -48872,8 +48872,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Grant permission in System Settings to enable window previews."
+            "state" : "translated",
+            "value" : "Concedi l'autorizzazione per abilitare le anteprime della finestra."
           }
         },
         "ja" : {
@@ -48956,8 +48956,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Grant permission in System Settings to enable window previews."
+            "state" : "translated",
+            "value" : "Cấp quyền trong Cài đặt hệ thống để bật bản xem trước cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -49336,8 +49336,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Group multiple app instances together"
+            "state" : "translated",
+            "value" : "Nhóm nhiều phiên bản ứng dụng lại với nhau"
           }
         },
         "zh-Hans" : {
@@ -49443,8 +49443,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Grouped by app name"
+            "state" : "translated",
+            "value" : "Raggruppate per nome dell'applicazione"
           }
         },
         "ja" : {
@@ -49527,8 +49527,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Grouped by app name"
+            "state" : "translated",
+            "value" : "Nhóm theo tên ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -51545,8 +51545,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Hide App"
+            "state" : "translated",
+            "value" : "Nascondi applicazione"
           }
         },
         "ja" : {
@@ -51629,8 +51629,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Hide App"
+            "state" : "translated",
+            "value" : "Ẩn ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -52010,8 +52010,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Hide preview card background"
+            "state" : "translated",
+            "value" : "Ẩn nền thẻ xem trước"
           }
         },
         "zh-Hans" : {
@@ -52117,8 +52117,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "High (960px)"
+            "state" : "translated",
+            "value" : "HD (960px)"
           }
         },
         "ja" : {
@@ -52201,8 +52201,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "High (960px)"
+            "state" : "translated",
+            "value" : "Cao (960px)"
           }
         },
         "zh-Hans" : {
@@ -52310,8 +52310,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Higher quality and frame rate use more CPU/GPU resources. Use lower settings for Window Switcher if you experience lag."
+            "state" : "translated",
+            "value" : "Qualità e fluidità superiori utilizzano più risorse CPU/GPU. Abbassa i valori se riscontri ritardi o rallentamenti."
           }
         },
         "ja" : {
@@ -52394,8 +52394,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Higher quality and frame rate use more CPU/GPU resources. Use lower settings for Window Switcher if you experience lag."
+            "state" : "translated",
+            "value" : "Chất lượng và tốc độ khung hình cao hơn sử dụng nhiều tài nguyên CPU/GPU hơn. Sử dụng cài đặt thấp hơn cho Trình chuyển đổi cửa sổ nếu bạn gặp tình trạng giật."
           }
         },
         "zh-Hans" : {
@@ -52690,8 +52690,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Highlights the currently focused window with a colored border."
+            "state" : "translated",
+            "value" : "Aggiunge un bordo intorno alla finestra attiva."
           }
         },
         "ja" : {
@@ -52774,8 +52774,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Highlights the currently focused window with a colored border."
+            "state" : "translated",
+            "value" : "Làm nổi bật cửa sổ đang được lấy tiêu điểm bằng viền màu."
           }
         },
         "zh-Hans" : {
@@ -54878,8 +54878,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Improved performance (nominal)"
+            "state" : "translated",
+            "value" : "Hiệu suất được cải thiện (danh nghĩa)"
           }
         },
         "zh-Hans" : {
@@ -55557,8 +55557,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Color"
+            "state" : "translated",
+            "value" : "Colore"
           }
         },
         "ja" : {
@@ -55641,8 +55641,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Color"
+            "state" : "translated",
+            "value" : "Màu chỉ báo"
           }
         },
         "zh-Hans" : {
@@ -55748,8 +55748,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Height"
+            "state" : "translated",
+            "value" : "Spessore"
           }
         },
         "ja" : {
@@ -55832,8 +55832,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Height"
+            "state" : "translated",
+            "value" : "Chiều cao chỉ báo"
           }
         },
         "zh-Hans" : {
@@ -55939,8 +55939,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Length"
+            "state" : "translated",
+            "value" : "Lunghezza"
           }
         },
         "ja" : {
@@ -56023,8 +56023,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Indicator Length"
+            "state" : "translated",
+            "value" : "Độ dài chỉ báo"
           }
         },
         "zh-Hans" : {
@@ -56407,8 +56407,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Initializer"
+            "state" : "translated",
+            "value" : "Trình khởi tạo"
           }
         },
         "zh-Hans" : {
@@ -56894,8 +56894,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Item Size"
+            "state" : "translated",
+            "value" : "Dimensione"
           }
         },
         "ja" : {
@@ -56978,8 +56978,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Item Size"
+            "state" : "translated",
+            "value" : "Kích thước mục"
           }
         },
         "zh-Hans" : {
@@ -59182,8 +59182,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Level 1 is exact match, level 5 is most lenient fuzzy matching."
+            "state" : "translated",
+            "value" : "Livello 1 = corrispondenza esatta. Livello 5 = massima tolleranza."
           }
         },
         "ja" : {
@@ -59266,8 +59266,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Level 1 is exact match, level 5 is most lenient fuzzy matching."
+            "state" : "translated",
+            "value" : "Mức 1 là khớp chính xác, mức 5 là khớp mờ lỏng lẻo nhất."
           }
         },
         "zh-Hans" : {
@@ -60322,8 +60322,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Low (480px)"
+            "state" : "translated",
+            "value" : "SD (480px)"
           }
         },
         "ja" : {
@@ -60406,8 +60406,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Low (480px)"
+            "state" : "translated",
+            "value" : "Thấp (480px)"
           }
         },
         "zh-Hans" : {
@@ -60512,8 +60512,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Lower values make gestures more sensitive. Higher values require longer swipes. Applies to both dock previews and window switcher."
+            "state" : "translated",
+            "value" : "Valori inferiori rendono i gesti più sensibili. Valori più alti richiedono scorrimenti più lunghi. Si applica sia alle anteprime del Dock che al selettore finestre."
           }
         },
         "ja" : {
@@ -60596,8 +60596,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Lower values make gestures more sensitive. Higher values require longer swipes. Applies to both dock previews and window switcher."
+            "state" : "translated",
+            "value" : "Giá trị thấp hơn làm cho cử chỉ nhạy hơn. Giá trị cao hơn yêu cầu vuốt dài hơn. Áp dụng cho cả xem trước trên dock và trình chuyển đổi cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -61655,8 +61655,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Maximize"
+            "state" : "translated",
+            "value" : "Massimizza"
           }
         },
         "ja" : {
@@ -61739,8 +61739,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Maximize"
+            "state" : "translated",
+            "value" : "Phóng to"
           }
         },
         "zh-Hans" : {
@@ -62422,7 +62422,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Grande"
+            "value" : "Piccole"
           }
         },
         "ja" : {
@@ -62993,8 +62993,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Middle Click"
+            "state" : "translated",
+            "value" : "Clic del tasto centrale"
           }
         },
         "ja" : {
@@ -63077,8 +63077,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Middle Click"
+            "state" : "translated",
+            "value" : "Nhấp chuột giữa"
           }
         },
         "zh-Hans" : {
@@ -64331,8 +64331,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Minimized and hidden windows will appear after all visible windows in previews and switcher."
+            "state" : "translated",
+            "value" : "Le finestre minimizzate e nascoste appariranno dopo tutte quelle visibili nelle anteprime e nel selettore finestre."
           }
         },
         "ja" : {
@@ -64415,8 +64415,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Minimized and hidden windows will appear after all visible windows in previews and switcher."
+            "state" : "translated",
+            "value" : "Các cửa sổ bị thu nhỏ và ẩn sẽ xuất hiện sau tất cả các cửa sổ hiển thị trong bản xem trước và trình chuyển đổi."
           }
         },
         "zh-Hans" : {
@@ -64711,8 +64711,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Mode"
+            "state" : "translated",
+            "value" : "Modalità"
           }
         },
         "ja" : {
@@ -64795,8 +64795,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Mode"
+            "state" : "translated",
+            "value" : "Chế độ"
           }
         },
         "zh-Hans" : {
@@ -64901,8 +64901,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Mouse Actions"
+            "state" : "translated",
+            "value" : "Azioni del mouse"
           }
         },
         "ja" : {
@@ -64985,8 +64985,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Mouse Actions"
+            "state" : "translated",
+            "value" : "Hành động chuột"
           }
         },
         "zh-Hans" : {
@@ -65285,8 +65285,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Native (Best)"
+            "state" : "translated",
+            "value" : "Nativa (migliore)"
           }
         },
         "ja" : {
@@ -65369,8 +65369,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Native (Best)"
+            "state" : "translated",
+            "value" : "Gốc (Tốt nhất)"
           }
         },
         "zh-Hans" : {
@@ -66428,8 +66428,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "No Action"
+            "state" : "translated",
+            "value" : "Nessuna azione"
           }
         },
         "ja" : {
@@ -66512,8 +66512,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "No Action"
+            "state" : "translated",
+            "value" : "Không hành động"
           }
         },
         "zh-Hans" : {
@@ -68605,8 +68605,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "No Results"
+            "state" : "translated",
+            "value" : "Không có kết quả"
           }
         },
         "zh-Hans" : {
@@ -68795,8 +68795,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "No shortcut set"
+            "state" : "translated",
+            "value" : "Chưa thiết lập phím tắt"
           }
         },
         "zh-Hans" : {
@@ -69175,8 +69175,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "No windows match your search"
+            "state" : "translated",
+            "value" : "Không có cửa sổ nào khớp với tìm kiếm của bạn"
           }
         },
         "zh-Hans" : {
@@ -70318,8 +70318,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Only display windows that are in the current virtual desktop/Space."
+            "state" : "translated",
+            "value" : "Chỉ hiển thị các cửa sổ nằm trong màn hình ảo/Không gian hiện tại."
           }
         },
         "zh-Hans" : {
@@ -70805,8 +70805,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Only the currently selected window gets live preview"
+            "state" : "translated",
+            "value" : "Anteprima in tempo reale solo per la finestra selezionata"
           }
         },
         "ja" : {
@@ -70889,8 +70889,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Only the currently selected window gets live preview"
+            "state" : "translated",
+            "value" : "Chỉ cửa sổ đang được chọn mới có bản xem trước trực tiếp"
           }
         },
         "zh-Hans" : {
@@ -70903,6 +70903,196 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Only the currently selected window gets live preview"
+          }
+        }
+      }
+    },
+    "Only use delay for initial window opening" : {
+      "localizations" : {
+        "af" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "sr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only use delay for initial window opening"
           }
         }
       }
@@ -71190,8 +71380,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open New Window"
+            "state" : "translated",
+            "value" : "Apri una nuova finestra"
           }
         },
         "ja" : {
@@ -71274,8 +71464,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open New Window"
+            "state" : "translated",
+            "value" : "Mở cửa sổ mới"
           }
         },
         "zh-Hans" : {
@@ -72035,7 +72225,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Option"
           }
         },
@@ -72416,7 +72606,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Option ⌥"
           }
         },
@@ -75579,8 +75769,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Position Offset"
+            "state" : "translated",
+            "value" : "Scostamento (offset)"
           }
         },
         "ja" : {
@@ -75663,8 +75853,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Position Offset"
+            "state" : "translated",
+            "value" : "Độ lệch vị trí"
           }
         },
         "zh-Hans" : {
@@ -76151,8 +76341,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Press a key…"
+            "state" : "translated",
+            "value" : "Premi un tasto…"
           }
         },
         "ja" : {
@@ -76235,8 +76425,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Press a key…"
+            "state" : "translated",
+            "value" : "Nhấn một phím…"
           }
         },
         "zh-Hans" : {
@@ -77189,8 +77379,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Press shortcut…"
+            "state" : "translated",
+            "value" : "Nhấn phím tắt…"
           }
         },
         "zh-Hans" : {
@@ -77760,8 +77950,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Prevent preview reappearance during fade-out"
+            "state" : "translated",
+            "value" : "Ngăn bản xem trước xuất hiện lại trong quá trình mờ dần"
           }
         },
         "zh-Hans" : {
@@ -82332,8 +82522,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Recently used"
+            "state" : "translated",
+            "value" : "Đã sử dụng gần đây"
           }
         },
         "zh-Hans" : {
@@ -82629,8 +82819,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Refresh dock size"
+            "state" : "translated",
+            "value" : "Aggiorna la dimensione del Dock"
           }
         },
         "ja" : {
@@ -82713,8 +82903,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Refresh dock size"
+            "state" : "translated",
+            "value" : "Làm mới kích thước dock"
           }
         },
         "zh-Hans" : {
@@ -83663,8 +83853,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Removes the background panel from individual window previews."
+            "state" : "translated",
+            "value" : "Loại bỏ bảng nền khỏi các bản xem trước cửa sổ riêng lẻ."
           }
         },
         "zh-Hans" : {
@@ -84048,8 +84238,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Removes the pill-shaped background styling from window titles in dock previews for a cleaner look."
+            "state" : "translated",
+            "value" : "Loại bỏ kiểu nền hình viên thuốc khỏi tiêu đề cửa sổ trong bản xem trước trên dock để có giao diện gọn gàng hơn."
           }
         },
         "zh-Hans" : {
@@ -84729,8 +84919,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Required for capturing window previews of other apps. Without this, only the compact list view will be available."
+            "state" : "translated",
+            "value" : "Necessaria per generare le anteprime delle finestre. Senza l'autorizzazione sarà disponibile solo la vista compatta a elenco."
           }
         },
         "ja" : {
@@ -84813,8 +85003,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Required for capturing window previews of other apps. Without this, only the compact list view will be available."
+            "state" : "translated",
+            "value" : "Cần thiết để chụp bản xem trước cửa sổ của các ứng dụng khác. Nếu không có quyền này, chỉ chế độ danh sách gọn nhẹ mới khả dụng."
           }
         },
         "zh-Hans" : {
@@ -86442,7 +86632,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Retina (1280px)"
           }
         },
@@ -86526,7 +86716,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Retina (1280px)"
           }
         },
@@ -86719,7 +86909,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Return"
           }
         },
@@ -88158,8 +88348,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Screen Recording permission is required for window thumbnails."
+            "state" : "translated",
+            "value" : "L'autorizzazione alla registrazione dello schermo è richiesta per la generazione delle miniature di anteprima."
           }
         },
         "ja" : {
@@ -88242,8 +88432,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Screen Recording permission is required for window thumbnails."
+            "state" : "translated",
+            "value" : "Cần có quyền Ghi màn hình cho hình thu nhỏ cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -88348,8 +88538,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Screen Recording permission is required to show window thumbnails."
+            "state" : "translated",
+            "value" : "L'autorizzazione alla registrazione dello schermo è richiesta per la visualizzazione delle miniature di anteprima."
           }
         },
         "ja" : {
@@ -88432,8 +88622,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Screen Recording permission is required to show window thumbnails."
+            "state" : "translated",
+            "value" : "Cần có quyền Ghi màn hình để hiển thị hình thu nhỏ cửa sổ."
           }
         },
         "zh-Hans" : {
@@ -89195,8 +89385,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Scroll long titles (marquee)"
+            "state" : "translated",
+            "value" : "Cuộn các tiêu đề dài (marquee)"
           }
         },
         "zh-Hans" : {
@@ -89385,8 +89575,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Scroll to window on mouse hover"
+            "state" : "translated",
+            "value" : "Cuộn đến cửa sổ khi di chuột qua"
           }
         },
         "zh-Hans" : {
@@ -89491,8 +89681,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Scroll up on a dock icon to bring the app to front, scroll down to hide all its windows."
+            "state" : "translated",
+            "value" : "Scorri verso l'alto sull'icona del Dock per portare l'applicazione in primo piano; scorri verso il basso per nascondere tutte le sue finestre."
           }
         },
         "ja" : {
@@ -89575,8 +89765,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Scroll up on a dock icon to bring the app to front, scroll down to hide all its windows."
+            "state" : "translated",
+            "value" : "Cuộn lên trên biểu tượng dock để đưa ứng dụng lên trước, cuộn xuống để ẩn tất cả các cửa sổ của nó."
           }
         },
         "zh-Hans" : {
@@ -89681,8 +89871,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Search Fuzziness"
+            "state" : "translated",
+            "value" : "Tolleranza della ricerca"
           }
         },
         "ja" : {
@@ -89765,8 +89955,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Search Fuzziness"
+            "state" : "translated",
+            "value" : "Độ mờ tìm kiếm"
           }
         },
         "zh-Hans" : {
@@ -91780,8 +91970,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Selected App's Windows"
+            "state" : "translated",
+            "value" : "Finestre dell'app selezionata"
           }
         },
         "ja" : {
@@ -91864,8 +92054,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Selected App's Windows"
+            "state" : "translated",
+            "value" : "Cửa sổ của ứng dụng đã chọn"
           }
         },
         "zh-Hans" : {
@@ -91970,8 +92160,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Selected Window Only"
+            "state" : "translated",
+            "value" : "Solo finestra selezionata"
           }
         },
         "ja" : {
@@ -92054,8 +92244,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Selected Window Only"
+            "state" : "translated",
+            "value" : "Chỉ cửa sổ đã chọn"
           }
         },
         "zh-Hans" : {
@@ -92351,8 +92541,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Set a threshold to automatically switch to compact mode when an app has that many or more windows. Set to 0 to disable."
+            "state" : "translated",
+            "value" : "Imposta una soglia per passare alla modalità compatta se un'app ha più di un certo numero di finestre. Imposta '0' per disabilitare la soglia."
           }
         },
         "ja" : {
@@ -92435,8 +92625,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Set a threshold to automatically switch to compact mode when an app has that many or more windows. Set to 0 to disable."
+            "state" : "translated",
+            "value" : "Đặt ngưỡng để tự động chuyển sang chế độ gọn nhẹ khi một ứng dụng có từ số lượng cửa sổ đó trở lên. Đặt là 0 để tắt."
           }
         },
         "zh-Hans" : {
@@ -93687,8 +93877,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shift Indicator"
+            "state" : "translated",
+            "value" : "Indicatore maiuscolo"
           }
         },
         "ja" : {
@@ -93771,8 +93961,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shift Indicator"
+            "state" : "translated",
+            "value" : "Dịch chuyển chỉ báo"
           }
         },
         "zh-Hans" : {
@@ -93878,8 +94068,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show active app indicator below dock icon"
+            "state" : "translated",
+            "value" : "Mostra un indicatore accanto all'icona dell'applicazione attiva"
           }
         },
         "ja" : {
@@ -93962,8 +94152,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show active app indicator below dock icon"
+            "state" : "translated",
+            "value" : "Hiển thị chỉ báo ứng dụng đang hoạt động bên dưới biểu tượng dock"
           }
         },
         "zh-Hans" : {
@@ -94068,8 +94258,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show active window border"
+            "state" : "translated",
+            "value" : "Mostra un bordo intorno all'anteprima della finestra attiva"
           }
         },
         "ja" : {
@@ -94152,8 +94342,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show active window border"
+            "state" : "translated",
+            "value" : "Hiển thị viền cửa sổ đang hoạt động"
           }
         },
         "zh-Hans" : {
@@ -95873,8 +96063,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show previews while holding Cmd+Tab."
+            "state" : "translated",
+            "value" : "Hiển thị bản xem trước khi giữ Cmd+Tab."
           }
         },
         "zh-Hans" : {
@@ -96172,8 +96362,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show Window Switcher instantly"
+            "state" : "translated",
+            "value" : "Mostra il selettore finestre senza ritardo iniziale"
           }
         },
         "ja" : {
@@ -96256,8 +96446,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show Window Switcher instantly"
+            "state" : "translated",
+            "value" : "Hiển thị Trình chuyển đổi cửa sổ ngay lập tức"
           }
         },
         "zh-Hans" : {
@@ -97401,8 +97591,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Show windows from current Space only"
+            "state" : "translated",
+            "value" : "Chỉ hiển thị cửa sổ từ Không gian hiện tại"
           }
         },
         "zh-Hans" : {
@@ -97699,8 +97889,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the current Space"
+            "state" : "translated",
+            "value" : "Mostra solo le finestre dallo spazio corrente"
           }
         },
         "ja" : {
@@ -97783,8 +97973,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the current Space"
+            "state" : "translated",
+            "value" : "Chỉ hiển thị các cửa sổ từ Không gian hiện tại"
           }
         },
         "zh-Hans" : {
@@ -97890,8 +98080,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the frontmost app in the current Space"
+            "state" : "translated",
+            "value" : "Mostra solo le finestre dall'app in primo piano nello spazio corrente"
           }
         },
         "ja" : {
@@ -97974,8 +98164,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the frontmost app in the current Space"
+            "state" : "translated",
+            "value" : "Chỉ hiển thị các cửa sổ từ ứng dụng phía trước nhất trong Không gian hiện tại"
           }
         },
         "zh-Hans" : {
@@ -98081,8 +98271,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the frontmost application"
+            "state" : "translated",
+            "value" : "Mostra solo le finestre dall'applicazione in primo piano"
           }
         },
         "ja" : {
@@ -98165,8 +98355,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Shows only windows from the frontmost application"
+            "state" : "translated",
+            "value" : "Chỉ hiển thị các cửa sổ từ ứng dụng phía trước nhất"
           }
         },
         "zh-Hans" : {
@@ -98655,8 +98845,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Skip (use list view only)"
+            "state" : "translated",
+            "value" : "Salta (usa solo la vista elenco)"
           }
         },
         "ja" : {
@@ -98739,8 +98929,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Skip (use list view only)"
+            "state" : "translated",
+            "value" : "Bỏ qua (chỉ dùng chế độ danh sách)"
           }
         },
         "zh-Hans" : {
@@ -98845,8 +99035,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Skip the small delay before the switcher appears. May feel snappier but can cause flickering if you quickly release the key."
+            "state" : "translated",
+            "value" : "Mostra il selettore finestre senza il breve ritardo predefinito. Velocità e fluidità potrebbero apparire migliori, ma se si lascia rapidamente il tasto della scorciatoia potrebbe verificarsi uno sfarfallio."
           }
         },
         "ja" : {
@@ -98929,8 +99119,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Skip the small delay before the switcher appears. May feel snappier but can cause flickering if you quickly release the key."
+            "state" : "translated",
+            "value" : "Bỏ qua độ trễ nhỏ trước khi trình chuyển đổi xuất hiện. Có thể cảm thấy nhanh hơn nhưng có thể gây nhấp nháy nếu bạn thả phím nhanh."
           }
         },
         "zh-Hans" : {
@@ -99037,7 +99227,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Media"
+            "value" : "Molto piccole"
           }
         },
         "ja" : {
@@ -99607,8 +99797,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sort minimized/hidden windows to end"
+            "state" : "translated",
+            "value" : "Visualizza le finestre minimizzate/nascoste in fondo"
           }
         },
         "ja" : {
@@ -99691,8 +99881,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sort minimized/hidden windows to end"
+            "state" : "translated",
+            "value" : "Sắp xếp cửa sổ bị thu nhỏ/ẩn xuống cuối"
           }
         },
         "zh-Hans" : {
@@ -100179,8 +100369,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Space"
+            "state" : "translated",
+            "value" : "Spazio"
           }
         },
         "ja" : {
@@ -100263,8 +100453,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Space"
+            "state" : "translated",
+            "value" : "Không gian"
           }
         },
         "zh-Hans" : {
@@ -100940,7 +101130,7 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Standard (640px)"
           }
         },
@@ -101024,8 +101214,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Standard (640px)"
+            "state" : "translated",
+            "value" : "Tiêu chuẩn (640px)"
           }
         },
         "zh-Hans" : {
@@ -101217,8 +101407,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Start on second window in Switcher"
+            "state" : "translated",
+            "value" : "Bắt đầu ở cửa sổ thứ hai trong Trình chuyển đổi"
           }
         },
         "zh-Hans" : {
@@ -103233,8 +103423,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Swipe on window previews in the dock popup. Direction is relative to dock position — swipe towards the dock (e.g., down when dock is at bottom, left when dock is on left)."
+            "state" : "translated",
+            "value" : "Scorri sulle anteprime del Dock. Le direzioni sono 'verso il Dock' o 'in direzione opposta al Dock', (es. giù/su se il Dock è visualizzato in basso, oppure sinistra/destra se il Dock è a sinistra)."
           }
         },
         "ja" : {
@@ -103317,8 +103507,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Swipe on window previews in the dock popup. Direction is relative to dock position — swipe towards the dock (e.g., down when dock is at bottom, left when dock is on left)."
+            "state" : "translated",
+            "value" : "Vuốt trên bản xem trước cửa sổ trong cửa sổ bật lên của dock. Hướng tương đối so với vị trí dock — vuốt về phía dock (ví dụ: xuống khi dock ở dưới cùng, trái khi dock ở bên trái)."
           }
         },
         "zh-Hans" : {
@@ -103423,8 +103613,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Swipe up or down on window previews in the keyboard-activated window switcher. Only vertical swipes are recognized, unless in compact mode."
+            "state" : "translated",
+            "value" : "Scorri su o giù sulle anteprime del selettore finestre lanciato tramite combinazione di tasti. Sono riconosciuti solo gli scorrimenti verticali, tranne in modalità compatta."
           }
         },
         "ja" : {
@@ -103507,8 +103697,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Swipe up or down on window previews in the keyboard-activated window switcher. Only vertical swipes are recognized, unless in compact mode."
+            "state" : "translated",
+            "value" : "Vuốt lên hoặc xuống trên bản xem trước cửa sổ trong trình chuyển đổi kích hoạt bằng bàn phím. Chỉ nhận dạng vuốt dọc, trừ khi ở chế độ gọn nhẹ."
           }
         },
         "zh-Hans" : {
@@ -103613,8 +103803,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Frame Rate"
+            "state" : "translated",
+            "value" : "Fluidità del selettore finestre (FPS = aggiornamenti al secondo)"
           }
         },
         "ja" : {
@@ -103697,8 +103887,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Frame Rate"
+            "state" : "translated",
+            "value" : "Tốc độ khung hình trình chuyển đổi"
           }
         },
         "zh-Hans" : {
@@ -103803,8 +103993,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Live Preview Scope"
+            "state" : "translated",
+            "value" : "Anteprima in tempo reale"
           }
         },
         "ja" : {
@@ -103887,8 +104077,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Live Preview Scope"
+            "state" : "translated",
+            "value" : "Phạm vi xem trước trực tiếp trình chuyển đổi"
           }
         },
         "zh-Hans" : {
@@ -103993,8 +104183,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Quality"
+            "state" : "translated",
+            "value" : "Qualità del selettore finestre"
           }
         },
         "ja" : {
@@ -104077,8 +104267,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Switcher Quality"
+            "state" : "translated",
+            "value" : "Chất lượng trình chuyển đổi"
           }
         },
         "zh-Hans" : {
@@ -104267,7 +104457,7 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Tab"
           }
         },
@@ -104944,8 +105134,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "The indicator appears next to the active app's dock icon. Note: This feature does not support auto-hiding docks."
+            "state" : "translated",
+            "value" : "L'indicatore appare sul Dock accanto all'icona dell'applicazione attiva. Nota: non è supportata la modalità 'Mostra/nascondi automaticamente il Dock'."
           }
         },
         "ja" : {
@@ -105028,8 +105218,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "The indicator appears next to the active app's dock icon. Note: This feature does not support auto-hiding docks."
+            "state" : "translated",
+            "value" : "Chỉ báo xuất hiện bên cạnh biểu tượng dock của ứng dụng đang hoạt động. Lưu ý: Tính năng này không hỗ trợ dock tự động ẩn."
           }
         },
         "zh-Hans" : {
@@ -105515,8 +105705,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "This display is currently disconnected. The window switcher will appear on the main display until reconnected."
+            "state" : "translated",
+            "value" : "Lo schermo non è connesso: il selettore finestre apparirà sul display principale."
           }
         },
         "ja" : {
@@ -105599,8 +105789,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "This display is currently disconnected. The window switcher will appear on the main display until reconnected."
+            "state" : "translated",
+            "value" : "Màn hình này hiện đã ngắt kết nối. Trình chuyển đổi cửa sổ sẽ xuất hiện trên màn hình chính cho đến khi kết nối lại."
           }
         },
         "zh-Hans" : {
@@ -106277,8 +106467,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Thumbnail (320px)"
+            "state" : "translated",
+            "value" : "Miniatura (320px)"
           }
         },
         "ja" : {
@@ -106361,8 +106551,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Thumbnail (320px)"
+            "state" : "translated",
+            "value" : "Hình thu nhỏ (320px)"
           }
         },
         "zh-Hans" : {
@@ -106661,8 +106851,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Title Format"
+            "state" : "translated",
+            "value" : "Formato del titolo"
           }
         },
         "ja" : {
@@ -106745,8 +106935,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Title Format"
+            "state" : "translated",
+            "value" : "Định dạng tiêu đề"
           }
         },
         "zh-Hans" : {
@@ -112273,8 +112463,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Use Liquid Glass (macOS 26+)"
+            "state" : "translated",
+            "value" : "Sử dụng Liquid Glass (macOS 26+)"
           }
         },
         "zh-Hans" : {
@@ -113525,8 +113715,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Uses your default window switcher settings"
+            "state" : "translated",
+            "value" : "Usa le impostazioni predefinite del selettore finestre"
           }
         },
         "ja" : {
@@ -113609,8 +113799,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Uses your default window switcher settings"
+            "state" : "translated",
+            "value" : "Sử dụng cài đặt trình chuyển đổi cửa sổ mặc định của bạn"
           }
         },
         "zh-Hans" : {
@@ -115327,8 +115517,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When disabled, long titles remain static instead of scrolling."
+            "state" : "translated",
+            "value" : "Khi bị tắt, các tiêu đề dài sẽ giữ nguyên thay vì cuộn."
           }
         },
         "zh-Hans" : {
@@ -116280,8 +116470,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When enabled, hovering over an app in the Dock shows windows from all instances of that app. When disabled, shows only windows from the specific instance under the mouse."
+            "state" : "translated",
+            "value" : "Khi được bật, di chuột qua ứng dụng trên Dock sẽ hiển thị cửa sổ từ tất cả các phiên bản của ứng dụng đó. Khi tắt, chỉ hiển thị cửa sổ từ phiên bản cụ thể dưới chuột."
           }
         },
         "zh-Hans" : {
@@ -116470,8 +116660,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When enabled, moving the mouse back over the preview during fade-out will not reactivate it. You must hover over the dock icon again to show the preview."
+            "state" : "translated",
+            "value" : "Khi được bật, di chuyển chuột trở lại bản xem trước trong quá trình mờ dần sẽ không kích hoạt lại nó. Bạn phải di chuột qua biểu tượng dock một lần nữa để hiển thị bản xem trước."
           }
         },
         "zh-Hans" : {
@@ -116851,8 +117041,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When enabled, shows visual indicators and dims minimized/hidden windows. When disabled, treats them as normal windows with full functionality."
+            "state" : "translated",
+            "value" : "Khi được bật, hiển thị các chỉ báo trực quan và làm mờ các cửa sổ bị thu nhỏ/ẩn. Khi tắt, coi chúng như các cửa sổ bình thường với đầy đủ chức năng."
           }
         },
         "zh-Hans" : {
@@ -116865,6 +117055,196 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "啟用時顯示圖形指示器並調暗已最小化／隱藏的視窗；停用時則與運作中的普通視窗一視同仁。"
+          }
+        }
+      }
+    },
+    "When enabled, switching between dock icons while a preview is already open will show previews instantly." : {
+      "localizations" : {
+        "af" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "no" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "sr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, switching between dock icons while a preview is already open will show previews instantly."
           }
         }
       }
@@ -116957,8 +117337,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When enabled, window previews show live video instead of static screenshots. Uses ScreenCaptureKit for real-time capture."
+            "state" : "translated",
+            "value" : "Se abilitata, le anteprime delle finestre mostrano video in tempo reale invece di screenshot statici. Utilizza ScreenCaptureKit per la cattura dello schermo."
           }
         },
         "ja" : {
@@ -117041,8 +117421,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When enabled, window previews show live video instead of static screenshots. Uses ScreenCaptureKit for real-time capture."
+            "state" : "translated",
+            "value" : "Khi được bật, bản xem trước cửa sổ hiển thị video trực tiếp thay vì ảnh chụp màn hình tĩnh. Sử dụng ScreenCaptureKit để chụp thời gian thực."
           }
         },
         "zh-Hans" : {
@@ -117422,8 +117802,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "When opening the window switcher, highlight the second window instead of the first."
+            "state" : "translated",
+            "value" : "Khi mở trình chuyển đổi cửa sổ, làm nổi bật cửa sổ thứ hai thay vì cửa sổ đầu tiên."
           }
         },
         "zh-Hans" : {
@@ -119329,8 +119709,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Image Capture Quality"
+            "state" : "translated",
+            "value" : "Chất lượng chụp ảnh cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -119816,8 +120196,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Preview Keyboard Shortcuts"
+            "state" : "translated",
+            "value" : "Scorciatoie da tastiera per le anteprime"
           }
         },
         "ja" : {
@@ -119900,8 +120280,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Preview Keyboard Shortcuts"
+            "state" : "translated",
+            "value" : "Phím tắt xem trước cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -120662,8 +121042,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Processing Debounce Interval"
+            "state" : "translated",
+            "value" : "Khoảng thời gian chống dội xử lý cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -121425,8 +121805,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window sort order"
+            "state" : "translated",
+            "value" : "Thứ tự sắp xếp cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -121913,8 +122293,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher Gestures"
+            "state" : "translated",
+            "value" : "Gesti nel selettore finestre"
           }
         },
         "ja" : {
@@ -121997,8 +122377,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher Gestures"
+            "state" : "translated",
+            "value" : "Cử chỉ trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -122103,8 +122483,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher is disabled. Enable it in General settings to use keyboard shortcuts."
+            "state" : "translated",
+            "value" : "Il selettore finestre è disattivato. Attivalo nelle impostazioni generali per usare le scorciatoie da tastiera."
           }
         },
         "ja" : {
@@ -122187,8 +122567,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher is disabled. Enable it in General settings to use keyboard shortcuts."
+            "state" : "translated",
+            "value" : "Trình chuyển đổi cửa sổ bị tắt. Bật nó trong cài đặt Chung để sử dụng phím tắt."
           }
         },
         "zh-Hans" : {
@@ -122950,8 +123330,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher Shortcut"
+            "state" : "translated",
+            "value" : "Phím tắt trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -123056,8 +123436,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher Shortcuts"
+            "state" : "translated",
+            "value" : "Scorciatoie per attivare il selettore finestre"
           }
         },
         "ja" : {
@@ -123140,8 +123520,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Switcher Shortcuts"
+            "state" : "translated",
+            "value" : "Các phím tắt trình chuyển đổi cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -123246,8 +123626,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Threshold"
+            "state" : "translated",
+            "value" : "Soglia finestre"
           }
         },
         "ja" : {
@@ -123330,8 +123710,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Threshold"
+            "state" : "translated",
+            "value" : "Ngưỡng cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -123820,8 +124200,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Title Only"
+            "state" : "translated",
+            "value" : "Solo titolo della finestra"
           }
         },
         "ja" : {
@@ -123904,8 +124284,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Window Title Only"
+            "state" : "translated",
+            "value" : "Chỉ tiêu đề cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -124778,8 +125158,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "X-Large"
+            "state" : "translated",
+            "value" : "Grandi"
           }
         },
         "ja" : {
@@ -124862,8 +125242,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "X-Large"
+            "state" : "translated",
+            "value" : "X-Lớn"
           }
         },
         "zh-Hans" : {
@@ -124969,8 +125349,8 @@
         },
         "it" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "X-Small"
+            "state" : "translated",
+            "value" : "Minime"
           }
         },
         "ja" : {
@@ -125053,8 +125433,8 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "X-Small"
+            "state" : "translated",
+            "value" : "X-Nhỏ"
           }
         },
         "zh-Hans" : {

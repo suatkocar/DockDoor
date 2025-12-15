@@ -84,6 +84,8 @@ struct WindowPreviewHoverContainer: View {
 
     @State private var dragPoints: [CGPoint] = []
     @State private var lastShakeCheck: Date = .init()
+    @State private var edgeScrollTimer: Timer?
+    @State private var edgeScrollDirection: CGFloat = 0
 
     init(appName: String,
          onWindowTap: (() -> Void)?,
@@ -193,8 +195,8 @@ struct WindowPreviewHoverContainer: View {
         }
         .onChange(of: previewStateCoordinator.windowSwitcherActive) { isActive in
             if !isActive {
-                // Clear search when switcher is dismissed
                 previewStateCoordinator.searchQuery = ""
+                stopEdgeScroll()
             }
         }
     }
@@ -244,6 +246,11 @@ struct WindowPreviewHoverContainer: View {
                         .transition(.opacity)
                         .allowsHitTesting(false)
                         .clipShape(RoundedRectangle(cornerRadius: Defaults[.uniformCardRadius] ? 26 : 8, style: .continuous))
+                }
+            }
+            .overlay {
+                if enableMouseHoverInSwitcher, previewStateCoordinator.windowSwitcherActive {
+                    edgeScrollZones(isHorizontal: orientationIsHorizontal)
                 }
             }
         }
@@ -592,6 +599,101 @@ struct WindowPreviewHoverContainer: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     previewStateCoordinator.isKeyboardScrolling = false
                 }
+            }
+        }
+    }
+
+    private func startEdgeScroll(direction: CGFloat, isHorizontal: Bool) {
+        edgeScrollDirection = direction
+        guard edgeScrollTimer == nil else { return }
+
+        edgeScrollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
+            smoothScrollBy(direction: edgeScrollDirection, isHorizontal: isHorizontal)
+        }
+    }
+
+    private func stopEdgeScroll() {
+        edgeScrollTimer?.invalidate()
+        edgeScrollTimer = nil
+        edgeScrollDirection = 0
+    }
+
+    private func smoothScrollBy(direction: CGFloat, isHorizontal: Bool) {
+        guard let window = NSApp.windows.first(where: { $0.isVisible && $0.title.isEmpty }),
+              let scrollView = findScrollView(in: window.contentView)
+        else { return }
+
+        let scrollAmount: CGFloat = 4.0 * direction
+        let clipView = scrollView.contentView
+        var newOrigin = clipView.bounds.origin
+
+        if isHorizontal {
+            newOrigin.x += scrollAmount
+            newOrigin.x = max(0, min(newOrigin.x, scrollView.documentView!.frame.width - clipView.bounds.width))
+        } else {
+            newOrigin.y += scrollAmount
+            newOrigin.y = max(0, min(newOrigin.y, scrollView.documentView!.frame.height - clipView.bounds.height))
+        }
+
+        clipView.setBoundsOrigin(newOrigin)
+    }
+
+    private func findScrollView(in view: NSView?) -> NSScrollView? {
+        guard let view else { return nil }
+        if let scrollView = view as? NSScrollView {
+            return scrollView
+        }
+        for subview in view.subviews {
+            if let found = findScrollView(in: subview) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    @ViewBuilder
+    private func edgeScrollZones(isHorizontal: Bool) -> some View {
+        let edgeSize: CGFloat = 50
+
+        if isHorizontal {
+            HStack {
+                // Leading edge
+                Color.clear
+                    .frame(width: edgeSize)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        if hovering { startEdgeScroll(direction: -1, isHorizontal: true) }
+                        else { stopEdgeScroll() }
+                    }
+                Spacer()
+                // Trailing edge
+                Color.clear
+                    .frame(width: edgeSize)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        if hovering { startEdgeScroll(direction: 1, isHorizontal: true) }
+                        else { stopEdgeScroll() }
+                    }
+            }
+        } else {
+            VStack {
+                // Top edge
+                Color.clear
+                    .frame(height: edgeSize)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        if hovering { startEdgeScroll(direction: -1, isHorizontal: false) }
+                        else { stopEdgeScroll() }
+                    }
+                Spacer()
+                // Bottom edge
+                Color.clear
+                    .frame(height: edgeSize)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        if hovering { startEdgeScroll(direction: 1, isHorizontal: false) }
+                        else { stopEdgeScroll() }
+                    }
             }
         }
     }

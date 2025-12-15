@@ -249,7 +249,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         if fullPreviewWindow == nil {
             let styleMask: NSWindow.StyleMask = [.nonactivatingPanel, .fullSizeContentView, .borderless]
             fullPreviewWindow = NSPanel(contentRect: .zero, styleMask: styleMask, backing: .buffered, defer: false)
-            fullPreviewWindow?.level = .floating
+            fullPreviewWindow?.level = .normal
             fullPreviewWindow?.isOpaque = false
             fullPreviewWindow?.backgroundColor = .clear
             fullPreviewWindow?.hasShadow = true
@@ -584,6 +584,9 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         let coordinator = windowSwitcherCoordinator
         guard !coordinator.windows.isEmpty else { return }
 
+        coordinator.hasMovedSinceOpen = false
+        coordinator.initialHoverLocation = nil
+
         let threshold = Defaults[.windowSwitcherCompactThreshold]
         let isListViewMode = coordinator.windowSwitcherActive && threshold > 0 && coordinator.windows.count >= threshold
 
@@ -676,7 +679,8 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                     bypassDockMouseValidation: Bool = false,
                     dockPositionOverride: DockPosition? = nil, initialIndex: Int? = nil)
     {
-        let delay = overrideDelay ? 0 : Defaults[.hoverWindowOpenDelay]
+        let shouldSkipDelay = overrideDelay || (Defaults[.useDelayOnlyForInitialOpen] && isVisible)
+        let delay = shouldSkipDelay ? 0 : Defaults[.hoverWindowOpenDelay]
 
         let workItem = { [weak self] in
             guard let self else { return }

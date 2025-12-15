@@ -40,9 +40,10 @@ private class WindowSwitchingCoordinator {
         }
 
         if stateManager.isActive {
-            let viewIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
-            if viewIndex >= 0, viewIndex != stateManager.currentIndex {
-                stateManager.setIndex(viewIndex)
+            // TODO: Consolidate WindowSwitcherStateManager and PreviewStateCoordinator into a single index system
+            let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
+            if uiIndex >= 0, uiIndex != stateManager.currentIndex {
+                stateManager.setIndex(uiIndex)
             }
 
             if isShiftPressed {
@@ -50,6 +51,10 @@ private class WindowSwitchingCoordinator {
             } else {
                 stateManager.cycleForward()
             }
+
+            previewCoordinator.windowSwitcherCoordinator.hasMovedSinceOpen = false
+            previewCoordinator.windowSwitcherCoordinator.initialHoverLocation = nil
+
             previewCoordinator.windowSwitcherCoordinator.setIndex(to: stateManager.currentIndex)
         } else if isModifierPressed {
             await initializeWindowSwitching(
@@ -282,7 +287,8 @@ class KeybindHelper {
     private func setupEventTap() {
         let eventMask = (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.keyUp.rawValue) |
-            (1 << CGEventType.flagsChanged.rawValue)
+            (1 << CGEventType.flagsChanged.rawValue) |
+            (1 << CGEventType.leftMouseDown.rawValue)
 
         let userInfo = KeybindHelperUserInfo(instance: self)
         unmanagedEventTapUserInfo = Unmanaged.passRetained(userInfo)
@@ -499,6 +505,30 @@ class KeybindHelper {
                 DispatchQueue.main.async { [weak self] in
                     self?.tabCycleTimer?.invalidate()
                     self?.tabCycleTimer = nil
+                }
+            }
+
+        case .leftMouseDown:
+            if previewCoordinator.isVisible,
+               previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive
+            {
+                let clickLocation = NSEvent.mouseLocation
+                let windowFrame = previewCoordinator.frame
+
+                if windowFrame.contains(clickLocation) {
+                    let flags = event.flags
+                    if flags.contains(.maskControl) {
+                        var newFlags = flags
+                        newFlags.remove(.maskControl)
+                        event.flags = newFlags
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.windowSwitchingCoordinator.cancelSwitching()
+                        self.previewCoordinator.hideWindow()
+                        self.preventSwitcherHideOnRelease = false
+                        self.hasProcessedModifierRelease = true
+                    }
                 }
             }
 
