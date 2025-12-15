@@ -183,6 +183,10 @@ struct WindowPreviewHoverContainer: View {
         .padding(.top, (!previewStateCoordinator.windowSwitcherActive && appNameStyle == .popover && showAppTitleData) ? 30 : 0)
         .onAppear {
             loadAppIcon()
+            LiveCaptureManager.shared.panelOpened()
+        }
+        .onDisappear {
+            Task { await LiveCaptureManager.shared.panelClosed() }
         }
         .onChange(of: previewStateCoordinator.windowSwitcherActive) { isActive in
             if !isActive {
