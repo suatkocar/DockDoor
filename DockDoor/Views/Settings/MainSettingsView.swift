@@ -98,7 +98,11 @@ struct MainSettingsView: View {
     @Default(.enableCmdTabEnhancements) var enableCmdTabEnhancements
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
     @Default(.scrollOnMouseHoverInSwitcher) var scrollOnMouseHoverInSwitcher
+    @Default(.scrollHorizontallyOnHover) var scrollHorizontallyOnHover
+    @Default(.scrollVerticallyOnHover) var scrollVerticallyOnHover
     @Default(.enableEdgeScrollInSwitcher) var enableEdgeScrollInSwitcher
+    @Default(.edgeScrollSpeed) var edgeScrollSpeed
+    @Default(.dynamicEdgeScrollSpeed) var dynamicEdgeScrollSpeed
     @Default(.includeHiddenWindowsInSwitcher) var includeHiddenWindowsInSwitcher
     @Default(.showTabsAsWindows) var showTabsAsWindows
     @Default(.useClassicWindowOrdering) var useClassicWindowOrdering
@@ -490,12 +494,39 @@ struct MainSettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 40)
+                                if scrollOnMouseHoverInSwitcher {
+                                    Toggle(isOn: $scrollHorizontallyOnHover) { Text("Scroll horizontally") }
+                                        .padding(.leading, 40)
+                                    Toggle(isOn: $scrollVerticallyOnHover) { Text("Scroll vertically") }
+                                        .padding(.leading, 40)
+                                    Text("Control which directions scroll when hovering over off-screen windows.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .padding(.leading, 60)
+                                }
                                 Toggle(isOn: $enableEdgeScrollInSwitcher) { Text("Enable edge scroll") }
                                     .padding(.leading, 20)
                                 Text("Hover near the edges of the window switcher to scroll through windows.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 40)
+                                if enableEdgeScrollInSwitcher {
+                                    HStack {
+                                        Text("Edge Scroll Speed")
+                                        Slider(value: $edgeScrollSpeed, in: 4 ... 48, step: 2)
+                                            .frame(maxWidth: 150)
+                                        Text("\(Int(edgeScrollSpeed)) px")
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 45, alignment: .trailing)
+                                    }
+                                    .padding(.leading, 40)
+                                    Toggle(isOn: $dynamicEdgeScrollSpeed) { Text("Dynamic speed (faster near edge)") }
+                                        .padding(.leading, 40)
+                                    Text("Scroll speed adjusts based on cursor proximity to the edge.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .padding(.leading, 60)
+                                }
                             }
                             Toggle(isOn: $useClassicWindowOrdering) { Text("Start on second window in Switcher") }
                             Text("When opening the window switcher, highlight the second window instead of the first.")
@@ -1067,7 +1098,11 @@ struct MainSettingsView: View {
                 Defaults[.enableWindowSwitcherGestures] = Defaults.Keys.enableWindowSwitcherGestures.defaultValue
                 Defaults[.switcherSwipeUpAction] = Defaults.Keys.switcherSwipeUpAction.defaultValue
                 Defaults[.switcherSwipeDownAction] = Defaults.Keys.switcherSwipeDownAction.defaultValue
+                Defaults[.switcherSwipeLeftAction] = Defaults.Keys.switcherSwipeLeftAction.defaultValue
+                Defaults[.switcherSwipeRightAction] = Defaults.Keys.switcherSwipeRightAction.defaultValue
                 Defaults[.gestureSwipeThreshold] = Defaults.Keys.gestureSwipeThreshold.defaultValue
+                Defaults[.scrollHorizontallyOnHover] = Defaults.Keys.scrollHorizontallyOnHover.defaultValue
+                Defaults[.scrollVerticallyOnHover] = Defaults.Keys.scrollVerticallyOnHover.defaultValue
                 Defaults[.middleClickAction] = Defaults.Keys.middleClickAction.defaultValue
 
                 // Reset keyboard shortcuts

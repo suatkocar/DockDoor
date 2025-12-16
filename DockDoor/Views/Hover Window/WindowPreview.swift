@@ -29,6 +29,11 @@ struct WindowPreview: View {
     @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
     @Default(.hidePreviewCardBackground) var hidePreviewCardBackground
     @Default(.showMinimizedHiddenLabels) var showMinimizedHiddenLabels
+    @Default(.useLiquidGlass) var useLiquidGlass
+    @Default(.previewCardGlassVariant) var previewCardGlassVariant
+    @Default(.previewCardOpacity) var previewCardOpacity
+    @Default(.previewCardBorderOpacity) var previewCardBorderOpacity
+    @Default(.showPreviewCardBorder) var showPreviewCardBorder
 
     // Dock embedded mode settings
     @Default(.dockShowWindowTitle) var dockShowWindowTitle
@@ -743,9 +748,35 @@ struct WindowPreview: View {
                 let cornerRadius = uniformCardRadius ? 20.0 : 0.0
 
                 if !hidePreviewCardBackground {
-                    BlurView(variant: 18)
+                    BlurView(variant: previewCardGlassVariant)
+                        .opacity(previewCardOpacity)
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                        .borderedBackground(.primary.opacity(0.1), lineWidth: 1.75, shape: RoundedRectangle(cornerRadius: cornerRadius))
+                        .overlay {
+                            if showPreviewCardBorder {
+                                if #available(macOS 26.0, *), useLiquidGlass {
+                                    RoundedRectangle(cornerRadius: cornerRadius)
+                                        .stroke(Color.white.opacity(0.2 * previewCardBorderOpacity), lineWidth: 1)
+                                        .blur(radius: 1.5)
+                                        .blendMode(.plusLighter)
+                                    RoundedRectangle(cornerRadius: cornerRadius)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.3 * previewCardBorderOpacity),
+                                                    Color.white.opacity(0.05 * previewCardBorderOpacity),
+                                                    Color.white.opacity(0.1 * previewCardBorderOpacity),
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            ),
+                                            lineWidth: 0.5
+                                        )
+                                } else {
+                                    RoundedRectangle(cornerRadius: cornerRadius)
+                                        .stroke(Color.primary.opacity(0.1), lineWidth: 1.75)
+                                }
+                            }
+                        }
                         .padding(-6)
                         .overlay {
                             if finalIsSelected {

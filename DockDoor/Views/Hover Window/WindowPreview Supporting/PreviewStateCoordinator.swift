@@ -198,7 +198,8 @@ class PreviewStateCoordinator: ObservableObject {
             isWindowSwitcherActive: windowSwitcherActive,
             previewMaxColumns: Defaults[.previewMaxColumns],
             previewMaxRows: Defaults[.previewMaxRows],
-            switcherMaxRows: Defaults[.switcherMaxRows]
+            switcherMaxRows: Defaults[.switcherMaxRows],
+            switcherMaxColumns: Defaults[.switcherMaxColumns]
         )
 
         overallMaxPreviewDimension = newOverallMaxDimension

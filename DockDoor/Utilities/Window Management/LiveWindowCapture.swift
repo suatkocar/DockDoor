@@ -1,28 +1,10 @@
 import Cocoa
-import CoreImage
 import Defaults
 import ScreenCaptureKit
 import SwiftUI
 import VideoToolbox
 
 struct LivePreviewImage: View {
-    let windowID: CGWindowID
-    let fallbackImage: CGImage?
-    let quality: LivePreviewQuality
-    let frameRate: LivePreviewFrameRate
-
-    var body: some View {
-        let keepAlive = Defaults[.livePreviewStreamKeepAlive]
-
-        if keepAlive != 0 {
-            LivePreviewImageCached(windowID: windowID, fallbackImage: fallbackImage, quality: quality, frameRate: frameRate)
-        } else {
-            LivePreviewImageFresh(windowID: windowID, fallbackImage: fallbackImage, quality: quality, frameRate: frameRate)
-        }
-    }
-}
-
-private struct LivePreviewImageCached: View {
     let windowID: CGWindowID
     let fallbackImage: CGImage?
     let quality: LivePreviewQuality
@@ -53,44 +35,13 @@ private struct LivePreviewImageCached: View {
     }
 }
 
-private struct LivePreviewImageFresh: View {
-    let windowID: CGWindowID
-    let fallbackImage: CGImage?
-    let quality: LivePreviewQuality
-    let frameRate: LivePreviewFrameRate
-
-    @StateObject private var capture: WindowLiveCapture
-
-    init(windowID: CGWindowID, fallbackImage: CGImage?, quality: LivePreviewQuality, frameRate: LivePreviewFrameRate) {
-        self.windowID = windowID
-        self.fallbackImage = fallbackImage
-        self.quality = quality
-        self.frameRate = frameRate
-        _capture = StateObject(wrappedValue: WindowLiveCapture(windowID: windowID, quality: quality, frameRate: frameRate))
-    }
-
-    var body: some View {
-        Group {
-            if let image = capture.capturedImage ?? fallbackImage {
-                Image(decorative: image, scale: 1.0)
-                    .interpolation(.high)
-                    .antialiased(true)
-                    .resizable()
-            }
-        }
-        .task {
-            await capture.startCapture()
-        }
-        .onDisappear {
-            Task { await capture.stopCapture() }
-        }
-    }
-}
-
 @MainActor
 final class LiveCaptureManager {
     static let shared = LiveCaptureManager()
+    private static let maxConcurrentStreams = 24
+
     private var captures: [CGWindowID: WindowLiveCapture] = [:]
+    private var accessOrder: [CGWindowID] = []
     private var stopGeneration = 0
 
     private init() {}
@@ -123,28 +74,44 @@ final class LiveCaptureManager {
 
     func getCapture(windowID: CGWindowID, quality: LivePreviewQuality, frameRate: LivePreviewFrameRate) -> WindowLiveCapture {
         if let existing = captures[windowID] {
+            refreshAccess(windowID)
             return existing
+        }
+
+        while captures.count >= Self.maxConcurrentStreams {
+            evictOldest()
         }
 
         let capture = WindowLiveCapture(windowID: windowID, quality: quality, frameRate: frameRate)
         captures[windowID] = capture
+        accessOrder.append(windowID)
         return capture
-    }
-
-    func requestStop(windowID: CGWindowID) async {
-        guard let capture = captures[windowID] else { return }
-        await capture.requestStop()
     }
 
     func remove(windowID: CGWindowID) {
         captures.removeValue(forKey: windowID)
+        accessOrder.removeAll { $0 == windowID }
     }
 
     func stopAllStreams() async {
         for capture in captures.values {
-            await capture.stopAndCleanup()
+            capture.forceStopNonBlocking()
         }
         captures.removeAll()
+        accessOrder.removeAll()
+    }
+
+    private func refreshAccess(_ windowID: CGWindowID) {
+        accessOrder.removeAll { $0 == windowID }
+        accessOrder.append(windowID)
+    }
+
+    private func evictOldest() {
+        guard let oldestID = accessOrder.first else { return }
+        if let capture = captures.removeValue(forKey: oldestID) {
+            capture.forceStopNonBlocking()
+        }
+        accessOrder.removeFirst()
     }
 }
 
@@ -299,20 +266,11 @@ final class WindowLiveCapture: ObservableObject {
         await stopAndCleanup()
     }
 
-    func stopCapture() async {
-        guard let stream else { return }
-        try? await stream.stopCapture()
-        self.stream = nil
-        streamOutput = nil
-        capturedImage = nil
-    }
-
     func stopAndCleanup() async {
         guard let stream else { return }
         streamOutput = nil
         self.stream = nil
         capturedImage = nil
-        lastFrame = nil
         try? await stream.stopCapture()
         LiveCaptureManager.shared.remove(windowID: windowID)
     }
@@ -330,14 +288,9 @@ final class WindowLiveCapture: ObservableObject {
 
 private class StreamOutput: NSObject, SCStreamOutput {
     private let onFrame: (CGImage) -> Void
-    private let ciContext: CIContext
 
     init(onFrame: @escaping (CGImage) -> Void) {
         self.onFrame = onFrame
-        ciContext = CIContext(options: [
-            .workingColorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
-            .outputColorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
-        ])
         super.init()
     }
 
@@ -345,16 +298,11 @@ private class StreamOutput: NSObject, SCStreamOutput {
         guard type == .screen else { return }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
-        let sourceColorSpace: CGColorSpace = if let unmanagedColorSpace = CVImageBufferGetColorSpace(pixelBuffer) {
-            unmanagedColorSpace.takeUnretainedValue()
-        } else {
-            CGColorSpace(name: CGColorSpace.displayP3)!
-        }
+        var cgImage: CGImage?
+        VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImage)
 
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-
-        if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent, format: .RGBAh, colorSpace: sourceColorSpace) {
-            onFrame(cgImage)
+        if let image = cgImage {
+            onFrame(image)
         }
     }
 }

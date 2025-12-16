@@ -18673,6 +18673,12 @@
         }
       }
     },
+    "Blur level and opacity for individual window preview cards." : {
+
+    },
+    "Blur level and opacity for the outer container." : {
+
+    },
     "Bottom Left" : {
       "comment" : "Preview window title position option\nTraffic light buttons position option",
       "extractionState" : "stale",
@@ -20579,6 +20585,9 @@
           }
         }
       }
+    },
+    "Card Border Opacity" : {
+
     },
     "Center Window" : {
       "comment" : "Window action",
@@ -26291,6 +26300,15 @@
         }
       }
     },
+    "Container Border Opacity" : {
+
+    },
+    "Container Glass Blur" : {
+
+    },
+    "Container Opacity" : {
+
+    },
     "Contribute translation" : {
       "localizations" : {
         "af" : {
@@ -27622,6 +27640,12 @@
           }
         }
       }
+    },
+    "Control which directions scroll when hovering over off-screen windows." : {
+
+    },
+    "Controls how many columns of windows are shown in the window switcher. Limited by screen width." : {
+
     },
     "Controls how many rows of windows are shown in the window switcher. Windows are distributed across rows automatically." : {
       "localizations" : {
@@ -36580,6 +36604,12 @@
           }
         }
       }
+    },
+    "Dynamic speed (faster near edge)" : {
+
+    },
+    "Edge Scroll Speed" : {
+
     },
     "Edit Color" : {
       "localizations" : {
@@ -60623,6 +60653,9 @@
         }
       }
     },
+    "Max Columns" : {
+
+    },
     "Max Columns (Left/Right Dock)" : {
       "localizations" : {
         "af" : {
@@ -78743,6 +78776,12 @@
         }
       }
     },
+    "Preview Card Glass Blur" : {
+
+    },
+    "Preview Card Opacity" : {
+
+    },
     "Preview Height" : {
       "localizations" : {
         "af" : {
@@ -89226,6 +89265,9 @@
         }
       }
     },
+    "Scroll horizontally" : {
+
+    },
     "Scroll long titles (marquee)" : {
       "localizations" : {
         "af" : {
@@ -89415,6 +89457,9 @@
           }
         }
       }
+    },
+    "Scroll speed adjusts based on cursor proximity to the edge." : {
+
     },
     "Scroll to window on mouse hover" : {
       "localizations" : {
@@ -89795,6 +89840,9 @@
           }
         }
       }
+    },
+    "Scroll vertically" : {
+
     },
     "Search Fuzziness" : {
       "localizations" : {
@@ -95140,6 +95188,9 @@
     "Show Button Tooltips" : {
 
     },
+    "Show Container Border" : {
+
+    },
     "Show Embedded Title" : {
       "comment" : "Window switcher setting toggle"
     },
@@ -95903,6 +95954,9 @@
           }
         }
       }
+    },
+    "Show Preview Card Border" : {
+
     },
     "Show previews while holding Cmd+Tab." : {
       "localizations" : {
@@ -103538,7 +103592,11 @@
         }
       }
     },
+    "Swipe on window previews in the keyboard-activated window switcher to perform actions." : {
+
+    },
     "Swipe up or down on window previews in the keyboard-activated window switcher. Only vertical swipes are recognized, unless in compact mode." : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {

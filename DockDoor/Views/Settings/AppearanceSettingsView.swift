@@ -89,6 +89,12 @@ struct AppearanceSettingsView: View {
     @Default(.uniformCardRadius) var uniformCardRadius
     @Default(.allowDynamicImageSizing) var allowDynamicImageSizing
     @Default(.useLiquidGlass) var useLiquidGlass
+    @Default(.containerGlassVariant) var containerGlassVariant
+    @Default(.previewCardGlassVariant) var previewCardGlassVariant
+    @Default(.containerBorderOpacity) var containerBorderOpacity
+    @Default(.previewCardBorderOpacity) var previewCardBorderOpacity
+    @Default(.showContainerBorder) var showContainerBorder
+    @Default(.showPreviewCardBorder) var showPreviewCardBorder
     @Default(.showAppName) var showAppName
     @Default(.appNameStyle) var appNameStyle
     @Default(.windowSwitcherControlPosition) var windowSwitcherControlPosition
@@ -98,11 +104,14 @@ struct AppearanceSettingsView: View {
     @Default(.unselectedContentOpacity) var unselectedContentOpacity
     @Default(.hoverHighlightColor) var hoverHighlightColor
     @Default(.dockPreviewBackgroundOpacity) var dockPreviewBackgroundOpacity
+    @Default(.containerOpacity) var containerOpacity
+    @Default(.previewCardOpacity) var previewCardOpacity
     @Default(.hidePreviewCardBackground) var hidePreviewCardBackground
     @Default(.showActiveWindowBorder) var showActiveWindowBorder
     @Default(.previewMaxColumns) var previewMaxColumns
     @Default(.previewMaxRows) var previewMaxRows
     @Default(.switcherMaxRows) var switcherMaxRows
+    @Default(.switcherMaxColumns) var switcherMaxColumns
     @Default(.globalPaddingMultiplier) var globalPaddingMultiplier
     @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
     @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
@@ -228,6 +237,77 @@ struct AppearanceSettingsView: View {
                             if #available(macOS 26.0, *) {
                                 Toggle(isOn: $useLiquidGlass) {
                                     Text("Use Liquid Glass (macOS 26+)")
+                                }
+
+                                if useLiquidGlass {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        sliderSetting(title: "Container Glass Blur",
+                                                      value: Binding(
+                                                          get: { Double(containerGlassVariant) },
+                                                          set: { containerGlassVariant = Int($0) }
+                                                      ),
+                                                      range: 0 ... 19,
+                                                      step: 1,
+                                                      unit: "",
+                                                      formatter: NumberFormatter())
+                                        sliderSetting(title: "Container Opacity",
+                                                      value: $containerOpacity,
+                                                      range: 0 ... 1.0,
+                                                      step: 0.05,
+                                                      unit: "",
+                                                      formatter: NumberFormatter.percentFormatter)
+                                        Text("Blur level and opacity for the outer container.")
+                                            .font(.footnote)
+                                            .foregroundColor(.gray)
+
+                                        sliderSetting(title: "Preview Card Glass Blur",
+                                                      value: Binding(
+                                                          get: { Double(previewCardGlassVariant) },
+                                                          set: { previewCardGlassVariant = Int($0) }
+                                                      ),
+                                                      range: 0 ... 19,
+                                                      step: 1,
+                                                      unit: "",
+                                                      formatter: NumberFormatter())
+                                        if !hidePreviewCardBackground {
+                                            sliderSetting(title: "Preview Card Opacity",
+                                                          value: $previewCardOpacity,
+                                                          range: 0 ... 1.0,
+                                                          step: 0.05,
+                                                          unit: "",
+                                                          formatter: NumberFormatter.percentFormatter)
+                                        }
+                                        Text("Blur level and opacity for individual window preview cards.")
+                                            .font(.footnote)
+                                            .foregroundColor(.gray)
+
+                                        Divider()
+
+                                        Toggle(isOn: $showContainerBorder) {
+                                            Text("Show Container Border")
+                                        }
+                                        if showContainerBorder {
+                                            sliderSetting(title: "Container Border Opacity",
+                                                          value: $containerBorderOpacity,
+                                                          range: 0 ... 1,
+                                                          step: 0.05,
+                                                          unit: "",
+                                                          formatter: NumberFormatter.percentFormatter)
+                                        }
+
+                                        Toggle(isOn: $showPreviewCardBorder) {
+                                            Text("Show Preview Card Border")
+                                        }
+                                        if showPreviewCardBorder {
+                                            sliderSetting(title: "Card Border Opacity",
+                                                          value: $previewCardBorderOpacity,
+                                                          range: 0 ... 1,
+                                                          step: 0.05,
+                                                          unit: "",
+                                                          formatter: NumberFormatter.percentFormatter)
+                                        }
+                                    }
+                                    .padding(.leading, 20)
                                 }
                             }
                             sliderSetting(title: "Spacing Scale",
@@ -737,6 +817,28 @@ struct AppearanceSettingsView: View {
                               }())
 
                 Text(String(localized: "Controls how many rows of windows are shown in the window switcher. Windows are distributed across rows automatically."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                let switcherMaxColumnsBinding = Binding<Double>(
+                    get: { Double(switcherMaxColumns) },
+                    set: { switcherMaxColumns = Int($0) }
+                )
+                sliderSetting(title: "Max Columns",
+                              value: switcherMaxColumnsBinding,
+                              range: 1.0 ... 12.0,
+                              step: 1.0,
+                              unit: "",
+                              formatter: {
+                                  let f = NumberFormatter()
+                                  f.minimumFractionDigits = 0
+                                  f.maximumFractionDigits = 0
+                                  return f
+                              }())
+
+                Text(String(localized: "Controls how many columns of windows are shown in the window switcher. Limited by screen width."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

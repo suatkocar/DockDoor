@@ -61,10 +61,13 @@ struct WindowPreviewHoverContainer: View {
     @Default(.previewMaxColumns) var previewMaxColumns
     @Default(.previewMaxRows) var previewMaxRows
     @Default(.switcherMaxRows) var switcherMaxRows
+    @Default(.switcherMaxColumns) var switcherMaxColumns
     @Default(.gradientColorPalette) var gradientColorPalette
     @Default(.showAnimations) var showAnimations
     @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
     @Default(.enableEdgeScrollInSwitcher) var enableEdgeScrollInSwitcher
+    @Default(.edgeScrollSpeed) var edgeScrollSpeed
+    @Default(.dynamicEdgeScrollSpeed) var dynamicEdgeScrollSpeed
     @Default(.windowSwitcherLivePreviewScope) var windowSwitcherLivePreviewScope
 
     // Compact mode thresholds (0 = disabled, 1+ = enable when window count >= threshold)
@@ -87,6 +90,9 @@ struct WindowPreviewHoverContainer: View {
     @State private var lastShakeCheck: Date = .init()
     @State private var edgeScrollTimer: Timer?
     @State private var edgeScrollDirection: CGFloat = 0
+    @State private var edgeScrollSpeedMultiplier: CGFloat = 1.0
+    @State private var edgeScrollIsHorizontal: Bool = true
+    @State private var screenEdgeMonitor: Timer?
 
     init(appName: String,
          onWindowTap: (() -> Void)?,
@@ -177,7 +183,29 @@ struct WindowPreviewHoverContainer: View {
         guard previewStateCoordinator.hasMovedSinceOpen else { return false }
 
         if let hoveredIndex, hoveredIndex != previewStateCoordinator.currIndex {
-            previewStateCoordinator.setIndex(to: hoveredIndex, shouldScroll: Defaults[.scrollOnMouseHoverInSwitcher], fromKeyboard: false)
+            let shouldScroll: Bool
+            if Defaults[.scrollOnMouseHoverInSwitcher] {
+                let maxColumns = switcherMaxColumns
+                let currIndex = previewStateCoordinator.currIndex
+                let currRow = currIndex >= 0 ? currIndex / maxColumns : 0
+                let newRow = hoveredIndex / maxColumns
+                let currCol = currIndex >= 0 ? currIndex % maxColumns : 0
+                let newCol = hoveredIndex % maxColumns
+
+                let isHorizontalScroll = currRow == newRow && currCol != newCol
+                let isVerticalScroll = currRow != newRow
+
+                if isVerticalScroll {
+                    shouldScroll = Defaults[.scrollVerticallyOnHover]
+                } else if isHorizontalScroll {
+                    shouldScroll = Defaults[.scrollHorizontallyOnHover]
+                } else {
+                    shouldScroll = true
+                }
+            } else {
+                shouldScroll = false
+            }
+            previewStateCoordinator.setIndex(to: hoveredIndex, shouldScroll: shouldScroll, fromKeyboard: false)
         }
         return true
     }
@@ -190,14 +218,19 @@ struct WindowPreviewHoverContainer: View {
         .onAppear {
             loadAppIcon()
             LiveCaptureManager.shared.panelOpened()
+            startScreenEdgeMonitor()
         }
         .onDisappear {
             Task { await LiveCaptureManager.shared.panelClosed() }
+            stopScreenEdgeMonitor()
         }
         .onChange(of: previewStateCoordinator.windowSwitcherActive) { isActive in
             if !isActive {
                 previewStateCoordinator.searchQuery = ""
-                stopEdgeScroll()
+                forceStopEdgeScroll()
+                stopScreenEdgeMonitor()
+            } else {
+                startScreenEdgeMonitor()
             }
         }
     }
@@ -528,7 +561,7 @@ struct WindowPreviewHoverContainer: View {
         currentMaxDimensionForPreviews: CGPoint,
         currentDimensionsMapForPreviews: [Int: WindowDimensions]
     ) -> some View {
-        ScrollView(shouldUseCompactMode ? .vertical : (isHorizontal ? .horizontal : .vertical), showsIndicators: false) {
+        ScrollView(shouldUseCompactMode ? .vertical : (previewStateCoordinator.windowSwitcherActive ? [.horizontal, .vertical] : (isHorizontal ? .horizontal : .vertical)), showsIndicators: false) {
             Group {
                 // Show no results view when search is active and no results found
                 if shouldShowNoResultsView() {
@@ -606,10 +639,64 @@ struct WindowPreviewHoverContainer: View {
 
     private func startEdgeScroll(direction: CGFloat, isHorizontal: Bool) {
         edgeScrollDirection = direction
+        edgeScrollIsHorizontal = isHorizontal
         guard edgeScrollTimer == nil else { return }
 
-        edgeScrollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
-            smoothScrollBy(direction: edgeScrollDirection, isHorizontal: isHorizontal)
+        edgeScrollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [self] _ in
+            updateEdgeScrollState()
+            smoothScrollBy(direction: edgeScrollDirection, isHorizontal: edgeScrollIsHorizontal)
+        }
+    }
+
+    private func updateEdgeScrollState() {
+        guard let window = NSApp.windows.first(where: { $0.isVisible && $0.title.isEmpty }) else { return }
+
+        let mouseLocation = NSEvent.mouseLocation
+        let windowFrame = window.frame
+        let edgeSize: CGFloat = 50
+
+        let isInLeftEdge = mouseLocation.x < windowFrame.minX + edgeSize
+        let isInRightEdge = mouseLocation.x > windowFrame.maxX - edgeSize
+        let isInTopEdge = mouseLocation.y > windowFrame.maxY - edgeSize
+        let isInBottomEdge = mouseLocation.y < windowFrame.minY + edgeSize
+        let isOutsideWindow = !windowFrame.contains(mouseLocation)
+
+        if edgeScrollIsHorizontal {
+            let isOutsideInScrollDirection = (edgeScrollDirection < 0 && mouseLocation.x < windowFrame.minX) ||
+                (edgeScrollDirection > 0 && mouseLocation.x > windowFrame.maxX)
+
+            if isOutsideInScrollDirection {
+                edgeScrollSpeedMultiplier = 2.5
+            } else if isOutsideWindow || (!isInLeftEdge && !isInRightEdge) {
+                forceStopEdgeScroll()
+                return
+            } else {
+                if edgeScrollDirection < 0, isInLeftEdge {
+                    let distanceFromEdge = mouseLocation.x - windowFrame.minX
+                    edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: edgeSize)
+                } else if edgeScrollDirection > 0, isInRightEdge {
+                    let distanceFromEdge = windowFrame.maxX - mouseLocation.x
+                    edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: edgeSize)
+                }
+            }
+        } else {
+            let isOutsideInScrollDirection = (edgeScrollDirection < 0 && mouseLocation.y > windowFrame.maxY) ||
+                (edgeScrollDirection > 0 && mouseLocation.y < windowFrame.minY)
+
+            if isOutsideInScrollDirection {
+                edgeScrollSpeedMultiplier = 2.5
+            } else if isOutsideWindow || (!isInTopEdge && !isInBottomEdge) {
+                forceStopEdgeScroll()
+                return
+            } else {
+                if edgeScrollDirection < 0, isInTopEdge {
+                    let distanceFromEdge = windowFrame.maxY - mouseLocation.y
+                    edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: edgeSize)
+                } else if edgeScrollDirection > 0, isInBottomEdge {
+                    let distanceFromEdge = mouseLocation.y - windowFrame.minY
+                    edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: edgeSize)
+                }
+            }
         }
     }
 
@@ -617,6 +704,64 @@ struct WindowPreviewHoverContainer: View {
         edgeScrollTimer?.invalidate()
         edgeScrollTimer = nil
         edgeScrollDirection = 0
+        edgeScrollSpeedMultiplier = 1.0
+    }
+
+    private func forceStopEdgeScroll() {
+        edgeScrollTimer?.invalidate()
+        edgeScrollTimer = nil
+        edgeScrollDirection = 0
+        edgeScrollSpeedMultiplier = 1.0
+    }
+
+    // MARK: - Global Screen Edge Monitor
+
+    private func startScreenEdgeMonitor() {
+        guard enableEdgeScrollInSwitcher else { return }
+        stopScreenEdgeMonitor()
+
+        screenEdgeMonitor = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [self] _ in
+            checkScreenEdges()
+        }
+    }
+
+    private func stopScreenEdgeMonitor() {
+        screenEdgeMonitor?.invalidate()
+        screenEdgeMonitor = nil
+    }
+
+    private func checkScreenEdges() {
+        guard let screen = bestGuessMonitor.frame as CGRect?,
+              let window = NSApp.windows.first(where: { $0.isVisible && $0.title.isEmpty })
+        else { return }
+
+        let mouseLocation = NSEvent.mouseLocation
+        let screenEdgeThreshold: CGFloat = 5
+        let windowFrame = window.frame
+
+        let isAtLeftScreenEdge = mouseLocation.x <= screen.minX + screenEdgeThreshold
+        let isAtRightScreenEdge = mouseLocation.x >= screen.maxX - screenEdgeThreshold
+
+        if isAtLeftScreenEdge {
+            if edgeScrollTimer == nil {
+                startEdgeScroll(direction: -1, isHorizontal: true)
+            }
+            let distanceFromEdge = mouseLocation.x - screen.minX
+            edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: screenEdgeThreshold * 10)
+        } else if isAtRightScreenEdge {
+            if edgeScrollTimer == nil {
+                startEdgeScroll(direction: 1, isHorizontal: true)
+            }
+            let distanceFromEdge = screen.maxX - mouseLocation.x
+            edgeScrollSpeedMultiplier = calculateSpeedMultiplier(distance: distanceFromEdge, maxDistance: screenEdgeThreshold * 10)
+        } else if edgeScrollTimer != nil {
+            let isInWindowLeftEdge = windowFrame.contains(mouseLocation) && mouseLocation.x < windowFrame.minX + 50
+            let isInWindowRightEdge = windowFrame.contains(mouseLocation) && mouseLocation.x > windowFrame.maxX - 50
+
+            if !isInWindowLeftEdge, !isInWindowRightEdge {
+                forceStopEdgeScroll()
+            }
+        }
     }
 
     private func smoothScrollBy(direction: CGFloat, isHorizontal: Bool) {
@@ -624,7 +769,8 @@ struct WindowPreviewHoverContainer: View {
               let scrollView = findScrollView(in: window.contentView)
         else { return }
 
-        let scrollAmount: CGFloat = 16.0 * direction
+        let effectiveSpeed = dynamicEdgeScrollSpeed ? edgeScrollSpeed * edgeScrollSpeedMultiplier : edgeScrollSpeed
+        let scrollAmount: CGFloat = effectiveSpeed * direction
         let clipView = scrollView.contentView
         var newOrigin = clipView.bounds.origin
 
@@ -662,18 +808,22 @@ struct WindowPreviewHoverContainer: View {
                 Color.clear
                     .frame(width: edgeSize)
                     .contentShape(Rectangle())
-                    .onHover { hovering in
-                        if hovering { startEdgeScroll(direction: -1, isHorizontal: true) }
-                        else { stopEdgeScroll() }
+                    .onContinuousHover { phase in
+                        if case .active = phase {
+                            startEdgeScroll(direction: -1, isHorizontal: true)
+                        }
                     }
+
                 Spacer()
+
                 // Trailing edge
                 Color.clear
                     .frame(width: edgeSize)
                     .contentShape(Rectangle())
-                    .onHover { hovering in
-                        if hovering { startEdgeScroll(direction: 1, isHorizontal: true) }
-                        else { stopEdgeScroll() }
+                    .onContinuousHover { phase in
+                        if case .active = phase {
+                            startEdgeScroll(direction: 1, isHorizontal: true)
+                        }
                     }
             }
         } else {
@@ -682,21 +832,32 @@ struct WindowPreviewHoverContainer: View {
                 Color.clear
                     .frame(height: edgeSize)
                     .contentShape(Rectangle())
-                    .onHover { hovering in
-                        if hovering { startEdgeScroll(direction: -1, isHorizontal: false) }
-                        else { stopEdgeScroll() }
+                    .onContinuousHover { phase in
+                        if case .active = phase {
+                            startEdgeScroll(direction: -1, isHorizontal: false)
+                        }
                     }
+
                 Spacer()
+
                 // Bottom edge
                 Color.clear
                     .frame(height: edgeSize)
                     .contentShape(Rectangle())
-                    .onHover { hovering in
-                        if hovering { startEdgeScroll(direction: 1, isHorizontal: false) }
-                        else { stopEdgeScroll() }
+                    .onContinuousHover { phase in
+                        if case .active = phase {
+                            startEdgeScroll(direction: 1, isHorizontal: false)
+                        }
                     }
             }
         }
+    }
+
+    private func calculateSpeedMultiplier(distance: CGFloat, maxDistance: CGFloat) -> CGFloat {
+        guard dynamicEdgeScrollSpeed, maxDistance > 0 else { return 1.0 }
+        let normalizedDistance = min(max(distance / maxDistance, 0), 1)
+        let multiplier = 2.5 - (normalizedDistance * 2.2)
+        return multiplier
     }
 
     private func loadAppIcon() {
@@ -912,6 +1073,7 @@ struct WindowPreviewHoverContainer: View {
             previewMaxColumns: previewMaxColumns,
             previewMaxRows: previewMaxRows,
             switcherMaxRows: switcherMaxRows,
+            switcherMaxColumns: switcherMaxColumns,
             totalItems: itemsToProcess.count
         )
 

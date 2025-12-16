@@ -109,7 +109,11 @@ extension Defaults.Keys {
     static let enableCmdTabEnhancements = Key<Bool>("enableCmdTabEnhancements", default: false)
     static let enableMouseHoverInSwitcher = Key<Bool>("enableMouseHoverInSwitcher", default: false)
     static let scrollOnMouseHoverInSwitcher = Key<Bool>("scrollOnMouseHoverInSwitcher", default: true)
+    static let scrollHorizontallyOnHover = Key<Bool>("scrollHorizontallyOnHover", default: true)
+    static let scrollVerticallyOnHover = Key<Bool>("scrollVerticallyOnHover", default: true)
     static let enableEdgeScrollInSwitcher = Key<Bool>("enableEdgeScrollInSwitcher", default: true)
+    static let edgeScrollSpeed = Key<CGFloat>("edgeScrollSpeed", default: 16.0)
+    static let dynamicEdgeScrollSpeed = Key<Bool>("dynamicEdgeScrollSpeed", default: true)
     static let showTabsAsWindows = Key<Bool>("showTabsAsWindows", default: false)
     static let keepPreviewOnAppTerminate = Key<Bool>("keepPreviewOnAppTerminate", default: false)
     static let enableWindowSwitcherSearch = Key<Bool>("enableWindowSwitcherSearch", default: false)
@@ -127,6 +131,12 @@ extension Defaults.Keys {
     static let ignoreAppsWithSingleWindow = Key<Bool>("ignoreAppsWithSingleWindow", default: false)
     static let groupAppInstancesInDock = Key<Bool>("groupAppInstancesInDock", default: true)
     static let useLiquidGlass = Key<Bool>("useLiquidGlass", default: true)
+    static let containerGlassVariant = Key<Int>("containerGlassVariant", default: 19)
+    static let previewCardGlassVariant = Key<Int>("previewCardGlassVariant", default: 18)
+    static let containerBorderOpacity = Key<CGFloat>("containerBorderOpacity", default: 1.0)
+    static let previewCardBorderOpacity = Key<CGFloat>("previewCardBorderOpacity", default: 1.0)
+    static let showContainerBorder = Key<Bool>("showContainerBorder", default: true)
+    static let showPreviewCardBorder = Key<Bool>("showPreviewCardBorder", default: true)
     static let showMenuBarIcon = Key<Bool>("showMenuBarIcon", default: true)
     static let raisedWindowLevel = Key<Bool>("raisedWindowLevel", default: true)
     static let launched = Key<Bool>("launched", default: false)
@@ -141,6 +151,8 @@ extension Defaults.Keys {
     static let unselectedContentOpacity = Key<CGFloat>("unselectedContentOpacity", default: 0.75)
     static let hoverHighlightColor = Key<Color?>("hoverHighlightColor", default: nil)
     static let dockPreviewBackgroundOpacity = Key<CGFloat>("dockPreviewBackgroundOpacity", default: 1.0)
+    static let containerOpacity = Key<CGFloat>("containerOpacity", default: 1.0)
+    static let previewCardOpacity = Key<CGFloat>("previewCardOpacity", default: 1.0)
     static let hidePreviewCardBackground = Key<Bool>("hidePreviewCardBackground", default: false)
     static let showActiveWindowBorder = Key<Bool>("showActiveWindowBorder", default: false)
 
@@ -151,6 +163,7 @@ extension Defaults.Keys {
     static let previewMaxColumns = Key<Int>("previewMaxColumns", default: 2) // For left/right dock
     static let previewMaxRows = Key<Int>("previewMaxRows", default: 1) // For bottom dock only
     static let switcherMaxRows = Key<Int>("switcherMaxRows", default: 2) // For window switcher
+    static let switcherMaxColumns = Key<Int>("switcherMaxColumns", default: 6) // For window switcher
 
     static let windowSwitcherPlacementStrategy = Key<WindowSwitcherPlacementStrategy>("windowSwitcherPlacementStrategy", default: .screenWithMouse)
     static let windowSwitcherControlPosition = Key<WindowSwitcherControlPosition>("windowSwitcherControlPosition", default: .topTrailing)
@@ -196,10 +209,12 @@ extension Defaults.Keys {
     static let dockSwipeTowardsDockAction = Key<WindowAction>("dockSwipeTowardsDockAction", default: .minimize)
     static let dockSwipeAwayFromDockAction = Key<WindowAction>("dockSwipeAwayFromDockAction", default: .maximize)
 
-    // Window Switcher Gestures (up/down only - switcher is always horizontally centered)
+    // Window Switcher Gestures
     static let enableWindowSwitcherGestures = Key<Bool>("enableWindowSwitcherGestures", default: true)
     static let switcherSwipeUpAction = Key<WindowAction>("switcherSwipeUpAction", default: .maximize)
     static let switcherSwipeDownAction = Key<WindowAction>("switcherSwipeDownAction", default: .minimize)
+    static let switcherSwipeLeftAction = Key<WindowAction>("switcherSwipeLeftAction", default: .none)
+    static let switcherSwipeRightAction = Key<WindowAction>("switcherSwipeRightAction", default: .none)
 
     // MARK: - Middle Click Action
 

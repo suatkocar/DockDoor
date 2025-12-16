@@ -87,14 +87,14 @@ struct TrackpadEventMonitor: NSViewRepresentable {
 
         private func setupMonitor() {
             scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-                self?.handleScroll(event)
-                return event
+                guard let self else { return event }
+                return handleScroll(event)
             }
         }
 
-        private func handleScroll(_ event: NSEvent) {
-            guard isActive else { return }
-            guard event.hasPreciseScrollingDeltas else { return }
+        private func handleScroll(_ event: NSEvent) -> NSEvent? {
+            guard isActive else { return event }
+            guard event.hasPreciseScrollingDeltas else { return nil }
 
             switch event.phase {
             case .began:
@@ -119,11 +119,12 @@ struct TrackpadEventMonitor: NSViewRepresentable {
                 break
             }
 
-            // Backup timer for end detection
             scrollEndTimer?.invalidate()
             scrollEndTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
                 self?.finishScroll()
             }
+
+            return nil
         }
 
         private func finishScroll() {
@@ -133,13 +134,13 @@ struct TrackpadEventMonitor: NSViewRepresentable {
             let minDelta: CGFloat = 50
 
             if abs(cumulativeScrollY) > abs(cumulativeScrollX), abs(cumulativeScrollY) > minDelta {
-                if cumulativeScrollY > 0 {
+                if cumulativeScrollY < 0 {
                     DispatchQueue.main.async { self.onSwipeDown() }
                 } else {
                     DispatchQueue.main.async { self.onSwipeUp() }
                 }
             } else if abs(cumulativeScrollX) > abs(cumulativeScrollY), abs(cumulativeScrollX) > minDelta {
-                if cumulativeScrollX < 0 {
+                if cumulativeScrollX > 0 {
                     DispatchQueue.main.async { self.onSwipeLeft() }
                 } else {
                     DispatchQueue.main.async { self.onSwipeRight() }

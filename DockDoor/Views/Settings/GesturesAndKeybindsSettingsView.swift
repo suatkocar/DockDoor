@@ -13,6 +13,8 @@ struct GesturesAndKeybindsSettingsView: View {
     @Default(.enableWindowSwitcherGestures) var enableWindowSwitcherGestures
     @Default(.switcherSwipeUpAction) var switcherSwipeUpAction
     @Default(.switcherSwipeDownAction) var switcherSwipeDownAction
+    @Default(.switcherSwipeLeftAction) var switcherSwipeLeftAction
+    @Default(.switcherSwipeRightAction) var switcherSwipeRightAction
 
     // MARK: - Shared Settings
 
@@ -134,7 +136,7 @@ struct GesturesAndKeybindsSettingsView: View {
                 }
 
                 if enableWindowSwitcherGestures {
-                    Text("Swipe up or down on window previews in the keyboard-activated window switcher. Only vertical swipes are recognized, unless in compact mode.")
+                    Text("Swipe on window previews in the keyboard-activated window switcher to perform actions.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.bottom, 4)
@@ -155,9 +157,25 @@ struct GesturesAndKeybindsSettingsView: View {
                         action: $switcherSwipeDownAction
                     )
 
+                    gestureDirectionRow(
+                        direction: "Swipe Left",
+                        icon: "arrow.left",
+                        description: nil,
+                        action: $switcherSwipeLeftAction
+                    )
+
+                    gestureDirectionRow(
+                        direction: "Swipe Right",
+                        icon: "arrow.right",
+                        description: nil,
+                        action: $switcherSwipeRightAction
+                    )
+
                     Button("Reset to Defaults") {
                         switcherSwipeUpAction = Defaults.Keys.switcherSwipeUpAction.defaultValue
                         switcherSwipeDownAction = Defaults.Keys.switcherSwipeDownAction.defaultValue
+                        switcherSwipeLeftAction = Defaults.Keys.switcherSwipeLeftAction.defaultValue
+                        switcherSwipeRightAction = Defaults.Keys.switcherSwipeRightAction.defaultValue
                     }
                     .buttonStyle(AccentButtonStyle(small: true))
                     .padding(.top, 4)

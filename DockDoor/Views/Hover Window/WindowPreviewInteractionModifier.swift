@@ -23,6 +23,8 @@ struct WindowPreviewInteractionModifier: ViewModifier {
     @Default(.enableWindowSwitcherGestures) private var enableWindowSwitcherGestures
     @Default(.switcherSwipeUpAction) private var switcherSwipeUpAction
     @Default(.switcherSwipeDownAction) private var switcherSwipeDownAction
+    @Default(.switcherSwipeLeftAction) private var switcherSwipeLeftAction
+    @Default(.switcherSwipeRightAction) private var switcherSwipeRightAction
 
     func body(content: Content) -> some View {
         content
@@ -101,8 +103,10 @@ struct WindowPreviewInteractionModifier: ViewModifier {
                     performAction(switcherSwipeUpAction)
                 case .down:
                     performAction(switcherSwipeDownAction)
-                case .left, .right:
-                    break
+                case .left:
+                    performAction(switcherSwipeLeftAction)
+                case .right:
+                    performAction(switcherSwipeRightAction)
                 }
             }
         } else {

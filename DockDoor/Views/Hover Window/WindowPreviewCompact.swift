@@ -38,6 +38,11 @@ struct WindowPreviewCompact: View {
     @Default(.hoverHighlightColor) private var hoverHighlightColor
     @Default(.showMinimizedHiddenLabels) private var showMinimizedHiddenLabels
     @Default(.hidePreviewCardBackground) private var hidePreviewCardBackground
+    @Default(.useLiquidGlass) private var useLiquidGlass
+    @Default(.previewCardGlassVariant) private var previewCardGlassVariant
+    @Default(.previewCardOpacity) private var previewCardOpacity
+    @Default(.previewCardBorderOpacity) private var previewCardBorderOpacity
+    @Default(.showPreviewCardBorder) private var showPreviewCardBorder
     @Default(.enableTitleMarquee) private var enableTitleMarquee
     @Default(.showAnimations) private var showAnimations
     @Default(.showActiveWindowBorder) private var showActiveWindowBorder
@@ -158,9 +163,35 @@ struct WindowPreviewCompact: View {
             let cornerRadius = uniformCardRadius ? 20.0 : 4.0
 
             if !hidePreviewCardBackground {
-                BlurView(variant: 18)
+                BlurView(variant: previewCardGlassVariant)
+                    .opacity(previewCardOpacity)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                    .borderedBackground(.primary.opacity(0.1), lineWidth: 1.75, shape: RoundedRectangle(cornerRadius: cornerRadius))
+                    .overlay {
+                        if showPreviewCardBorder {
+                            if #available(macOS 26.0, *), useLiquidGlass {
+                                RoundedRectangle(cornerRadius: cornerRadius)
+                                    .stroke(Color.white.opacity(0.2 * previewCardBorderOpacity), lineWidth: 1)
+                                    .blur(radius: 1.5)
+                                    .blendMode(.plusLighter)
+                                RoundedRectangle(cornerRadius: cornerRadius)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.3 * previewCardBorderOpacity),
+                                                Color.white.opacity(0.05 * previewCardBorderOpacity),
+                                                Color.white.opacity(0.1 * previewCardBorderOpacity),
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 0.5
+                                    )
+                            } else {
+                                RoundedRectangle(cornerRadius: cornerRadius)
+                                    .stroke(Color.primary.opacity(0.1), lineWidth: 1.75)
+                            }
+                        }
+                    }
                     .overlay {
                         if isSelected {
                             let highlightColor = hoverHighlightColor ?? Color(nsColor: .controlAccentColor)

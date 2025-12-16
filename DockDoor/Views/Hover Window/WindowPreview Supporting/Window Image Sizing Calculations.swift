@@ -57,7 +57,8 @@ extension WindowPreviewHoverContainer {
         isWindowSwitcherActive: Bool,
         previewMaxColumns: Int,
         previewMaxRows: Int,
-        switcherMaxRows: Int
+        switcherMaxRows: Int,
+        switcherMaxColumns: Int
     ) -> [Int: WindowDimensions] {
         var dimensionsMap: [Int: WindowDimensions] = [:]
 
@@ -77,6 +78,7 @@ extension WindowPreviewHoverContainer {
                 previewMaxColumns: previewMaxColumns,
                 previewMaxRows: previewMaxRows,
                 switcherMaxRows: switcherMaxRows,
+                switcherMaxColumns: switcherMaxColumns,
                 totalItems: windows.count
             )
 
@@ -223,6 +225,7 @@ extension WindowPreviewHoverContainer {
         previewMaxColumns: Int,
         previewMaxRows: Int,
         switcherMaxRows: Int,
+        switcherMaxColumns: Int,
         totalItems: Int? = nil
     ) -> (maxColumns: Int, maxRows: Int) {
         let screenWidth = bestGuessMonitor.frame.width * 0.75
@@ -240,7 +243,7 @@ extension WindowPreviewHoverContainer {
         var effectiveMaxRows: Int
 
         if isWindowSwitcherActive {
-            effectiveMaxColumns = calculatedMaxColumns
+            effectiveMaxColumns = switcherMaxColumns
             effectiveMaxRows = switcherMaxRows
         } else if dockPosition == .bottom || dockPosition == .cmdTab {
             effectiveMaxColumns = calculatedMaxColumns
@@ -277,15 +280,15 @@ extension WindowPreviewHoverContainer {
         var chunks: [[T]]
 
         if isHorizontal {
-            let actualRowsNeeded = min(maxRows, Int(ceil(Double(totalItems) / Double(maxColumns))))
-            let itemsPerRow = Int(ceil(Double(totalItems) / Double(actualRowsNeeded)))
+            let rowsNeededAtMaxColumns = Int(ceil(Double(totalItems) / Double(maxColumns)))
+            let actualRowsNeeded = min(maxRows, rowsNeededAtMaxColumns)
+            let actualColumnsNeeded = Int(ceil(Double(totalItems) / Double(actualRowsNeeded)))
+            let itemsPerRow = min(maxColumns, actualColumnsNeeded)
 
             chunks = []
             var startIndex = 0
 
-            for _ in 0 ..< actualRowsNeeded {
-                guard startIndex < totalItems else { break }
-
+            while startIndex < totalItems {
                 let endIndex = min(startIndex + itemsPerRow, totalItems)
                 let rowItems = Array(items[startIndex ..< endIndex])
 
@@ -296,15 +299,15 @@ extension WindowPreviewHoverContainer {
                 startIndex = endIndex
             }
         } else {
-            let actualColumnsNeeded = min(maxColumns, Int(ceil(Double(totalItems) / Double(maxRows))))
-            let itemsPerColumn = Int(ceil(Double(totalItems) / Double(actualColumnsNeeded)))
+            let columnsNeededAtMaxRows = Int(ceil(Double(totalItems) / Double(maxRows)))
+            let actualColumnsNeeded = min(maxColumns, columnsNeededAtMaxRows)
+            let actualRowsNeeded = Int(ceil(Double(totalItems) / Double(actualColumnsNeeded)))
+            let itemsPerColumn = min(maxRows, actualRowsNeeded)
 
             chunks = []
             var startIndex = 0
 
-            for _ in 0 ..< actualColumnsNeeded {
-                guard startIndex < totalItems else { break }
-
+            while startIndex < totalItems {
                 let endIndex = min(startIndex + itemsPerColumn, totalItems)
                 let columnItems = Array(items[startIndex ..< endIndex])
 
@@ -364,6 +367,7 @@ extension WindowPreviewHoverContainer {
             previewMaxColumns: Defaults[.previewMaxColumns],
             previewMaxRows: Defaults[.previewMaxRows],
             switcherMaxRows: Defaults[.switcherMaxRows],
+            switcherMaxColumns: Defaults[.switcherMaxColumns],
             totalItems: totalItems
         )
 
