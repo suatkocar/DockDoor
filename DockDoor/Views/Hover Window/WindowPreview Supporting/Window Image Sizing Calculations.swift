@@ -140,6 +140,7 @@ extension WindowPreviewHoverContainer {
                             maxDimensions: cardMaxFrameDimensions
                         )
                     } else {
+                        // Windowless apps and windows without images use fallback
                         let fallbackSize = CGSize(width: min(300, overallMaxDimensions.x),
                                                   height: min(300, overallMaxDimensions.y))
                         dimensionsMap[windowIndex] = WindowDimensions(

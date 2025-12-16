@@ -39,4 +39,16 @@ extension NSScreen {
             screen.uniqueIdentifier() == identifier
         }
     }
+
+    /// Returns the display UUID string for use with CGS Space APIs
+    func uuid() -> ScreenUuid? {
+        guard let screenNumber = deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
+            return nil
+        }
+        let displayId = CGDirectDisplayID(screenNumber.uint32Value)
+        guard let cfUuid = CGDisplayCreateUUIDFromDisplayID(displayId)?.takeRetainedValue() else {
+            return nil
+        }
+        return CFUUIDCreateString(nil, cfUuid)
+    }
 }

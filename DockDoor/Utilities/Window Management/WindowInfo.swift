@@ -12,6 +12,8 @@ struct WindowInfo: Identifiable, Hashable {
     var appAxElement: AXUIElement
     var closeButton: AXUIElement?
     var spaceID: Int?
+    var spaceIDs: [CGSSpaceID] = []
+    var isOnAllSpaces: Bool = false
     var lastAccessedTime: Date
     var creationTime: Date
     var imageCapturedTime: Date
@@ -40,6 +42,10 @@ struct WindowInfo: Identifiable, Hashable {
 
     var frame: CGRect { windowProvider.frame }
     var scWindow: SCWindow? { _scWindow }
+
+    /// Returns true if this is a windowless app placeholder (like AltTab's isWindowlessApp)
+    /// Windowless apps have id == 0 and show only the app icon
+    var isWindowlessApp: Bool { id == 0 }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -285,42 +291,33 @@ extension WindowInfo {
     }
 
     func bringToFront() {
-        let maxRetries = 3
-        var retryCount = 0
-
-        func attemptActivation() -> Bool {
+        if isMinimized {
             do {
-                var psn = ProcessSerialNumber()
-                _ = GetProcessForPID(app.processIdentifier, &psn)
-                _ = _SLPSSetFrontProcessWithOptions(&psn, UInt32(id), SLPSMode.userGenerated.rawValue)
-
-                WindowUtil.makeKeyWindow(&psn, windowID: id)
-
-                try axElement.performAction(kAXRaiseAction)
-                try axElement.setAttribute(kAXMainWindowAttribute, true)
-
-                return true
+                try axElement.setAttribute(kAXMinimizedAttribute, false)
+                WindowUtil.updateCachedWindowState(self, isMinimized: false)
             } catch {
-                print("Attempt \(retryCount + 1) failed to bring window to front: \(error)")
-                if error is AxError {
-                    WindowUtil.removeWindowFromDesktopSpaceCache(with: id, in: app.processIdentifier)
-                }
-                return false
+                print("Failed to deminimize window: \(error)")
             }
         }
 
-        while retryCount < maxRetries {
-            if attemptActivation() {
-                WindowUtil.updateTimestampOptimistically(for: self)
-                return
-            }
-            retryCount += 1
-            if retryCount < maxRetries {
-                usleep(50000)
-            }
+        if app.isHidden {
+            app.unhide()
         }
 
-        print("Failed to bring window to front after \(maxRetries) attempts")
+        app.activate()
+
+        var psn = ProcessSerialNumber()
+        _ = GetProcessForPID(app.processIdentifier, &psn)
+        _ = _SLPSSetFrontProcessWithOptions(&psn, UInt32(id), SLPSMode.userGenerated.rawValue)
+        WindowUtil.makeKeyWindow(&psn, windowID: id)
+
+        do {
+            try axElement.performAction(kAXRaiseAction)
+        } catch {
+            // Ignore - window might already be raised
+        }
+
+        WindowUtil.updateTimestampOptimistically(for: self)
     }
 
     func close() {

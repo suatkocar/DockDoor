@@ -136,11 +136,9 @@ enum WindowAction: String, Hashable, CaseIterable, Defaults.Serializable {
         switch self {
         case .quit:
             window.quit(force: NSEvent.modifierFlags.contains(.option))
-            if keepPreviewOnQuit {
-                return .appWindowsRemoved(pid: window.app.processIdentifier)
-            } else {
-                return .dismissed
-            }
+            // Always return appWindowsRemoved - let appDidTerminate handler decide if switcher should close
+            // This allows the switcher to stay open if there are other app windows
+            return .appWindowsRemoved(pid: window.app.processIdentifier)
 
         case .close:
             window.close()
@@ -485,6 +483,9 @@ extension WindowUtil {
             ? windows.filter { !$0.isHidden && !$0.isMinimized }
             : windows
 
+        // Filter out apps that are in the user's filter list (applies immediately when filter changes)
+        filteredWindows = filteredWindows.filter { !isAppFiltered($0.app) }
+
         // Filter out tabbed windows if showTabsAsWindows is disabled
         if !Defaults[.showTabsAsWindows] {
             filteredWindows = filterOutTabbedWindows(filteredWindows)
@@ -505,11 +506,34 @@ extension WindowUtil {
 
         let visibleWindowIDs = Set(windowList.compactMap { $0[kCGWindowNumber as String] as? CGWindowID })
 
+        // Get current visible space IDs to check if window is in another space
+        let currentSpaceIDs = Set(getVisibleSpaceIDs())
+
         return windows.filter { windowInfo in
+            // Always keep minimized or hidden windows
             if windowInfo.isMinimized || windowInfo.isHidden {
                 return true
             }
-            return visibleWindowIDs.contains(windowInfo.id)
+
+            // Keep windowless apps (id == 0) - these are placeholder entries for running apps with no windows
+            if windowInfo.id == 0 {
+                return true
+            }
+
+            // Keep windows that are visible on current screen
+            if visibleWindowIDs.contains(windowInfo.id) {
+                return true
+            }
+
+            // Keep windows that are in another space (not tabbed, just different space)
+            let windowSpaceIDs = windowInfo.id.cgsSpaces()
+            let isInOtherSpace = !windowSpaceIDs.isEmpty && windowSpaceIDs.allSatisfy { !currentSpaceIDs.contains($0) }
+            if isInOtherSpace {
+                return true
+            }
+
+            // Filter out tabbed windows (in current space but not visible)
+            return false
         }
     }
 
@@ -595,6 +619,9 @@ extension WindowUtil {
         // Discover windows via AX (minimized, hidden, other spaces, SCK-missed, or all when compact mode)
         await discoverNonSCKWindowsViaAX(app: app, sckWindowIDs: sckWindowIDs)
 
+        // Discover invisible windows using CGS private API (catches windows that SCK and AX miss)
+        await discoverInvisibleWindows(for: app, excludeWindowIDs: sckWindowIDs)
+
         // Purify cache and return
         if let finalWindows = await WindowUtil.purifyAppCache(with: app.processIdentifier, removeAll: false) {
             guard !Defaults[.ignoreAppsWithSingleWindow] || finalWindows.count > 1 else { return [] }
@@ -606,6 +633,263 @@ extension WindowUtil {
 
     private static func discoverNonSCKWindowsViaAX(app: NSRunningApplication, sckWindowIDs: Set<CGWindowID>) async {
         _ = await discoverWindowsViaAX(app: app, excludeWindowIDs: sckWindowIDs)
+    }
+
+    /// Discovers invisible/minimized windows using CGSCopyWindowsWithOptionsAndTags
+    /// This catches windows that SCShareableContent and AX miss
+    static func discoverInvisibleWindows(for app: NSRunningApplication, excludeWindowIDs: Set<CGWindowID> = []) async {
+        let pid = app.processIdentifier
+        let allSpaces = getAllSpaceIDs()
+        guard !allSpaces.isEmpty else { return }
+
+        let invisibleWindowIDs = windowIDsInSpaces(allSpaces, includeInvisible: true)
+
+        let appAX = AXUIElementCreateApplication(pid)
+        let cgCandidates = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+
+        for windowID in invisibleWindowIDs {
+            guard !excludeWindowIDs.contains(windowID) else { continue }
+
+            guard let cgEntry = cgCandidates.first(where: {
+                ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value == windowID &&
+                    ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid
+            }) else { continue }
+
+            let level = (cgEntry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+            guard level == 0 else { continue }
+
+            let axWindows = AXUIElement.allWindows(pid, appElement: appAX)
+            for axWin in axWindows {
+                var axWindowID: CGWindowID = 0
+                if _AXUIElementGetWindow(axWin, &axWindowID) == .success, axWindowID == windowID {
+                    try? await captureAndCacheAXWindowInfo(
+                        axWindow: axWin,
+                        appAxElement: appAX,
+                        app: app,
+                        excludeWindowIDs: excludeWindowIDs
+                    )
+                    break
+                }
+            }
+        }
+    }
+
+    /// Updates space info for all cached windows (like AltTab's updatesWindowSpace)
+    /// Call this before showing window switcher to refresh space info
+    static func updateSpaceInfoForAllWindows() {
+        let allWindows = desktopSpaceWindowCacheManager.getAllWindows()
+        for var window in allWindows {
+            let spaceIds = window.id.cgsSpaces()
+            window.spaceIDs = spaceIds
+            window.isOnAllSpaces = spaceIds.count > 1
+            if let firstSpace = spaceIds.first {
+                window.spaceID = Int(firstSpace)
+            }
+            desktopSpaceWindowCacheManager.updateWindow(window)
+        }
+    }
+
+    /// Discovers windows from ALL spaces for ALL running apps
+    /// Call this before showing window switcher to ensure all windows are discovered
+    /// For windows in other spaces (AX can't access), creates placeholder entries with app icon
+    static func discoverAllWindowsFromAllSpaces() async {
+        let allSpaces = getAllSpaceIDs()
+        guard !allSpaces.isEmpty else { return }
+
+        let allWindowIDs = windowIDsInSpaces(allSpaces, includeInvisible: true)
+        let cgCandidates = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+
+        var pidToWindowInfo: [pid_t: [(windowID: CGWindowID, title: String?, bounds: CGRect?)]] = [:]
+
+        for windowID in allWindowIDs {
+            guard let cgEntry = cgCandidates.first(where: {
+                ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value == windowID
+            }) else { continue }
+
+            let level = (cgEntry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+            guard level == 0 else { continue }
+
+            guard let pid = (cgEntry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value else { continue }
+
+            let title = cgEntry[kCGWindowName as String] as? String
+            var bounds: CGRect?
+            if let boundsDict = cgEntry[kCGWindowBounds as String] as? [String: Any],
+               let rect = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
+            {
+                bounds = rect
+            }
+
+            pidToWindowInfo[pid, default: []].append((windowID, title, bounds))
+        }
+
+        let runningApps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
+
+        for app in runningApps {
+            guard let windowInfos = pidToWindowInfo[app.processIdentifier], !windowInfos.isEmpty else { continue }
+            guard !isAppFiltered(app) else { continue }
+
+            let pid = app.processIdentifier
+            let appAX = AXUIElementCreateApplication(pid)
+            let axWindows = AXUIElement.allWindows(pid, appElement: appAX)
+
+            // Get existing cached window IDs
+            let cachedWindowIDs = Set(desktopSpaceWindowCacheManager.readCache(pid: pid).map(\.id))
+
+            // Map AX windows to their IDs
+            var axWindowMap: [CGWindowID: AXUIElement] = [:]
+            for axWin in axWindows {
+                var axWindowID: CGWindowID = 0
+                if _AXUIElementGetWindow(axWin, &axWindowID) == .success {
+                    axWindowMap[axWindowID] = axWin
+                }
+            }
+
+            for (windowID, cgTitle, cgBounds) in windowInfos {
+                // Skip if already cached
+                if cachedWindowIDs.contains(windowID) { continue }
+
+                if let axWin = axWindowMap[windowID] {
+                    // AX accessible - use normal capture
+                    try? await captureAndCacheAXWindowInfo(
+                        axWindow: axWin,
+                        appAxElement: appAX,
+                        app: app,
+                        excludeWindowIDs: cachedWindowIDs
+                    )
+                } else {
+                    // AX not accessible (other space) - capture screenshot via CGS like AltTab does
+                    let spaceIds = windowID.cgsSpaces()
+
+                    // Capture screenshot using CGSHWCaptureWindowList (works across spaces)
+                    var windowIDUInt32 = UInt32(windowID)
+                    let screenshot: CGImage? = {
+                        guard let capturedWindows = CGSHWCaptureWindowList(
+                            CGSMainConnectionID(),
+                            &windowIDUInt32,
+                            1,
+                            [.ignoreGlobalClipShape, .bestResolution]
+                        ) as? [CGImage] else { return nil }
+                        return capturedWindows.first
+                    }()
+
+                    let windowProvider = CGWindowInfoProvider(
+                        windowID: windowID,
+                        title: cgTitle ?? app.localizedName ?? "Window",
+                        frame: cgBounds ?? .zero,
+                        bundleID: app.bundleIdentifier,
+                        pid: pid
+                    )
+
+                    let windowFromOtherSpace = WindowInfo(
+                        windowProvider: windowProvider,
+                        app: app,
+                        image: screenshot, // Screenshot captured via CGS
+                        axElement: appAX,
+                        appAxElement: appAX,
+                        closeButton: nil,
+                        lastAccessedTime: Date(),
+                        creationTime: Date(),
+                        imageCapturedTime: screenshot != nil ? Date() : nil,
+                        spaceID: spaceIds.first.map { Int($0) },
+                        isMinimized: false,
+                        isHidden: app.isHidden
+                    )
+
+                    desktopSpaceWindowCacheManager.updateCache(pid: pid) { windowSet in
+                        windowSet.insert(windowFromOtherSpace)
+                    }
+                }
+            }
+        }
+
+        // Add windowless apps (like AltTab's addWindowlessWindowIfNeeded)
+        await addWindowlessApps()
+    }
+
+    /// Adds placeholder entries for running apps with no windows (like DeepL)
+    /// Similar to AltTab's addWindowlessWindowIfNeeded() function
+    /// AltTab ONLY does this for .regular apps, NOT .accessory apps
+    private static func addWindowlessApps() async {
+        let runningApps = NSWorkspace.shared.runningApplications.filter {
+            $0.activationPolicy == .regular && !$0.isTerminated
+        }
+
+        for app in runningApps {
+            // Check both user filters and system filters
+            guard !isAppFiltered(app) else { continue }
+            guard let bundleId = app.bundleIdentifier, !filteredBundleIdentifiers.contains(bundleId) else { continue }
+
+            let pid = app.processIdentifier
+            let existingWindows = desktopSpaceWindowCacheManager.readCache(pid: pid)
+
+            // If app has no windows in cache, add a windowless app placeholder
+            if existingWindows.isEmpty {
+                let windowProvider = WindowlessAppProvider(app: app)
+
+                let windowlessEntry = WindowInfo(
+                    windowProvider: windowProvider,
+                    app: app,
+                    image: nil, // Will show app icon
+                    axElement: AXUIElementCreateApplication(pid),
+                    appAxElement: AXUIElementCreateApplication(pid),
+                    closeButton: nil,
+                    lastAccessedTime: Date(),
+                    creationTime: Date(),
+                    imageCapturedTime: nil,
+                    spaceID: nil,
+                    isMinimized: false,
+                    isHidden: app.isHidden
+                )
+
+                desktopSpaceWindowCacheManager.updateCache(pid: pid) { windowSet in
+                    windowSet.insert(windowlessEntry)
+                }
+            }
+        }
+    }
+
+    /// A simple WindowPropertiesProviding implementation for CGS-discovered windows
+    struct CGWindowInfoProvider: WindowPropertiesProviding {
+        let windowID: CGWindowID
+        let title: String?
+        let frame: CGRect
+        let owningApplicationBundleIdentifier: String?
+        let owningApplicationProcessID: pid_t?
+        let isOnScreen: Bool
+        let windowLayer: Int
+
+        init(windowID: CGWindowID, title: String?, frame: CGRect, bundleID: String? = nil, pid: pid_t? = nil) {
+            self.windowID = windowID
+            self.title = title
+            self.frame = frame
+            owningApplicationBundleIdentifier = bundleID
+            owningApplicationProcessID = pid
+            isOnScreen = false // Window is in another space
+            windowLayer = 0
+        }
+    }
+
+    /// A WindowPropertiesProviding implementation for windowless apps (like DeepL, menu bar apps)
+    /// These apps are running but have no visible windows - we show just the app icon
+    struct WindowlessAppProvider: WindowPropertiesProviding {
+        let windowID: CGWindowID
+        let title: String?
+        let frame: CGRect
+        let owningApplicationBundleIdentifier: String?
+        let owningApplicationProcessID: pid_t?
+        let isOnScreen: Bool
+        let windowLayer: Int
+
+        init(app: NSRunningApplication) {
+            // Use a special windowID (0) to indicate windowless app
+            windowID = 0
+            title = app.localizedName
+            frame = .zero
+            owningApplicationBundleIdentifier = app.bundleIdentifier
+            owningApplicationProcessID = app.processIdentifier
+            isOnScreen = false
+            windowLayer = 0
+        }
     }
 
     static func discoverWindowsViaAX(
@@ -721,9 +1005,15 @@ extension WindowUtil {
         let group = LimitedTaskGroup<Void>(maxConcurrentTasks: 4)
 
         for window in windows where window.scWindow == nil {
-            // Skip invalid AX elements
+            // Skip windowless apps - they don't have real windows to refresh
+            if window.isWindowlessApp {
+                continue
+            }
+
+            // Skip invalid AX elements but DON'T remove from cache
+            // The window might be temporarily inaccessible (dialog, sheet, etc.)
+            // Let purifyAppCache handle removal if window truly doesn't exist
             if !isValidElement(window.axElement) {
-                desktopSpaceWindowCacheManager.removeFromCache(pid: pid, windowId: window.id)
                 continue
             }
 
@@ -941,11 +1231,41 @@ extension WindowUtil {
                 return nil
             }
 
+            // Get all window IDs that exist in the system (across all spaces)
+            let allSpaces = getAllSpaceIDs()
+            let systemWindowIDs = Set(windowIDsInSpaces(allSpaces, includeInvisible: true))
+
             var purifiedSet = existingWindowsSet
             for window in existingWindowsSet {
-                if !isValidElement(window.axElement) {
+                // Windowless apps (id == 0) are placeholders - check if app is still valid and not filtered
+                if window.isWindowlessApp {
+                    // Remove windowless app if the app is filtered or terminated
+                    if isAppFiltered(window.app) || window.app.isTerminated {
+                        purifiedSet.remove(window)
+                        desktopSpaceWindowCacheManager.removeFromCache(pid: pid, windowId: window.id)
+                    }
+                    continue
+                }
+
+                // Check if window still exists in the system (works across spaces)
+                let existsInSystem = systemWindowIDs.contains(window.id)
+
+                if !existsInSystem {
+                    // Window no longer exists, remove it
                     purifiedSet.remove(window)
                     desktopSpaceWindowCacheManager.removeFromCache(pid: pid, windowId: window.id)
+                } else if !isValidElement(window.axElement) {
+                    // Window exists but AX can't access it - likely in another space
+                    // Update space info but keep in cache
+                    var updatedWindow = window
+                    updatedWindow.spaceIDs = window.id.cgsSpaces()
+                    updatedWindow.isOnAllSpaces = updatedWindow.spaceIDs.count > 1
+                    if let firstSpace = updatedWindow.spaceIDs.first {
+                        updatedWindow.spaceID = Int(firstSpace)
+                    }
+                    purifiedSet.remove(window)
+                    purifiedSet.insert(updatedWindow)
+                    desktopSpaceWindowCacheManager.updateWindow(updatedWindow)
                 }
             }
             return purifiedSet

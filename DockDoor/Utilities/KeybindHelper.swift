@@ -69,7 +69,17 @@ private class WindowSwitchingCoordinator {
         previewCoordinator: SharedPreviewWindowCoordinator,
         mode: SwitcherInvocationMode = .allWindows
     ) async {
+        // Quick sync updates - no async/await blocking
+        refreshSpacesInfo()
+        WindowUtil.updateSpaceInfoForAllWindows()
+
+        // Get windows immediately from cache (fast)
         var windows = WindowUtil.getAllWindowsOfAllApps()
+
+        // Discover windows from all spaces in background (don't block switcher opening)
+        Task.detached(priority: .userInitiated) {
+            await WindowUtil.discoverAllWindowsFromAllSpaces()
+        }
 
         // Apply space filter based on mode or default setting
         let filterBySpace = (mode == .currentSpaceOnly || mode == .activeAppCurrentSpace)

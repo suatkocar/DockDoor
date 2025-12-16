@@ -139,4 +139,17 @@ class SpaceWindowCacheManager {
         defer { cacheLock.unlock() }
         return Array(windowCache.values.flatMap { $0 }).sorted(by: { $0.lastAccessedTime > $1.lastAccessedTime })
     }
+
+    func updateWindow(_ window: WindowInfo) {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        let pid = window.app.processIdentifier
+        guard var windowSet = windowCache[pid] else { return }
+        if let existingWindow = windowSet.first(where: { $0.id == window.id }) {
+            windowSet.remove(existingWindow)
+            windowSet.insert(window)
+            windowCache[pid] = windowSet
+            notifyCoordinatorOfUpdatedWindows([window])
+        }
+    }
 }

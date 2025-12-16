@@ -614,6 +614,8 @@ struct WindowPreviewHoverContainer: View {
         }
         .padding(2)
         .animation(.smooth(duration: 0.1), value: previewStateCoordinator.windows)
+        .animation(.smooth(duration: 0.15), value: previewStateCoordinator.windows.count)
+        .animation(.smooth(duration: 0.15), value: previewStateCoordinator.windowDimensionsMap.count)
         .onChange(of: previewStateCoordinator.currIndex) { newIndex in
             guard previewStateCoordinator.shouldScrollToIndex else { return }
 

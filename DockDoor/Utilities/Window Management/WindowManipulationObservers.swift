@@ -86,7 +86,26 @@ class WindowManipulationObservers {
         WindowUtil.purgeAppCache(with: app.processIdentifier)
         removeObserver(for: app.processIdentifier)
 
-        if !Defaults[.keepPreviewOnAppTerminate] {
+        // Remove terminated app's windows from switcher
+        let terminatedPid = app.processIdentifier
+        let coordinator = previewCoordinator.windowSwitcherCoordinator
+
+        if coordinator.windowSwitcherActive {
+            // Remove windows belonging to terminated app
+            let indicesToRemove = coordinator.windows.enumerated()
+                .filter { $0.element.app.processIdentifier == terminatedPid }
+                .map(\.offset)
+                .reversed() // Remove from end to preserve indices
+
+            for index in indicesToRemove {
+                coordinator.removeWindow(at: index)
+            }
+
+            // If no windows left and setting says hide, hide the switcher
+            if coordinator.windows.isEmpty, !Defaults[.keepPreviewOnAppTerminate] {
+                previewCoordinator.hideWindow()
+            }
+        } else if !Defaults[.keepPreviewOnAppTerminate] {
             previewCoordinator.hideWindow()
         }
 

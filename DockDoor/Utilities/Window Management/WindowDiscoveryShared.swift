@@ -138,6 +138,130 @@ func currentActiveSpaceIDs() -> Set<Int> {
     return result
 }
 
+// MARK: - Invisible Window Discovery (via CGSCopyWindowsWithOptionsAndTags)
+
+/// Returns all Space IDs from all displays
+func getAllSpaceIDs() -> [CGSSpaceID] {
+    var spaceIds = [CGSSpaceID]()
+    guard let displays = CGSCopyManagedDisplaySpaces(CGS_CONNECTION) as? [NSDictionary] else { return spaceIds }
+    for display in displays {
+        guard let spaces = display["Spaces"] as? [NSDictionary] else { continue }
+        for space in spaces {
+            if let spaceId = space["id64"] as? CGSSpaceID {
+                spaceIds.append(spaceId)
+            }
+        }
+    }
+    return spaceIds
+}
+
+/// Returns the current Space ID for the main display
+func getCurrentSpaceID() -> CGSSpaceID? {
+    guard let mainScreen = NSScreen.main,
+          let uuid = mainScreen.uuid() else { return nil }
+    return CGSManagedDisplayGetCurrentSpace(CGS_CONNECTION, uuid)
+}
+
+/// Returns all visible Space IDs (one per display)
+func getVisibleSpaceIDs() -> [CGSSpaceID] {
+    var visibleSpaces = [CGSSpaceID]()
+    guard let displays = CGSCopyManagedDisplaySpaces(CGS_CONNECTION) as? [NSDictionary] else { return visibleSpaces }
+    for display in displays {
+        if let currentSpace = display["Current Space"] as? NSDictionary,
+           let spaceId = currentSpace["id64"] as? CGSSpaceID
+        {
+            visibleSpaces.append(spaceId)
+        }
+    }
+    return visibleSpaces
+}
+
+// MARK: - Spaces Info Cache (like AltTab's Spaces class)
+
+private var cachedSpaceIdsAndIndexes: [(CGSSpaceID, Int)] = []
+private var cachedCurrentSpaceId: CGSSpaceID = 1
+private var cachedVisibleSpaces: [CGSSpaceID] = []
+
+/// Refreshes all space information (like AltTab's Spaces.refresh())
+func refreshSpacesInfo() {
+    cachedSpaceIdsAndIndexes.removeAll()
+    cachedVisibleSpaces.removeAll()
+
+    var spaceIndex = 1
+    guard let displays = CGSCopyManagedDisplaySpaces(CGS_CONNECTION) as? [NSDictionary] else { return }
+
+    for display in displays {
+        guard let spaces = display["Spaces"] as? [NSDictionary] else { continue }
+        for space in spaces {
+            if let spaceId = space["id64"] as? CGSSpaceID {
+                cachedSpaceIdsAndIndexes.append((spaceId, spaceIndex))
+                spaceIndex += 1
+            }
+        }
+        if let currentSpace = display["Current Space"] as? NSDictionary,
+           let spaceId = currentSpace["id64"] as? CGSSpaceID
+        {
+            cachedVisibleSpaces.append(spaceId)
+        }
+    }
+
+    // Update current space
+    if let mainScreen = NSScreen.main,
+       let uuid = mainScreen.uuid()
+    {
+        cachedCurrentSpaceId = CGSManagedDisplayGetCurrentSpace(CGS_CONNECTION, uuid)
+    }
+}
+
+/// Returns the space index for a given space ID
+func spaceIndexForId(_ spaceId: CGSSpaceID) -> Int? {
+    cachedSpaceIdsAndIndexes.first { $0.0 == spaceId }?.1
+}
+
+/// Returns the cached current space ID
+func getCachedCurrentSpaceId() -> CGSSpaceID {
+    cachedCurrentSpaceId
+}
+
+/// Returns all cached space IDs with their indexes
+func getCachedSpaceIdsAndIndexes() -> [(CGSSpaceID, Int)] {
+    cachedSpaceIdsAndIndexes
+}
+
+/// Returns all window IDs in the given spaces, including invisible/minimized windows
+/// This is the key function that alt-tab uses to discover windows that SCShareableContent misses
+func windowIDsInSpaces(_ spaceIds: [CGSSpaceID], includeInvisible: Bool = true) -> [CGWindowID] {
+    var setTags = Int(0)
+    var clearTags = Int(0)
+    var options: CGSCopyWindowsOptions = [.screenSaverLevel1000]
+    if includeInvisible {
+        options = [options, .invisible1, .invisible2]
+    }
+    let windowIDs = CGSCopyWindowsWithOptionsAndTags(
+        CGS_CONNECTION,
+        0,
+        spaceIds as CFArray,
+        options.rawValue,
+        &setTags,
+        &clearTags
+    )
+    return windowIDs as? [CGWindowID] ?? []
+}
+
+/// Returns all window IDs across all spaces, including invisible/minimized
+func allWindowIDsIncludingInvisible() -> [CGWindowID] {
+    let allSpaces = getAllSpaceIDs()
+    guard !allSpaces.isEmpty else { return [] }
+    return windowIDsInSpaces(allSpaces, includeInvisible: true)
+}
+
+/// Returns window IDs in the current visible spaces, including invisible/minimized
+func windowIDsInCurrentSpaces(includeInvisible: Bool = true) -> [CGWindowID] {
+    let visibleSpaces = getVisibleSpaceIDs()
+    guard !visibleSpaces.isEmpty else { return [] }
+    return windowIDsInSpaces(visibleSpaces, includeInvisible: includeInvisible)
+}
+
 // Decide if a window should be accepted considering on-screen state,
 // ScreenCaptureKit presence, multi-Space, and window/app state.
 func shouldAcceptWindow(axWindow: AXUIElement,

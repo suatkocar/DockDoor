@@ -13,7 +13,7 @@ struct WindowPreview: View {
     let handleWindowAction: (WindowAction) -> Void
     var currIndex: Int
     var windowSwitcherActive: Bool
-    let dimensions: WindowPreviewHoverContainer.WindowDimensions
+    let dimensions: WindowPreviewHoverContainer.WindowDimensions?
     let mockPreviewActive: Bool
     let disableActions: Bool
     let onHoverIndexChange: ((Int?, CGPoint?) -> Bool)?
@@ -213,7 +213,21 @@ struct WindowPreview: View {
         let frameRate = windowSwitcherActive ? windowSwitcherLivePreviewFrameRate : dockLivePreviewFrameRate
 
         Group {
-            if useLivePreview {
+            // Check windowless app FIRST - these have no real window to preview
+            if windowInfo.isWindowlessApp, let appIcon = windowInfo.app.icon {
+                // Windowless app - show large app icon in preview area (like AltTab)
+                VStack {
+                    Spacer()
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFit()
+                        .frame(width: 96, height: 96)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.3))
+            } else if useLivePreview {
                 LivePreviewImage(windowID: windowInfo.id, fallbackImage: windowInfo.image, quality: quality, frameRate: frameRate)
                     .scaledToFit()
             } else if let cgImage = windowInfo.image {
@@ -236,7 +250,10 @@ struct WindowPreview: View {
         .clipShape(uniformCardRadius ? AnyShape(RoundedRectangle(cornerRadius: 12, style: .continuous)) : AnyShape(Rectangle()))
         .dynamicWindowFrame(
             allowDynamicSizing: allowDynamicImageSizing,
-            dimensions: dimensions,
+            dimensions: dimensions ?? WindowPreviewHoverContainer.WindowDimensions(
+                size: CGSize(width: 150, height: 150),
+                maxDimensions: CGSize(width: bestGuessMonitor.frame.width * 0.75, height: bestGuessMonitor.frame.height * 0.75)
+            ),
             dockPosition: dockPosition,
             windowSwitcherActive: windowSwitcherActive
         )
