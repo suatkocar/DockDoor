@@ -478,7 +478,13 @@ extension WindowUtil {
 
 extension WindowUtil {
     static func getAllWindowsOfAllApps() -> [WindowInfo] {
-        let windows = desktopSpaceWindowCacheManager.getAllWindows()
+        var windows = desktopSpaceWindowCacheManager.getAllWindows()
+
+        // Add windowless apps (like DeepL) - apps that are running but have no windows
+        // This is done here (not in background) to avoid race conditions
+        let windowlessApps = getWindowlessApps(existingWindows: windows)
+        windows.append(contentsOf: windowlessApps)
+
         var filteredWindows = !Defaults[.includeHiddenWindowsInSwitcher]
             ? windows.filter { !$0.isHidden && !$0.isMinimized }
             : windows
@@ -497,6 +503,60 @@ extension WindowUtil {
         }
 
         return sortWindowsForSwitcher(filteredWindows)
+    }
+
+    /// Returns windowless app entries for running apps that have no windows
+    /// Similar to AltTab's addWindowlessWindowIfNeeded() but called synchronously when switcher opens
+    private static func getWindowlessApps(existingWindows: [WindowInfo]) -> [WindowInfo] {
+        let runningApps = NSWorkspace.shared.runningApplications.filter {
+            $0.activationPolicy == .regular && !$0.isTerminated
+        }
+
+        // Get PIDs that already have windows
+        let pidsWithWindows = Set(existingWindows.map(\.app.processIdentifier))
+
+        // Get all window info from system to double-check
+        let cgWindowList = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        var pidsWithSystemWindows = Set<pid_t>()
+        for windowInfo in cgWindowList {
+            guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
+                  layer == 0 else { continue }
+            pidsWithSystemWindows.insert(pid)
+        }
+
+        var windowlessEntries: [WindowInfo] = []
+
+        for app in runningApps {
+            guard !isAppFiltered(app) else { continue }
+            guard let bundleId = app.bundleIdentifier, !filteredBundleIdentifiers.contains(bundleId) else { continue }
+
+            let pid = app.processIdentifier
+
+            // Only add if app has NO windows in cache AND NO windows in system
+            if !pidsWithWindows.contains(pid), !pidsWithSystemWindows.contains(pid) {
+                let windowProvider = WindowlessAppProvider(app: app)
+
+                let windowlessEntry = WindowInfo(
+                    windowProvider: windowProvider,
+                    app: app,
+                    image: nil,
+                    axElement: AXUIElementCreateApplication(pid),
+                    appAxElement: AXUIElementCreateApplication(pid),
+                    closeButton: nil,
+                    lastAccessedTime: Date(),
+                    creationTime: Date(),
+                    imageCapturedTime: nil,
+                    spaceID: nil,
+                    isMinimized: false,
+                    isHidden: app.isHidden
+                )
+
+                windowlessEntries.append(windowlessEntry)
+            }
+        }
+
+        return windowlessEntries
     }
 
     private static func filterOutTabbedWindows(_ windows: [WindowInfo]) -> [WindowInfo] {
@@ -802,8 +862,8 @@ extension WindowUtil {
             }
         }
 
-        // Add windowless apps (like AltTab's addWindowlessWindowIfNeeded)
-        await addWindowlessApps()
+        // NOTE: Don't call addWindowlessApps() here - it causes race conditions
+        // Windowless apps are handled in getAllWindowsOfAllApps() when switcher opens
     }
 
     /// Adds placeholder entries for running apps with no windows (like DeepL)
@@ -814,6 +874,16 @@ extension WindowUtil {
             $0.activationPolicy == .regular && !$0.isTerminated
         }
 
+        // Get all window info from system to check which apps actually have windows
+        let cgWindowList = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        var pidsWithWindows = Set<pid_t>()
+        for windowInfo in cgWindowList {
+            guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
+                  layer == 0 else { continue }
+            pidsWithWindows.insert(pid)
+        }
+
         for app in runningApps {
             // Check both user filters and system filters
             guard !isAppFiltered(app) else { continue }
@@ -822,8 +892,12 @@ extension WindowUtil {
             let pid = app.processIdentifier
             let existingWindows = desktopSpaceWindowCacheManager.readCache(pid: pid)
 
-            // If app has no windows in cache, add a windowless app placeholder
-            if existingWindows.isEmpty {
+            // Only add windowless placeholder if:
+            // 1. App has no windows in cache AND
+            // 2. App has no windows in system (CGWindowList)
+            // This prevents adding placeholders for apps that actually have windows
+            let hasWindowsInSystem = pidsWithWindows.contains(pid)
+            if existingWindows.isEmpty, !hasWindowsInSystem {
                 let windowProvider = WindowlessAppProvider(app: app)
 
                 let windowlessEntry = WindowInfo(
