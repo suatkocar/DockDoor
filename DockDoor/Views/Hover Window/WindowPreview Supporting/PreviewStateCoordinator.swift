@@ -147,12 +147,21 @@ class PreviewStateCoordinator: ObservableObject {
     @MainActor
     func addWindows(_ newWindowsToAdd: [WindowInfo]) {
         guard !newWindowsToAdd.isEmpty else { return }
-        // Gate additions by PID of the currently displayed windows (if any)
-        guard let currentPid = windows.first?.app.processIdentifier else {
-            // No active windows context; ignore additions to avoid cross-app injection
-            return
+
+        // When the window switcher is active, this coordinator represents a global list
+        // (windows across many apps). In that case, do NOT gate by PID.
+        // PID gating is only meant for single-app hover previews.
+        let gated: [WindowInfo]
+        if windowSwitcherActive {
+            gated = newWindowsToAdd
+        } else {
+            // Gate additions by PID of the currently displayed windows (if any)
+            guard let currentPid = windows.first?.app.processIdentifier else {
+                // No active windows context; ignore additions to avoid cross-app injection
+                return
+            }
+            gated = newWindowsToAdd.filter { $0.app.processIdentifier == currentPid }
         }
-        let gated: [WindowInfo] = newWindowsToAdd.filter { $0.app.processIdentifier == currentPid }
 
         var windowsWereAdded = false
         for newWin in gated {

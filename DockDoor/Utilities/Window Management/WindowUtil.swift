@@ -515,13 +515,31 @@ extension WindowUtil {
         // Get PIDs that already have windows
         let pidsWithWindows = Set(existingWindows.map(\.app.processIdentifier))
 
-        // Get all window info from system to double-check
+        // Get all window info from system to double-check.
+        // IMPORTANT: Many apps keep tiny/transparent helper windows around even when "no real window" is open.
+        // We only consider a window "real" if it's layer 0 AND non-trivial size AND mostly visible.
         let cgWindowList = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         var pidsWithSystemWindows = Set<pid_t>()
         for windowInfo in cgWindowList {
             guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
                   let layer = windowInfo[kCGWindowLayer as String] as? Int,
                   layer == 0 else { continue }
+
+            let alpha = windowInfo[kCGWindowAlpha as String] as? Double ?? 1.0
+            if alpha <= 0.01 {
+                continue
+            }
+
+            if let boundsDict = windowInfo[kCGWindowBounds as String] as? NSDictionary {
+                var bounds = CGRect.zero
+                if CGRectMakeWithDictionaryRepresentation(boundsDict, &bounds) {
+                    // Ignore tiny helper windows (tooltips, overlays, offscreen stubs)
+                    if bounds.width < 100 || bounds.height < 100 {
+                        continue
+                    }
+                }
+            }
+
             pidsWithSystemWindows.insert(pid)
         }
 
@@ -769,6 +787,9 @@ extension WindowUtil {
             let level = (cgEntry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
             guard level == 0 else { continue }
 
+            let alpha = (cgEntry[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1.0
+            if alpha <= 0.01 { continue }
+
             guard let pid = (cgEntry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value else { continue }
 
             let title = cgEntry[kCGWindowName as String] as? String
@@ -777,6 +798,10 @@ extension WindowUtil {
                let rect = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
             {
                 bounds = rect
+            }
+
+            if let bounds, bounds.width < 100 || bounds.height < 100 {
+                continue
             }
 
             pidToWindowInfo[pid, default: []].append((windowID, title, bounds))
@@ -831,6 +856,13 @@ extension WindowUtil {
                         ) as? [CGImage] else { return nil }
                         return capturedWindows.first
                     }()
+
+                    if screenshot == nil {
+                        let trimmedTitle = (cgTitle ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmedTitle.isEmpty {
+                            continue
+                        }
+                    }
 
                     let windowProvider = CGWindowInfoProvider(
                         windowID: windowID,
