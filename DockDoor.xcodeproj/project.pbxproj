@@ -13,6 +13,8 @@
 		1A04FA16AC74448F83D0F964 /* ActiveAppIndicatorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F87422D4714171AD2CCC4A /* ActiveAppIndicatorCoordinator.swift */; };
 		27DC8C172CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27DC8C152CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift */; };
 		341691AA2EE37A6D004AFFC9 /* LiveWindowCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */; };
+		344FF97F2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */; };
+		344FF9812EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */; };
 		3A105FD62C1BED660015EC66 /* BlurView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FD52C1BED660015EC66 /* BlurView.swift */; };
 		3A105FD92C1C049E0015EC66 /* dockStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FD82C1C049E0015EC66 /* dockStyle.swift */; };
 		3A105FDD2C1C0EE20015EC66 /* DynStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FDC2C1C0EE20015EC66 /* DynStack.swift */; };
@@ -118,6 +120,8 @@
 		BB6A4F1C2C1CFCFF00CB4C9E /* PermissionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6A4F1B2C1CFCFF00CB4C9E /* PermissionsSettingsView.swift */; };
 		BB6CAB7F2EB3F0020080E537 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6CAB7E2EB3F0020080E537 /* SettingsView.swift */; };
 		BB6D81962DF75CA100DB64E4 /* SimpleProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6D81952DF75CA100DB64E4 /* SimpleProgressBar.swift */; };
+		BB709B3B2EF21493007809A2 /* WidgetSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB709B3A2EF21493007809A2 /* WidgetSettingsView.swift */; };
+		BB709B3D2EF21E9E007809A2 /* VolumeScrollModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB709B3C2EF21E9E007809A2 /* VolumeScrollModifier.swift */; };
 		BB7CA33D2C31F1B00012E303 /* WindowManipulationObservers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7CA33C2C31F1B00012E303 /* WindowManipulationObservers.swift */; };
 		BB7CD3C92EE54DDC00412546 /* TrackpadGestureModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7CD3C82EE54DDC00412546 /* TrackpadGestureModifier.swift */; };
 		BB7CD3CD2EE66EE800412546 /* GesturesAndKeybindsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7CD3CC2EE66EE800412546 /* GesturesAndKeybindsSettingsView.swift */; };
@@ -166,6 +170,8 @@
 		05C0C7172C60629C000ADAC6 /* AXUIElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXUIElement.swift; sourceTree = "<group>"; };
 		27DC8C152CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NumberFormatter+Convenience.swift"; sourceTree = "<group>"; };
 		341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWindowCapture.swift; sourceTree = "<group>"; };
+		344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbonHotkeyManager.swift; sourceTree = "<group>"; };
+		344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPreviewSettingsCache.swift; sourceTree = "<group>"; };
 		3A105FD52C1BED660015EC66 /* BlurView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurView.swift; sourceTree = "<group>"; };
 		3A105FD82C1C049E0015EC66 /* dockStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dockStyle.swift; sourceTree = "<group>"; };
 		3A105FDC2C1C0EE20015EC66 /* DynStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynStack.swift; sourceTree = "<group>"; };
@@ -269,6 +275,8 @@
 		BB6A4F1B2C1CFCFF00CB4C9E /* PermissionsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsView.swift; sourceTree = "<group>"; };
 		BB6CAB7E2EB3F0020080E537 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		BB6D81952DF75CA100DB64E4 /* SimpleProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleProgressBar.swift; sourceTree = "<group>"; };
+		BB709B3A2EF21493007809A2 /* WidgetSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSettingsView.swift; sourceTree = "<group>"; };
+		BB709B3C2EF21E9E007809A2 /* VolumeScrollModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeScrollModifier.swift; sourceTree = "<group>"; };
 		BB7CA33C2C31F1B00012E303 /* WindowManipulationObservers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManipulationObservers.swift; sourceTree = "<group>"; };
 		BB7CD3C82EE54DDC00412546 /* TrackpadGestureModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadGestureModifier.swift; sourceTree = "<group>"; };
 		BB7CD3CC2EE66EE800412546 /* GesturesAndKeybindsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GesturesAndKeybindsSettingsView.swift; sourceTree = "<group>"; };
@@ -505,6 +513,7 @@
 		BB157B772C0E32EF00997315 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */,
 				205C45E5266848C9B4F622AA /* ActiveAppIndicator */,
 				BB5D35532ED4C4CC006ECE15 /* DebugLogger.swift */,
 				BB21067C2E83565A002F87D6 /* KeyboardLabel.swift */,
@@ -593,6 +602,7 @@
 		BB6021CE2D1E60C700D47C86 /* WindowPreview Supporting */ = {
 			isa = PBXGroup;
 			children = (
+				344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */,
 				BB7CD3C82EE54DDC00412546 /* TrackpadGestureModifier.swift */,
 				BBE63DFE2DEA58040079D2B9 /* PreviewStateCoordinator.swift */,
 				BBC57AA72E3A6BED0078B262 /* DynamicWindowFrameModifier.swift */,
@@ -618,6 +628,7 @@
 				BB638EFB2E0216DE0010077D /* MediaControlsFullView.swift */,
 				BB638EF92E0216DA0010077D /* MediaControlsEmbeddedView.swift */,
 				BBB6C5312DF3C8A4009E93C4 /* MediaControlsView.swift */,
+				BB709B3C2EF21E9E007809A2 /* VolumeScrollModifier.swift */,
 			);
 			path = Media;
 			sourceTree = "<group>";
@@ -725,6 +736,7 @@
 				BB0440612C77AE85009F1D33 /* GradientColorPaletteSettingsView.swift */,
 				BB6CAB7E2EB3F0020080E537 /* SettingsView.swift */,
 				BB7CD3CC2EE66EE800412546 /* GesturesAndKeybindsSettingsView.swift */,
+				BB709B3A2EF21493007809A2 /* WidgetSettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -867,6 +879,7 @@
 				BB638F0C2E0217480010077D /* MediaLyricsView.swift in Sources */,
 				BB6CAB7F2EB3F0020080E537 /* SettingsView.swift in Sources */,
 				BB638F222E0218F40010077D /* CalendarSkeleton.swift in Sources */,
+				344FF97F2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift in Sources */,
 				BB638F0F2E02175C0010077D /* MediaControlsSkeleton.swift in Sources */,
 				BB0CBE3A2DD8179200D55437 /* MouseEventModifier.swift in Sources */,
 				BBB6C5372DF738E4009E93C4 /* Color.swift in Sources */,
@@ -874,6 +887,7 @@
 				3A1622C32C8D586900D318EE /* PermissionsView.swift in Sources */,
 				BBC5BDF42E45A708003A0D64 /* SwiftUIUtils.swift in Sources */,
 				BBF4139A2C40A64A00AA6733 /* CustomizableFluidGradient.swift in Sources */,
+				344FF9812EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift in Sources */,
 				BBE692192D17AD9E0093B4A5 /* DangerButton.swift in Sources */,
 				3A1622BE2C8C218500D318EE /* FirstTimeViewInstructionsView.swift in Sources */,
 				BB1A85F52D05263C00326297 /* FiltersSettingsView.swift in Sources */,
@@ -892,6 +906,7 @@
 				BB157B802C0E8E6700997315 /* MessageUtil.swift in Sources */,
 				BBD182AE2E3EE37500A81D69 /* WindowSwitcherStateManager.swift in Sources */,
 				BB638F242E0218F80010077D /* CalendarEmptyState.swift in Sources */,
+				BB709B3B2EF21493007809A2 /* WidgetSettingsView.swift in Sources */,
 				BB638F1A2E0218CD0010077D /* CalendarEmbeddedView.swift in Sources */,
 				05C0C7182C60629C000ADAC6 /* AXUIElement.swift in Sources */,
 				3A1622C12C8D57AF00D318EE /* PermissionsChecker.swift in Sources */,
@@ -905,6 +920,7 @@
 				BBDF65732E7E212400DD6D6D /* DockObserver+CmdTab.swift in Sources */,
 				BB3968022C2A6CC2004F1AB6 /* Marquee.swift in Sources */,
 				BBB023AD2EDCCB9100317CF4 /* WindowInfo.swift in Sources */,
+				BB709B3D2EF21E9E007809A2 /* VolumeScrollModifier.swift in Sources */,
 				BB0440602C77AD2C009F1D33 /* CodableColor.swift in Sources */,
 				BB52EDF02C5BEFE3006A64A4 /* HiddenModifier.swift in Sources */,
 				BBBAA15B2DE6998B00FF8F8F /* UpdaterState.swift in Sources */,

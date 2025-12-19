@@ -1,4 +1,5 @@
 import Defaults
+import QuartzCore
 import Sparkle
 import SwiftUI
 
@@ -19,10 +20,11 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     private let dockManager = DockAutoHideManager()
     private var searchWindow: SearchWindow?
 
-    private var appName: String = ""
+    private(set) var appName: String = ""
     var currentlyDisplayedPID: pid_t?
     var mouseIsWithinPreviewWindow: Bool = false
     private var onWindowTap: (() -> Void)?
+    private var pendingShowWorkItem: DispatchWorkItem?
     private var fullPreviewWindow: NSPanel?
 
     var windowSize: CGSize = getWindowSize()
@@ -32,6 +34,16 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     private(set) var hasScreenRecordingPermission: Bool = PermissionsChecker.hasScreenRecordingPermission()
 
     var pinnedWindows: [String: NSWindow] = [:]
+
+    // Cached hosting view for instant display (eliminates ~50-70ms view recreation)
+    // Using AnyView so we can set EmptyView() when hiding - this forces SwiftUI to dismantle
+    // all views and remove their event monitors, fixing scroll blocking in Settings
+    private var cachedHostingView: NSHostingView<AnyView>?
+
+    // Cached size for instant positioning (eliminates ~20-30ms fittingSize overhead)
+    private var cachedWindowSize: CGSize?
+    private var cachedWindowCount: Int = 0
+    private var cachedIsWindowSwitcher: Bool = false
 
     init() {
         let styleMask: NSWindow.StyleMask = [.nonactivatingPanel, .fullSizeContentView, .borderless]
@@ -49,7 +61,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     }
 
     private func setupWindow() {
-        level = Defaults[.raisedWindowLevel] ? .statusBar : .floating
+        level = Defaults[.raisedWindowLevel] ? .popUpMenu : .floating
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
@@ -57,6 +69,8 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .transient, .fullScreenAuxiliary]
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = true
+        // Disable window animations for instant appearance
+        animationBehavior = .none
 
         if let p3ColorSpace = CGColorSpace(name: CGColorSpace.displayP3) {
             colorSpace = NSColorSpace(cgColorSpace: p3ColorSpace)
@@ -94,6 +108,32 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         searchWindow?.isFocused ?? false
     }
 
+    /// Manually refresh the UI when PreviewStateCoordinator state changes
+    /// This is required because PreviewStateCoordinator is no longer an ObservableObject
+    @MainActor
+    func refreshUI() {
+        guard isVisible, let cached = cachedHostingView else { return }
+
+        let updateAvailable = (NSApp.delegate as? AppDelegate)?.updaterState.anUpdateIsAvailable ?? false
+        let currentDockPosition = DockUtils.getDockPosition()
+
+        let hoverView = WindowPreviewHoverContainer(
+            appName: appName,
+            onWindowTap: onWindowTap,
+            dockPosition: currentDockPosition,
+            mouseLocation: nil,
+            bestGuessMonitor: NSScreen.main ?? NSScreen.screens.first!,
+            dockItemElement: nil,
+            windowSwitcherCoordinator: windowSwitcherCoordinator,
+            mockPreviewActive: false,
+            updateAvailable: updateAvailable,
+            embeddedContentType: .none,
+            hasScreenRecordingPermission: hasScreenRecordingPermission
+        )
+
+        cached.rootView = AnyView(hoverView)
+    }
+
     private func isMediaApp(bundleIdentifier: String?) -> Bool {
         guard let bundleId = bundleIdentifier else { return false }
         return bundleId == spotifyAppIdentifier || bundleId == appleMusicAppIdentifier
@@ -117,6 +157,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     }
 
     func hideWindow() {
+        // Cancel any pending show operations first - critical for quick release handling
+        pendingShowWorkItem?.cancel()
+        pendingShowWorkItem = nil
+
         guard isVisible else { return }
 
         DragPreviewCoordinator.shared.endDragging()
@@ -129,6 +173,19 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             currentContent.removeFromSuperview()
         }
         contentView = nil
+
+        // CRITICAL: Explicitly remove all TrackpadGestureModifier monitors
+        // SwiftUI doesn't immediately dismantle views when rootView changes, so we force it
+        TrackpadEventMonitor.Coordinator.removeAllMonitors()
+
+        // Set rootView to EmptyView to help SwiftUI dismantle views
+        if let cached = cachedHostingView {
+            cached.rootView = AnyView(EmptyView())
+        }
+
+        cachedWindowSize = nil
+        cachedWindowCount = 0
+        cachedIsWindowSwitcher = false
         appName = ""
         currentlyDisplayedPID = nil
         mouseIsWithinPreviewWindow = false
@@ -138,6 +195,15 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         windowSwitcherCoordinator.setWindows([], dockPosition: currentDockPos, bestGuessMonitor: currentScreen)
         windowSwitcherCoordinator.setShowing(.both, toState: false)
         dockManager.restoreDockState()
+
+        // Resign key/main window status to fix scroll issues in other windows (Settings)
+        if isKeyWindow {
+            resignKey()
+        }
+        if isMainWindow {
+            resignMain()
+        }
+        makeFirstResponder(nil)
         orderOut(nil)
     }
 
@@ -189,28 +255,70 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                                                   embeddedContentType: EmbeddedContentType = .none,
                                                   dockPositionOverride: DockPosition? = nil)
     {
+        // Disable implicit animations for instant UI updates
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        defer { CATransaction.commit() }
+
         windowSwitcherCoordinator.setShowing(centeredHoverWindowState, toState: centerOnScreen)
 
-        // Defer showing the search window until after the hover window frame is applied
+        let currentDockPosition = dockPositionOverride ?? DockUtils.getDockPosition()
+        let windowCount = windowSwitcherCoordinator.windows.count
+        let isWindowSwitcher = centerOnScreen
 
+        // Create new SwiftUI view with current data
         let updateAvailable = (NSApp.delegate as? AppDelegate)?.updaterState.anUpdateIsAvailable ?? false
+        let hoverView = WindowPreviewHoverContainer(
+            appName: appName,
+            onWindowTap: onWindowTap,
+            dockPosition: currentDockPosition,
+            mouseLocation: mouseLocation,
+            bestGuessMonitor: mouseScreen,
+            dockItemElement: dockItemElement,
+            windowSwitcherCoordinator: windowSwitcherCoordinator,
+            mockPreviewActive: false,
+            updateAvailable: updateAvailable,
+            embeddedContentType: embeddedContentType,
+            hasScreenRecordingPermission: hasScreenRecordingPermission
+        )
 
-        let hoverView = WindowPreviewHoverContainer(appName: appName, onWindowTap: onWindowTap,
-                                                    dockPosition: dockPositionOverride ?? DockUtils.getDockPosition(), mouseLocation: mouseLocation,
-                                                    bestGuessMonitor: mouseScreen, dockItemElement: dockItemElement,
-                                                    windowSwitcherCoordinator: windowSwitcherCoordinator,
-                                                    mockPreviewActive: false,
-                                                    updateAvailable: updateAvailable,
-                                                    embeddedContentType: embeddedContentType,
-                                                    hasScreenRecordingPermission: hasScreenRecordingPermission)
-        let newHostingView = NSHostingView(rootView: hoverView)
-
-        if let oldContentView = contentView {
-            oldContentView.removeFromSuperview()
+        // OPTIMIZATION: Reuse NSHostingView instance, just update rootView
+        // This eliminates NSHostingView creation overhead (~30-50ms)
+        let hostingView: NSHostingView<AnyView>
+        if let cached = cachedHostingView {
+            cached.rootView = AnyView(hoverView)
+            hostingView = cached
+        } else {
+            hostingView = NSHostingView(rootView: AnyView(hoverView))
+            cachedHostingView = hostingView
         }
-        contentView = newHostingView
 
-        let newHoverWindowSize = newHostingView.fittingSize
+        if contentView !== hostingView {
+            if let oldContentView = contentView {
+                oldContentView.removeFromSuperview()
+            }
+            contentView = hostingView
+        }
+
+        // OPTIMIZATION: Use cached size when window count is same to avoid expensive fittingSize
+        // fittingSize triggers full SwiftUI layout calculation (~20-30ms)
+        let newHoverWindowSize: CGSize
+
+        if let cached = cachedWindowSize,
+           cachedWindowCount == windowCount,
+           cachedIsWindowSwitcher == isWindowSwitcher,
+           windowCount > 0
+        {
+            // Use cached size for instant positioning
+            newHoverWindowSize = cached
+        } else {
+            // Calculate new size and cache it
+            newHoverWindowSize = hostingView.fittingSize
+            cachedWindowSize = newHoverWindowSize
+            cachedWindowCount = windowCount
+            cachedIsWindowSwitcher = isWindowSwitcher
+        }
+
         let position: CGPoint
         if centerOnScreen {
             position = centerWindowOnScreen(size: newHoverWindowSize, screen: mouseScreen)
@@ -408,6 +516,9 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         dockPositionOverride: DockPosition? = nil,
         initialIndex: Int? = nil
     ) {
+        // Refresh settings cache once at display time, not on every render
+        windowSwitcherCoordinator.refreshSettingsCache()
+
         let screen = mouseScreen ?? NSScreen.main!
         var finalEmbeddedContentType: EmbeddedContentType = .none
         var useBigStandaloneViewInstead = false
@@ -499,7 +610,12 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         let shouldCenterOnScreen = centeredHoverWindowState != .none
 
         let screen = mouseScreen ?? NSScreen.main!
-        hideFullPreviewWindow()
+
+        // Only hide full preview if we're about to show a NEW full preview
+        // Don't hide it when just refreshing the main dock preview
+        if centeredHoverWindowState == .fullWindowPreview {
+            hideFullPreviewWindow()
+        }
 
         if centeredHoverWindowState == .fullWindowPreview,
            let windowInfo = windows.first,
@@ -682,8 +798,45 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         let shouldSkipDelay = overrideDelay || (Defaults[.useDelayOnlyForInitialOpen] && isVisible)
         let delay = shouldSkipDelay ? 0 : Defaults[.hoverWindowOpenDelay]
 
-        let workItem = { [weak self] in
-            guard let self else { return }
+        // Cancel any previous pending show
+        pendingShowWorkItem?.cancel()
+        pendingShowWorkItem = nil
+
+        // INSTANT PATH: When delay is 0 and we're on MainActor, call performDisplay directly
+        // This eliminates async overhead for maximum speed
+        if delay == 0, Thread.isMainThread {
+            // For dock previews, validate mouse is still over expected dock item (prevents flickering)
+            if !bypassDockMouseValidation, let expectedBundleId = bundleIdentifier {
+                if let currentDockItemStatus = DockObserver.activeInstance?.getDockItemAppStatusUnderMouse() {
+                    let currentBundleId: String? = switch currentDockItemStatus.status {
+                    case let .success(app): app.bundleIdentifier
+                    case let .notRunning(bundleId): bundleId
+                    case .notFound: nil
+                    }
+                    let matches = currentBundleId == expectedBundleId
+                    guard matches else { return }
+                }
+            }
+
+            performDisplay(
+                appName: appName,
+                windows: windows,
+                mouseLocation: mouseLocation,
+                mouseScreen: mouseScreen,
+                dockItemElement: dockItemElement,
+                centeredHoverWindowState: centeredHoverWindowState,
+                onWindowTap: onWindowTap,
+                bundleIdentifier: bundleIdentifier,
+                dockPositionOverride: dockPositionOverride,
+                initialIndex: initialIndex
+            )
+            return
+        }
+
+        // DELAYED PATH: Use DispatchWorkItem for dock hover previews with delay
+        var workItem: DispatchWorkItem!
+        workItem = DispatchWorkItem { [weak self] in
+            guard let self, !workItem.isCancelled else { return }
 
             // Check if mouse entered the preview window and we're trying to show a different app
             if mouseIsWithinPreviewWindow,
@@ -691,35 +844,39 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                let expectedBundleId = bundleIdentifier,
                let expectedApp = NSRunningApplication.runningApplications(withBundleIdentifier: expectedBundleId).first,
                currentPID != expectedApp.processIdentifier
-            {
-                return
-            }
+            { return }
 
             // Final validation: ensure mouse is still over the expected dock item
             if !bypassDockMouseValidation {
                 if let expectedBundleId = bundleIdentifier {
-                    guard let currentDockItemStatus = DockObserver.activeInstance?.getDockItemAppStatusUnderMouse() else {
-                        return
+                    guard let currentDockItemStatus = DockObserver.activeInstance?.getDockItemAppStatusUnderMouse() else { return }
+                    let currentBundleId: String? = switch currentDockItemStatus.status {
+                    case let .success(app): app.bundleIdentifier
+                    case let .notRunning(bundleId): bundleId
+                    case .notFound: nil
                     }
-                    let matches: Bool = switch currentDockItemStatus.status {
-                    case let .success(app):
-                        app.bundleIdentifier == expectedBundleId
-                    case let .notRunning(bundleId):
-                        bundleId == expectedBundleId
-                    case .notFound:
-                        false
-                    }
-                    guard matches else {
-                        return
-                    }
+                    let matches = currentBundleId == expectedBundleId
+                    guard matches else { return }
                 }
             }
 
-            Task { @MainActor [weak self] in
-                self?.performDisplay(appName: appName, windows: windows, mouseLocation: mouseLocation, mouseScreen: mouseScreen, dockItemElement: dockItemElement, centeredHoverWindowState: centeredHoverWindowState, onWindowTap: onWindowTap, bundleIdentifier: bundleIdentifier, dockPositionOverride: dockPositionOverride, initialIndex: initialIndex)
-            }
+            // For delayed path, we're already on main thread from asyncAfter, call directly
+            guard !workItem.isCancelled else { return }
+            performDisplay(
+                appName: appName,
+                windows: windows,
+                mouseLocation: mouseLocation,
+                mouseScreen: mouseScreen,
+                dockItemElement: dockItemElement,
+                centeredHoverWindowState: centeredHoverWindowState,
+                onWindowTap: onWindowTap,
+                bundleIdentifier: bundleIdentifier,
+                dockPositionOverride: dockPositionOverride,
+                initialIndex: initialIndex
+            )
         }
 
+        pendingShowWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
 }

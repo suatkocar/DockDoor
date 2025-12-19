@@ -36,11 +36,19 @@ struct TrackpadEventMonitor: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView(frame: .zero)
+        // Set up event monitor when view is added to hierarchy
+        context.coordinator.setupMonitor()
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         context.coordinator.isActive = isActive
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        // Remove event monitor when view is removed from hierarchy
+        // This fixes scroll blocking in Settings when switcher is hidden
+        coordinator.removeMonitor()
     }
 
     func makeCoordinator() -> Coordinator {
@@ -63,7 +71,21 @@ struct TrackpadEventMonitor: NSViewRepresentable {
         private var cumulativeScrollX: CGFloat = 0
         private var cumulativeScrollY: CGFloat = 0
         private var isScrolling = false
+        private var isNaturalScrolling = false
         private var scrollEndTimer: Timer?
+
+        private static var instanceCount = 0
+        private let instanceId: Int
+
+        // Central registry of all active coordinators for explicit cleanup
+        private static var activeCoordinators: [Int: Coordinator] = [:]
+
+        /// Remove all active monitors - call this when hiding the switcher window
+        static func removeAllMonitors() {
+            for (_, coordinator) in activeCoordinators {
+                coordinator.removeMonitor()
+            }
+        }
 
         init(
             onSwipeUp: @escaping () -> Void,
@@ -71,36 +93,53 @@ struct TrackpadEventMonitor: NSViewRepresentable {
             onSwipeLeft: @escaping () -> Void,
             onSwipeRight: @escaping () -> Void
         ) {
+            Self.instanceCount += 1
+            instanceId = Self.instanceCount
             self.onSwipeUp = onSwipeUp
             self.onSwipeDown = onSwipeDown
             self.onSwipeLeft = onSwipeLeft
             self.onSwipeRight = onSwipeRight
-            setupMonitor()
+            // Don't set up monitor here - wait for view to be added to hierarchy
         }
 
         deinit {
-            if let monitor = scrollMonitor {
-                NSEvent.removeMonitor(monitor)
-            }
-            scrollEndTimer?.invalidate()
+            removeMonitor()
         }
 
-        private func setupMonitor() {
+        /// Remove event monitor - called when view is removed from hierarchy
+        func removeMonitor() {
+            if let monitor = scrollMonitor {
+                NSEvent.removeMonitor(monitor)
+                scrollMonitor = nil
+            }
+            scrollEndTimer?.invalidate()
+            scrollEndTimer = nil
+            // Unregister from central registry
+            Self.activeCoordinators.removeValue(forKey: instanceId)
+        }
+
+        /// Set up event monitor - called when view is added to hierarchy
+        func setupMonitor() {
+            guard scrollMonitor == nil else { return }
             scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
                 guard let self else { return event }
                 return handleScroll(event)
             }
+            // Register in central registry for explicit cleanup
+            Self.activeCoordinators[instanceId] = self
         }
 
         private func handleScroll(_ event: NSEvent) -> NSEvent? {
             guard isActive else { return event }
-            guard event.hasPreciseScrollingDeltas else { return nil }
+            // IMPORTANT: Pass through non-trackpad events to allow scrolling in other windows
+            guard event.hasPreciseScrollingDeltas else { return event }
 
             switch event.phase {
             case .began:
                 cumulativeScrollX = 0
                 cumulativeScrollY = 0
                 isScrolling = true
+                isNaturalScrolling = event.isDirectionInvertedFromDevice
                 scrollEndTimer?.invalidate()
 
             case .changed:
@@ -132,6 +171,8 @@ struct TrackpadEventMonitor: NSViewRepresentable {
             isScrolling = false
 
             let minDelta: CGFloat = 50
+
+            let normalizedY = isNaturalScrolling ? -cumulativeScrollY : cumulativeScrollY
 
             if abs(cumulativeScrollY) > abs(cumulativeScrollX), abs(cumulativeScrollY) > minDelta {
                 if cumulativeScrollY < 0 {

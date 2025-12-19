@@ -113,6 +113,7 @@ struct AppearanceSettingsView: View {
     @Default(.switcherMaxRows) var switcherMaxRows
     @Default(.switcherMaxColumns) var switcherMaxColumns
     @Default(.globalPaddingMultiplier) var globalPaddingMultiplier
+    @Default(.previewWindowSpacing) var previewWindowSpacing
     @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
     @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
     @Default(.showMinimizedHiddenLabels) var showMinimizedHiddenLabels
@@ -172,21 +173,22 @@ struct AppearanceSettingsView: View {
     @State private var isHoveringOverPreview: Bool = false
 
     @State private var mockAppNameForPreview: String = "DockDoor (•‿•)"
-    @StateObject private var mockWindowSwitcherCoordinator: PreviewStateCoordinator
-    @StateObject private var mockDockPreviewCoordinator: PreviewStateCoordinator
+    // NOTE: Using @State instead of @StateObject since PreviewStateCoordinator is no longer ObservableObject
+    @State private var mockWindowSwitcherCoordinator: PreviewStateCoordinator
+    @State private var mockDockPreviewCoordinator: PreviewStateCoordinator
 
     private let advancedAppearanceSettingsSectionID = "advancedAppearanceSettingsSection"
 
     init() {
         let initialMockWindows = AppearanceSettingsView.generateMockWindowsForPreview()
 
-        _mockDockPreviewCoordinator = StateObject(wrappedValue: AppearanceSettingsView.getMockCoordinator(
+        _mockDockPreviewCoordinator = State(initialValue: AppearanceSettingsView.getMockCoordinator(
             windows: initialMockWindows,
             windowSwitcherActive: false,
             dockPosition: .bottom,
             bestGuessMonitor: NSScreen.main!
         ))
-        _mockWindowSwitcherCoordinator = StateObject(wrappedValue: AppearanceSettingsView.getMockCoordinator(
+        _mockWindowSwitcherCoordinator = State(initialValue: AppearanceSettingsView.getMockCoordinator(
             windows: initialMockWindows,
             windowSwitcherActive: true,
             dockPosition: .bottom,
@@ -319,6 +321,18 @@ struct AppearanceSettingsView: View {
                                               let f = NumberFormatter()
                                               f.minimumFractionDigits = 1
                                               f.maximumFractionDigits = 1
+                                              return f
+                                          }())
+
+                            sliderSetting(title: "Preview Window Gap",
+                                          value: $previewWindowSpacing,
+                                          range: 0 ... 48,
+                                          step: 4,
+                                          unit: "px",
+                                          formatter: {
+                                              let f = NumberFormatter()
+                                              f.minimumFractionDigits = 0
+                                              f.maximumFractionDigits = 0
                                               return f
                                           }())
 

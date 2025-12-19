@@ -28,6 +28,7 @@ extension Defaults.Keys {
     static let dockClickAction = Key<DockClickAction>("dockClickAction", default: .hide)
     static let enableCmdRightClickQuit = Key<Bool>("enableCmdRightClickQuit", default: true)
     static let enableDockScrollGesture = Key<Bool>("enableDockScrollGesture", default: false)
+    static let mediaScrollBehavior = Key<MediaScrollBehavior>("mediaScrollBehavior", default: .adjustVolume)
 
     static let screenCaptureCacheLifespan = Key<CGFloat>("screenCaptureCacheLifespan", default: 60)
     static let windowProcessingDebounceInterval = Key<CGFloat>("windowProcessingDebounceInterval", default: 0.3)
@@ -164,6 +165,7 @@ extension Defaults.Keys {
     static let previewMaxRows = Key<Int>("previewMaxRows", default: 1) // For bottom dock only
     static let switcherMaxRows = Key<Int>("switcherMaxRows", default: 2) // For window switcher
     static let switcherMaxColumns = Key<Int>("switcherMaxColumns", default: 6) // For window switcher
+    static let previewWindowSpacing = Key<CGFloat>("previewWindowSpacing", default: 24) // Gap between preview windows
 
     static let windowSwitcherPlacementStrategy = Key<WindowSwitcherPlacementStrategy>("windowSwitcherPlacementStrategy", default: .screenWithMouse)
     static let windowSwitcherControlPosition = Key<WindowSwitcherControlPosition>("windowSwitcherControlPosition", default: .topTrailing)
@@ -180,6 +182,7 @@ extension Defaults.Keys {
     static let appNameFilters = Key<[String]>("appNameFilters", default: [])
     static let windowTitleFilters = Key<[String]>("windowTitleFilters", default: [])
     static let customAppDirectories = Key<[String]>("customAppDirectories", default: [])
+    static let filteredCalendarIdentifiers = Key<[String]>("filteredCalendarIdentifiers", default: [])
 
     // Onboarding / Hints
     static let hasSeenCmdTabFocusHint = Key<Bool>("hasSeenCmdTabFocusHint", default: false)
@@ -426,6 +429,20 @@ enum DockClickAction: String, CaseIterable, Defaults.Serializable {
             String(localized: "Minimize windows", comment: "Dock click action option")
         case .hide:
             String(localized: "Hide application", comment: "Dock click action option")
+        }
+    }
+}
+
+enum MediaScrollBehavior: String, CaseIterable, Defaults.Serializable {
+    case adjustVolume
+    case activateHide
+
+    var localizedName: String {
+        switch self {
+        case .adjustVolume:
+            String(localized: "Adjust volume", comment: "Media scroll behavior option")
+        case .activateHide:
+            String(localized: "Activate/Hide (same as other apps)", comment: "Media scroll behavior option")
         }
     }
 }

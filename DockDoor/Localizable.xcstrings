@@ -8199,6 +8199,9 @@
         }
       }
     },
+    "Activate/Hide (same as other apps)" : {
+      "comment" : "Media scroll behavior option"
+    },
     "Active App + Current Space" : {
       "comment" : "Switcher invocation mode",
       "localizations" : {
@@ -10293,6 +10296,9 @@
         }
       }
     },
+    "Adjust volume" : {
+      "comment" : "Media scroll behavior option"
+    },
     "Adjusts how responsive the app feels and behaves during interaction." : {
       "localizations" : {
         "af" : {
@@ -10482,6 +10488,9 @@
           }
         }
       }
+    },
+    "Aero Shake" : {
+
     },
     "Aero Shake Action" : {
       "extractionState" : "stale",
@@ -19634,6 +19643,9 @@
         }
       }
     },
+    "Calendar" : {
+
+    },
     "Calendar Access Needed" : {
       "localizations" : {
         "af" : {
@@ -19823,6 +19835,9 @@
           }
         }
       }
+    },
+    "Calendar Access Required" : {
+
     },
     "Can you even see this?" : {
       "comment" : "Window size option",
@@ -33750,7 +33765,11 @@
         }
       }
     },
+    "Dock Icon Scroll Gesture" : {
+
+    },
     "Dock Preview Aero Shake Action" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -36225,6 +36244,9 @@
         }
       }
     },
+    "DockDoor needs access to your calendars to show events. Please enable Calendar access in System Settings > Privacy & Security > Calendars." : {
+
+    },
     "DockDoor needs permission to access your calendar." : {
       "localizations" : {
         "af" : {
@@ -38329,6 +38351,7 @@
       }
     },
     "Enable dock scroll gestures" : {
+      "extractionState" : "stale",
       "localizations" : {
         "af" : {
           "stringUnit" : {
@@ -40045,6 +40068,9 @@
           }
         }
       }
+    },
+    "Enable scroll gestures on dock icons" : {
+
     },
     "Enable search while using Window Switcher" : {
       "localizations" : {
@@ -51108,6 +51134,9 @@
         }
       }
     },
+    "Hide All" : {
+
+    },
     "Hide all app windows on dock icon click" : {
       "localizations" : {
         "af" : {
@@ -59703,6 +59732,9 @@
     "Loading applications..." : {
 
     },
+    "Loading calendars..." : {
+
+    },
     "Loading lyrics..." : {
       "localizations" : {
         "af" : {
@@ -60652,6 +60684,9 @@
           }
         }
       }
+    },
+    "Make sure you have calendars set up in the Calendar app." : {
+
     },
     "Max Columns" : {
 
@@ -65045,6 +65080,9 @@
         }
       }
     },
+    "Music/Spotify behavior:" : {
+
+    },
     "Name" : {
       "localizations" : {
         "af" : {
@@ -67145,6 +67183,9 @@
           }
         }
       }
+    },
+    "No calendars found" : {
+
     },
     "No custom directories added" : {
       "localizations" : {
@@ -72098,6 +72139,9 @@
           }
         }
       }
+    },
+    "Open System Settings" : {
+
     },
     "Option" : {
       "localizations" : {
@@ -80685,6 +80729,9 @@
           }
         }
       }
+    },
+    "Preview Window Gap" : {
+
     },
     "Preview Window Inactivity Timer" : {
       "localizations" : {
@@ -91750,6 +91797,9 @@
         }
       }
     },
+    "Select which calendars appear in the dock preview when hovering over the Calendar app." : {
+
+    },
     "Select windows when hovering with mouse. Disable for keyboard-only navigation." : {
 
     },
@@ -93850,6 +93900,9 @@
         }
       }
     },
+    "Shake a window preview rapidly" : {
+
+    },
     "Shift Indicator" : {
       "localizations" : {
         "af" : {
@@ -94610,6 +94663,9 @@
           }
         }
       }
+    },
+    "Show All" : {
+
     },
     "Show App Icon" : {
 
@@ -118655,6 +118711,9 @@
           }
         }
       }
+    },
+    "Widgets" : {
+      "comment" : "Widget settings tab title"
     },
     "Window Background" : {
       "localizations" : {

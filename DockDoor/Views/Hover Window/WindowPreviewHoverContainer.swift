@@ -50,33 +50,41 @@ struct WindowPreviewHoverContainer: View {
     let embeddedContentType: EmbeddedContentType
     let hasScreenRecordingPermission: Bool
 
-    @ObservedObject var previewStateCoordinator: PreviewStateCoordinator
+    // NOTE: This is intentionally NOT @ObservedObject to prevent SwiftUI subscriptions
+    // from interfering with scroll events in other windows when the switcher is hidden.
+    // The view is recreated with new state via SharedPreviewWindowCoordinator.updateRootView()
+    let previewStateCoordinator: PreviewStateCoordinator
 
-    @Default(.uniformCardRadius) var uniformCardRadius
-    @Default(.showAppName) var showAppTitleData
-    @Default(.appNameStyle) var appNameStyle
-    @Default(.dockShowHeaderAppIcon) var dockShowHeaderAppIcon
-    @Default(.dockShowHeaderAppName) var dockShowHeaderAppName
-    @Default(.aeroShakeAction) var aeroShakeAction
-    @Default(.previewMaxColumns) var previewMaxColumns
-    @Default(.previewMaxRows) var previewMaxRows
-    @Default(.switcherMaxRows) var switcherMaxRows
-    @Default(.switcherMaxColumns) var switcherMaxColumns
-    @Default(.gradientColorPalette) var gradientColorPalette
-    @Default(.showAnimations) var showAnimations
-    @Default(.enableMouseHoverInSwitcher) var enableMouseHoverInSwitcher
-    @Default(.enableEdgeScrollInSwitcher) var enableEdgeScrollInSwitcher
-    @Default(.edgeScrollSpeed) var edgeScrollSpeed
-    @Default(.dynamicEdgeScrollSpeed) var dynamicEdgeScrollSpeed
-    @Default(.windowSwitcherLivePreviewScope) var windowSwitcherLivePreviewScope
+    // Cached settings - accessed via computed properties for performance
+    private var containerSettings: HoverContainerSettingsCache? { previewStateCoordinator.containerSettings }
+
+    // Computed properties that read from cache or fall back to Defaults
+    private var uniformCardRadius: Bool { containerSettings?.uniformCardRadius ?? Defaults[.uniformCardRadius] }
+    private var showAppTitleData: Bool { containerSettings?.showAppTitleData ?? Defaults[.showAppName] }
+    private var appNameStyle: AppNameStyle { containerSettings?.appNameStyle ?? Defaults[.appNameStyle] }
+    private var dockShowHeaderAppIcon: Bool { containerSettings?.dockShowHeaderAppIcon ?? Defaults[.dockShowHeaderAppIcon] }
+    private var dockShowHeaderAppName: Bool { containerSettings?.dockShowHeaderAppName ?? Defaults[.dockShowHeaderAppName] }
+    private var aeroShakeAction: AeroShakeAction { containerSettings?.aeroShakeAction ?? Defaults[.aeroShakeAction] }
+    private var previewMaxColumns: Int { containerSettings?.previewMaxColumns ?? Defaults[.previewMaxColumns] }
+    private var previewMaxRows: Int { containerSettings?.previewMaxRows ?? Defaults[.previewMaxRows] }
+    private var switcherMaxRows: Int { containerSettings?.switcherMaxRows ?? Defaults[.switcherMaxRows] }
+    private var switcherMaxColumns: Int { containerSettings?.switcherMaxColumns ?? Defaults[.switcherMaxColumns] }
+    private var previewWindowSpacing: CGFloat { containerSettings?.previewWindowSpacing ?? Defaults[.previewWindowSpacing] }
+    private var gradientColorPalette: GradientColorPaletteSettings { containerSettings?.gradientColorPalette ?? Defaults[.gradientColorPalette] }
+    private var showAnimations: Bool { containerSettings?.showAnimations ?? Defaults[.showAnimations] }
+    private var enableMouseHoverInSwitcher: Bool { containerSettings?.enableMouseHoverInSwitcher ?? Defaults[.enableMouseHoverInSwitcher] }
+    private var enableEdgeScrollInSwitcher: Bool { containerSettings?.enableEdgeScrollInSwitcher ?? Defaults[.enableEdgeScrollInSwitcher] }
+    private var edgeScrollSpeed: Double { containerSettings?.edgeScrollSpeed ?? Defaults[.edgeScrollSpeed] }
+    private var dynamicEdgeScrollSpeed: Bool { containerSettings?.dynamicEdgeScrollSpeed ?? Defaults[.dynamicEdgeScrollSpeed] }
+    private var windowSwitcherLivePreviewScope: WindowSwitcherLivePreviewScope { containerSettings?.windowSwitcherLivePreviewScope ?? Defaults[.windowSwitcherLivePreviewScope] }
 
     // Compact mode thresholds (0 = disabled, 1+ = enable when window count >= threshold)
-    @Default(.windowSwitcherCompactThreshold) var windowSwitcherCompactThreshold
-    @Default(.dockPreviewCompactThreshold) var dockPreviewCompactThreshold
-    @Default(.cmdTabCompactThreshold) var cmdTabCompactThreshold
+    private var windowSwitcherCompactThreshold: Int { containerSettings?.windowSwitcherCompactThreshold ?? Defaults[.windowSwitcherCompactThreshold] }
+    private var dockPreviewCompactThreshold: Int { containerSettings?.dockPreviewCompactThreshold ?? Defaults[.dockPreviewCompactThreshold] }
+    private var cmdTabCompactThreshold: Int { containerSettings?.cmdTabCompactThreshold ?? Defaults[.cmdTabCompactThreshold] }
 
     // Force list view settings
-    @Default(.disableImagePreview) var disableImagePreview
+    private var disableImagePreview: Bool { containerSettings?.disableImagePreview ?? Defaults[.disableImagePreview] }
 
     @State private var draggedWindowIndex: Int? = nil
     @State private var isDragging = false
@@ -93,6 +101,10 @@ struct WindowPreviewHoverContainer: View {
     @State private var edgeScrollSpeedMultiplier: CGFloat = 1.0
     @State private var edgeScrollIsHorizontal: Bool = true
     @State private var screenEdgeMonitor: Timer?
+
+    // State tracking for manual change detection (since PreviewStateCoordinator is not ObservableObject)
+    @State private var lastTrackedIndex: Int = -1
+    @State private var lastTrackedWindowSwitcherActive: Bool = false
 
     init(appName: String,
          onWindowTap: (() -> Void)?,
@@ -219,12 +231,25 @@ struct WindowPreviewHoverContainer: View {
             loadAppIcon()
             LiveCaptureManager.shared.panelOpened()
             startScreenEdgeMonitor()
+            // Initialize tracking state
+            lastTrackedWindowSwitcherActive = previewStateCoordinator.windowSwitcherActive
+            lastTrackedIndex = previewStateCoordinator.currIndex
         }
         .onDisappear {
             Task { await LiveCaptureManager.shared.panelClosed() }
             stopScreenEdgeMonitor()
         }
-        .onChange(of: previewStateCoordinator.windowSwitcherActive) { isActive in
+        // Manual state change detection (since PreviewStateCoordinator is not ObservableObject)
+        .onAppear {
+            handleWindowSwitcherActiveChange()
+        }
+    }
+
+    /// Handle windowSwitcherActive state changes manually
+    private func handleWindowSwitcherActiveChange() {
+        let isActive = previewStateCoordinator.windowSwitcherActive
+        if lastTrackedWindowSwitcherActive != isActive {
+            lastTrackedWindowSwitcherActive = isActive
             if !isActive {
                 previewStateCoordinator.searchQuery = ""
                 forceStopEdgeScroll()
@@ -349,7 +374,7 @@ struct WindowPreviewHoverContainer: View {
             }
             .padding(.leading, 4)
         }
-        .contentShape(appNameStyle == .popover ? AnyShape(RoundedRectangle(cornerRadius: 10, style: .continuous)) : AnyShape(Rectangle()))
+        .contentShape(RoundedRectangle(cornerRadius: appNameStyle == .popover ? 10 : 0, style: .continuous))
         .onHover { hover in
             hoveringAppIcon = hover
         }
@@ -579,9 +604,9 @@ struct WindowPreviewHoverContainer: View {
                     }
                 } else if isHorizontal {
                     let chunkedItems = createChunkedItems()
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: previewWindowSpacing) {
                         ForEach(Array(chunkedItems.enumerated()), id: \.offset) { index, rowItems in
-                            HStack(spacing: 24) {
+                            HStack(spacing: previewWindowSpacing) {
                                 ForEach(rowItems, id: \.id) { item in
                                     buildFlowItem(
                                         item: item,
@@ -594,9 +619,9 @@ struct WindowPreviewHoverContainer: View {
                     }
                 } else {
                     let chunkedItems = createChunkedItems()
-                    HStack(alignment: .top, spacing: 24) {
+                    HStack(alignment: .top, spacing: previewWindowSpacing) {
                         ForEach(Array(chunkedItems.enumerated()), id: \.offset) { index, colItems in
-                            VStack(spacing: 24) {
+                            VStack(spacing: previewWindowSpacing) {
                                 ForEach(colItems, id: \.id) { item in
                                     buildFlowItem(
                                         item: item,
@@ -615,26 +640,38 @@ struct WindowPreviewHoverContainer: View {
         .padding(2)
         // Force complete re-render when window count changes to avoid partial/animated layout transitions
         .id("grid-\(previewStateCoordinator.windows.count)-\(previewStateCoordinator.windowDimensionsMap.count)")
-        .onChange(of: previewStateCoordinator.currIndex) { newIndex in
-            guard previewStateCoordinator.shouldScrollToIndex else { return }
+        // Manual state change detection for currIndex (since PreviewStateCoordinator is not ObservableObject)
+        .onAppear {
+            handleCurrIndexChange(scrollProxy: scrollProxy)
+        }
+    }
 
-            if previewStateCoordinator.lastInputWasKeyboard {
-                previewStateCoordinator.isKeyboardScrolling = true
-            }
+    /// Handle currIndex state changes manually - called when view is recreated
+    private func handleCurrIndexChange(scrollProxy: ScrollViewProxy) {
+        let newIndex = previewStateCoordinator.currIndex
+        guard lastTrackedIndex != newIndex else { return }
+        lastTrackedIndex = newIndex
 
-            if showAnimations {
-                withAnimation(.snappy) {
-                    scrollProxy.scrollTo("\(appName)-\(newIndex)", anchor: .center)
-                }
-            } else {
+        guard previewStateCoordinator.shouldScrollToIndex else { return }
+
+        if previewStateCoordinator.lastInputWasKeyboard {
+            previewStateCoordinator.isKeyboardScrolling = true
+        }
+
+        if showAnimations {
+            withAnimation(.snappy) {
                 scrollProxy.scrollTo("\(appName)-\(newIndex)", anchor: .center)
             }
-
+            // Only delay reset when animating
             if previewStateCoordinator.lastInputWasKeyboard {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     previewStateCoordinator.isKeyboardScrolling = false
                 }
             }
+        } else {
+            // No animation - instant scroll and immediate reset
+            scrollProxy.scrollTo("\(appName)-\(newIndex)", anchor: .center)
+            previewStateCoordinator.isKeyboardScrolling = false
         }
     }
 
@@ -1166,7 +1203,8 @@ struct WindowPreviewHoverContainer: View {
                         mockPreviewActive: mockPreviewActive,
                         disableActions: disableActions,
                         onHoverIndexChange: handleHoverIndexChange,
-                        isEligibleForLivePreview: isEligibleForLivePreview
+                        isEligibleForLivePreview: isEligibleForLivePreview,
+                        settings: previewStateCoordinator.previewSettings
                     )
                     .id("\(appName)-\(index)")
                     .gesture(

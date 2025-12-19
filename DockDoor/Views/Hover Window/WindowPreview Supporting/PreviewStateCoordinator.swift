@@ -2,21 +2,24 @@ import Defaults
 import SwiftUI
 
 // Pure UI state container for window preview presentation
-class PreviewStateCoordinator: ObservableObject {
-    @Published var currIndex: Int = -1
-    @Published var windowSwitcherActive: Bool = false
+// NOTE: This is intentionally NOT an ObservableObject to prevent SwiftUI subscriptions
+// from interfering with scroll events in other windows when the switcher is hidden.
+// State changes trigger view updates via SharedPreviewWindowCoordinator.refreshUI()
+final class PreviewStateCoordinator {
+    var currIndex: Int = -1
+    var windowSwitcherActive: Bool = false
 
-    @Published var hasMovedSinceOpen: Bool = false
-    @Published var lastInputWasKeyboard: Bool = true
+    var hasMovedSinceOpen: Bool = false
+    var lastInputWasKeyboard: Bool = true
     var initialHoverLocation: CGPoint?
-    @Published var isKeyboardScrolling: Bool = false
-    @Published var fullWindowPreviewActive: Bool = false
-    @Published var windows: [WindowInfo] = []
+    var isKeyboardScrolling: Bool = false
+    var fullWindowPreviewActive: Bool = false
+    var windows: [WindowInfo] = []
 
     /// When true, this coordinator is used for settings preview and should NOT interact with SharedPreviewWindowCoordinator
     var isMockCoordinator: Bool = false
-    @Published var shouldScrollToIndex: Bool = true
-    @Published var searchQuery: String = "" {
+    var shouldScrollToIndex: Bool = true
+    var searchQuery: String = "" {
         didSet {
             if windowSwitcherActive {
                 Task { @MainActor in
@@ -30,9 +33,20 @@ class PreviewStateCoordinator: ObservableObject {
         !searchQuery.isEmpty
     }
 
-    @Published var overallMaxPreviewDimension: CGPoint = .zero
-    @Published var windowDimensionsMap: [Int: WindowPreviewHoverContainer.WindowDimensions] = [:]
+    var overallMaxPreviewDimension: CGPoint = .zero
+    var windowDimensionsMap: [Int: WindowPreviewHoverContainer.WindowDimensions] = [:]
     private var lastKnownBestGuessMonitor: NSScreen?
+
+    // Cached settings - read once when window is shown, not on every render
+    var previewSettings: WindowPreviewSettingsCache?
+    var containerSettings: HoverContainerSettingsCache?
+
+    /// Refreshes the cached settings from UserDefaults. Call this once when showing the preview window.
+    @MainActor
+    func refreshSettingsCache() {
+        previewSettings = WindowPreviewSettingsCache.current()
+        containerSettings = HoverContainerSettingsCache.current()
+    }
 
     enum WindowState {
         case windowSwitcher
@@ -73,16 +87,36 @@ class PreviewStateCoordinator: ObservableObject {
 
     @MainActor
     func setIndex(to: Int, shouldScroll: Bool = true, fromKeyboard: Bool = true) {
+        let oldIndex = currIndex
         shouldScrollToIndex = shouldScroll
         lastInputWasKeyboard = fromKeyboard
         if fromKeyboard {
             initialHoverLocation = nil
             hasMovedSinceOpen = false
         }
+
+        // Capture last live preview frame as thumbnail for the previous window
+        // This updates the thumbnail when user moves away from a window that had live preview
+        if windowSwitcherActive,
+           oldIndex >= 0, oldIndex < windows.count,
+           oldIndex != to,
+           Defaults[.windowSwitcherLivePreviewScope] == .selectedWindowOnly
+        {
+            let previousWindow = windows[oldIndex]
+            if let lastFrame = LiveCaptureManager.shared.getLastFrame(for: previousWindow.id) {
+                windows[oldIndex].image = lastFrame
+                windows[oldIndex].imageCapturedTime = Date()
+            }
+        }
+
         if to >= 0, to < windows.count {
             currIndex = to
         } else {
             currIndex = -1
+        }
+        // Trigger UI refresh when index changes (since we're not using ObservableObject)
+        if currIndex != oldIndex, !isMockCoordinator {
+            SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
         }
     }
 
@@ -114,6 +148,7 @@ class PreviewStateCoordinator: ObservableObject {
         if windows.isEmpty {
             currIndex = -1
             if !isMockCoordinator {
+                print("HIDE_SOURCE[PreviewStateCoordinator.setWindows]: windows became empty")
                 SharedPreviewWindowCoordinator.activeInstance?.hideWindow()
             }
             return
@@ -133,6 +168,11 @@ class PreviewStateCoordinator: ObservableObject {
         if let monitor = lastKnownBestGuessMonitor {
             let dockPosition = DockUtils.getDockPosition()
             recomputeAndPublishDimensions(dockPosition: dockPosition, bestGuessMonitor: monitor)
+        }
+
+        // Trigger UI refresh after removing window
+        if !isMockCoordinator {
+            SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
         }
     }
 
@@ -183,6 +223,7 @@ class PreviewStateCoordinator: ObservableObject {
         windows.removeAll()
         currIndex = -1 // Reset to no selection
         if !isMockCoordinator {
+            print("HIDE_SOURCE[PreviewStateCoordinator.clearWindows]: clearWindows called")
             SharedPreviewWindowCoordinator.activeInstance?.hideWindow()
         }
     }
@@ -217,6 +258,7 @@ class PreviewStateCoordinator: ObservableObject {
 
     @MainActor
     private func updateIndexForSearch() {
+        let oldIndex = currIndex
         if !hasActiveSearch {
             if currIndex >= windows.count {
                 currIndex = windows.isEmpty ? -1 : 0
@@ -224,6 +266,10 @@ class PreviewStateCoordinator: ObservableObject {
         } else {
             let filtered = filteredWindowIndices()
             currIndex = filtered.first ?? -1
+        }
+        // Trigger UI refresh when index changes from search
+        if currIndex != oldIndex, !isMockCoordinator {
+            SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
         }
     }
 

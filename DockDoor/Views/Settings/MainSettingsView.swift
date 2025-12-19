@@ -144,15 +144,9 @@ struct MainSettingsView: View {
     @Default(.shouldHideOnDockItemClick) var shouldHideOnDockItemClick
     @Default(.dockClickAction) var dockClickAction
     @Default(.enableCmdRightClickQuit) var enableCmdRightClickQuit
-    @Default(.enableDockScrollGesture) var enableDockScrollGesture
     @Default(.previewHoverAction) var previewHoverAction
-    @Default(.aeroShakeAction) var aeroShakeAction
-    @Default(.showSpecialAppControls) var showSpecialAppControls
-    @Default(.useEmbeddedMediaControls) var useEmbeddedMediaControls
     @Default(.showAnimations) var showAnimations
     @Default(.raisedWindowLevel) var raisedWindowLevel
-    @Default(.enablePinning) var enablePinning
-    @Default(.showBigControlsWhenNoValidWindows) var showBigControlsWhenNoValidWindows
     @Default(.disableImagePreview) var disableImagePreview
     @StateObject private var permissionsChecker = PermissionsChecker()
 
@@ -171,11 +165,6 @@ struct MainSettingsView: View {
                         advancedSettingsSection.id(advancedSettingsSectionID)
                     }
                 }
-            }
-        }
-        .onChange(of: enablePinning) { isEnabled in
-            if !isEnabled {
-                SharedPreviewWindowCoordinator.activeInstance?.unpinAll()
             }
         }
         .onAppear {
@@ -962,7 +951,6 @@ struct MainSettingsView: View {
 
                     Picker("Dock Preview Hover Action", selection: $previewHoverAction) { ForEach(PreviewHoverAction.allCases, id: \.self) { Text($0.localizedName).tag($0) } }.pickerStyle(MenuPickerStyle())
                     sliderSetting(title: "Preview Hover Action Delay", value: $tapEquivalentInterval, range: 0 ... 2, step: 0.1, unit: "seconds", formatter: NumberFormatter.oneDecimalFormatter).disabled(previewHoverAction == .none)
-                    Picker("Dock Preview Aero Shake Action", selection: $aeroShakeAction) { ForEach(AeroShakeAction.allCases, id: \.self) { Text($0.localizedName).tag($0) } }.pickerStyle(MenuPickerStyle())
                     Toggle(isOn: $shouldHideOnDockItemClick) { Text("Hide all app windows on dock icon click") }
                     if shouldHideOnDockItemClick {
                         Picker("Dock Click Action", selection: $dockClickAction) {
@@ -974,44 +962,6 @@ struct MainSettingsView: View {
                         .padding(.leading, 20)
                     }
                     Toggle(isOn: $enableCmdRightClickQuit) { Text("CMD + Right Click on dock icon to quit app") }
-
-                    Toggle(isOn: $enableDockScrollGesture) { Text("Enable dock scroll gestures") }
-                    Text("Scroll up on a dock icon to bring the app to front, scroll down to hide all its windows.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 20)
-
-                    Toggle(isOn: $showSpecialAppControls) { Text("Show media/calendar controls on Dock hover") }
-                    Text("For supported apps (Music, Spotify, Calendar), show interactive controls instead of window previews when hovering their Dock icons.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 20)
-                    if showSpecialAppControls {
-                        Toggle(isOn: $useEmbeddedMediaControls) { Text("Embed controls with window previews (if previews shown)") }
-                            .padding(.leading, 20)
-                        Text("If enabled, controls integrate with previews when possible.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.leading, 40)
-
-                        Toggle(isOn: $showBigControlsWhenNoValidWindows) { Text("Show big controls when no valid windows") }
-                            .padding(.leading, 20)
-                            .disabled(!useEmbeddedMediaControls)
-                        Text(useEmbeddedMediaControls ?
-                            "When embedded mode is enabled, show big controls instead of embedded ones if all windows are minimized/hidden or there are no windows." :
-                            "This setting only applies when \"Embed controls with window previews\" is enabled above.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.leading, 40)
-                            .opacity(useEmbeddedMediaControls ? 1.0 : 0.6)
-
-                        Toggle(isOn: $enablePinning) { Text("Enable Pinning") }
-                            .padding(.leading, 20)
-                        Text("Allow special app controls to be pinned to the screen via right-click menu.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.leading, 40)
-                    }
 
                     sliderSetting(title: "Window Buffer from Dock (pixels)", value: $bufferFromDock, range: -100 ... 100, step: 5, unit: "px", formatter: { let f = NumberFormatter(); f.allowsFloats = false; f.minimumIntegerDigits = 1; f.maximumFractionDigits = 0; return f }())
                 }
@@ -1076,7 +1026,7 @@ struct MainSettingsView: View {
                 hoverWindowOpenDelay = perfDefault.hoverWindowOpenDelay; fadeOutDuration = perfDefault.fadeOutDuration; tapEquivalentInterval = perfDefault.tapEquivalentInterval; preventDockHide = perfDefault.preventDockHide
                 let qualityDefault = PreviewQualityProfile.standard.settings
                 screenCaptureCacheLifespan = qualityDefault.screenCaptureCacheLifespan; windowPreviewImageScale = qualityDefault.windowPreviewImageScale
-                bufferFromDock = Defaults.Keys.bufferFromDock.defaultValue; shouldHideOnDockItemClick = Defaults.Keys.shouldHideOnDockItemClick.defaultValue; dockClickAction = Defaults.Keys.dockClickAction.defaultValue; enableCmdRightClickQuit = Defaults.Keys.enableCmdRightClickQuit.defaultValue; enableDockScrollGesture = Defaults.Keys.enableDockScrollGesture.defaultValue; previewHoverAction = Defaults.Keys.previewHoverAction.defaultValue; aeroShakeAction = Defaults.Keys.aeroShakeAction.defaultValue
+                bufferFromDock = Defaults.Keys.bufferFromDock.defaultValue; shouldHideOnDockItemClick = Defaults.Keys.shouldHideOnDockItemClick.defaultValue; dockClickAction = Defaults.Keys.dockClickAction.defaultValue; enableCmdRightClickQuit = Defaults.Keys.enableCmdRightClickQuit.defaultValue; previewHoverAction = Defaults.Keys.previewHoverAction.defaultValue
 
                 showMenuBarIcon = Defaults.Keys.showMenuBarIcon.defaultValue
                 enableWindowSwitcher = Defaults.Keys.enableWindowSwitcher.defaultValue
@@ -1117,8 +1067,11 @@ struct MainSettingsView: View {
                 Defaults[.alternateKeybindKey] = Defaults.Keys.alternateKeybindKey.defaultValue
                 Defaults[.alternateKeybindMode] = Defaults.Keys.alternateKeybindMode.defaultValue
 
-                showSpecialAppControls = Defaults.Keys.showSpecialAppControls.defaultValue
-                showBigControlsWhenNoValidWindows = Defaults.Keys.showBigControlsWhenNoValidWindows.defaultValue
+                Defaults[.showSpecialAppControls] = Defaults.Keys.showSpecialAppControls.defaultValue
+                Defaults[.showBigControlsWhenNoValidWindows] = Defaults.Keys.showBigControlsWhenNoValidWindows.defaultValue
+                Defaults[.useEmbeddedMediaControls] = Defaults.Keys.useEmbeddedMediaControls.defaultValue
+                Defaults[.enablePinning] = Defaults.Keys.enablePinning.defaultValue
+                Defaults[.filteredCalendarIdentifiers] = Defaults.Keys.filteredCalendarIdentifiers.defaultValue
                 groupAppInstancesInDock = Defaults.Keys.groupAppInstancesInDock.defaultValue
 
                 // Reset image preview settings

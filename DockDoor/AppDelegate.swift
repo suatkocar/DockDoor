@@ -141,6 +141,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         settingsManager?.close()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // Re-enable native Command+Tab when app quits
+        setNativeCommandTabEnabled(true)
+    }
+
     func quitApp() {
         NSApplication.shared.terminate(nil)
     }

@@ -93,6 +93,11 @@ final class LiveCaptureManager {
         accessOrder.removeAll { $0 == windowID }
     }
 
+    /// Get the last captured frame for a window (useful for updating thumbnails after live preview ends)
+    func getLastFrame(for windowID: CGWindowID) -> CGImage? {
+        captures[windowID]?.lastFrame ?? captures[windowID]?.capturedImage
+    }
+
     func stopAllStreams() async {
         for capture in captures.values {
             capture.forceStopNonBlocking()

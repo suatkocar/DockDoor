@@ -43,7 +43,7 @@ struct WindowInfo: Identifiable, Hashable {
     var frame: CGRect { windowProvider.frame }
     var scWindow: SCWindow? { _scWindow }
 
-    /// Returns true if this is a windowless app placeholder (like AltTab's isWindowlessApp)
+    /// Returns true if this is a windowless app placeholder
     /// Windowless apps have id == 0 and show only the app icon
     var isWindowlessApp: Bool { id == 0 }
 

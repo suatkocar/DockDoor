@@ -477,13 +477,39 @@ extension WindowUtil {
 // MARK: - Window Discovery
 
 extension WindowUtil {
-    static func getAllWindowsOfAllApps() -> [WindowInfo] {
+    // Cache for windowless apps to avoid expensive CGWindowListCopyWindowInfo call on every activation
+    private static var cachedWindowlessApps: [WindowInfo] = []
+    private static var windowlessAppsCacheTime: Date?
+    private static let windowlessAppsCacheValiditySeconds: TimeInterval = 5.0 // Refresh every 5 seconds
+    private static var isRefreshingWindowlessApps = false
+
+    static func getAllWindowsOfAllApps(skipWindowlessApps: Bool = false) -> [WindowInfo] {
         var windows = desktopSpaceWindowCacheManager.getAllWindows()
 
         // Add windowless apps (like DeepL) - apps that are running but have no windows
-        // This is done here (not in background) to avoid race conditions
-        let windowlessApps = getWindowlessApps(existingWindows: windows)
-        windows.append(contentsOf: windowlessApps)
+        // OPTIMIZATION: Always return cached data immediately, refresh in background if stale
+        if !skipWindowlessApps {
+            // Always use cached data for instant response
+            windows.append(contentsOf: cachedWindowlessApps)
+
+            // Check if we need to refresh in background
+            let now = Date()
+            let needsRefresh = windowlessAppsCacheTime == nil ||
+                now.timeIntervalSince(windowlessAppsCacheTime!) >= windowlessAppsCacheValiditySeconds
+
+            if needsRefresh, !isRefreshingWindowlessApps {
+                isRefreshingWindowlessApps = true
+                let currentWindows = windows // Capture for background task
+                Task.detached(priority: .utility) {
+                    let windowlessApps = getWindowlessApps(existingWindows: currentWindows)
+                    await MainActor.run {
+                        cachedWindowlessApps = windowlessApps
+                        windowlessAppsCacheTime = Date()
+                        isRefreshingWindowlessApps = false
+                    }
+                }
+            }
+        }
 
         var filteredWindows = !Defaults[.includeHiddenWindowsInSwitcher]
             ? windows.filter { !$0.isHidden && !$0.isMinimized }
@@ -506,7 +532,6 @@ extension WindowUtil {
     }
 
     /// Returns windowless app entries for running apps that have no windows
-    /// Similar to AltTab's addWindowlessWindowIfNeeded() but called synchronously when switcher opens
     private static func getWindowlessApps(existingWindows: [WindowInfo]) -> [WindowInfo] {
         let runningApps = NSWorkspace.shared.runningApplications.filter {
             $0.activationPolicy == .regular && !$0.isTerminated
@@ -622,6 +647,29 @@ extension WindowUtil {
 
         return windows.filter { windowInfo in
             windowInfo.app.processIdentifier == frontmostApp.processIdentifier
+        }
+    }
+
+    /// Synchronous version of filterWindowsByCurrentSpace for instant mode.
+    /// Uses only cached space info - no async API calls for maximum speed.
+    static func filterWindowsByCurrentSpaceSync(_ windows: [WindowInfo]) -> [WindowInfo] {
+        let activeSpaceIDs = currentActiveSpaceIDs()
+
+        return windows.filter { windowInfo in
+            let windowSpaces = Set(windowInfo.id.cgsSpaces().map { Int($0) })
+
+            // Check cached space info first
+            if !windowSpaces.isEmpty {
+                return !windowSpaces.isDisjoint(with: activeSpaceIDs)
+            }
+
+            // Fall back to stored spaceID
+            if let spaceID = windowInfo.spaceID {
+                return activeSpaceIDs.contains(spaceID)
+            }
+
+            // If no space info available, include the window (better to show than hide)
+            return true
         }
     }
 
@@ -752,7 +800,6 @@ extension WindowUtil {
         }
     }
 
-    /// Updates space info for all cached windows (like AltTab's updatesWindowSpace)
     /// Call this before showing window switcher to refresh space info
     static func updateSpaceInfoForAllWindows() {
         let allWindows = desktopSpaceWindowCacheManager.getAllWindows()
@@ -842,7 +889,7 @@ extension WindowUtil {
                         excludeWindowIDs: cachedWindowIDs
                     )
                 } else {
-                    // AX not accessible (other space) - capture screenshot via CGS like AltTab does
+                    // AX not accessible (other space) - capture screenshot via CGS
                     let spaceIds = windowID.cgsSpaces()
 
                     // Capture screenshot using CGSHWCaptureWindowList (works across spaces)
@@ -899,8 +946,6 @@ extension WindowUtil {
     }
 
     /// Adds placeholder entries for running apps with no windows (like DeepL)
-    /// Similar to AltTab's addWindowlessWindowIfNeeded() function
-    /// AltTab ONLY does this for .regular apps, NOT .accessory apps
     private static func addWindowlessApps() async {
         let runningApps = NSWorkspace.shared.runningApplications.filter {
             $0.activationPolicy == .regular && !$0.isTerminated

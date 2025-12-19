@@ -21,8 +21,46 @@ private class WindowSwitchingCoordinator {
     private var uiRenderingTask: Task<Void, Never>?
     private var currentSessionId = UUID()
 
+    /// Set BEFORE UI opens, cleared when dismissed - critical for catching quick modifier releases
+    var isSwitcherBeingUsed = false
+
     private static var lastUpdateAllWindowsTime: Date?
     private static let updateAllWindowsThrottleInterval: TimeInterval = 60.0
+
+    /// Synchronous version for instant mode - no async overhead, no blocking guard
+    @MainActor
+    func handleWindowSwitchingSync(
+        previewCoordinator: SharedPreviewWindowCoordinator,
+        isModifierPressed: Bool,
+        isShiftPressed: Bool,
+        mode: SwitcherInvocationMode = .allWindows
+    ) {
+        if stateManager.isActive, !previewCoordinator.isVisible {
+            stateManager.reset()
+        }
+
+        if stateManager.isActive {
+            let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
+            if uiIndex >= 0, uiIndex != stateManager.currentIndex {
+                stateManager.setIndex(uiIndex)
+            }
+
+            if isShiftPressed {
+                stateManager.cycleBackward()
+            } else {
+                stateManager.cycleForward()
+            }
+
+            previewCoordinator.windowSwitcherCoordinator.hasMovedSinceOpen = false
+            previewCoordinator.windowSwitcherCoordinator.initialHoverLocation = nil
+            previewCoordinator.windowSwitcherCoordinator.setIndex(to: stateManager.currentIndex)
+        } else if isModifierPressed {
+            initializeWindowSwitchingSync(
+                previewCoordinator: previewCoordinator,
+                mode: mode
+            )
+        }
+    }
 
     @MainActor
     func handleWindowSwitching(
@@ -64,12 +102,90 @@ private class WindowSwitchingCoordinator {
         }
     }
 
+    // Cache for space refresh to avoid calling every activation
+    private static var lastSpaceRefreshTime: Date?
+    private static let spaceRefreshThrottleInterval: TimeInterval = 0.5 // Refresh at most every 500ms
+
+    /// Fully synchronous initialization for instant mode - maximum speed
+    @MainActor
+    private func initializeWindowSwitchingSync(
+        previewCoordinator: SharedPreviewWindowCoordinator,
+        mode: SwitcherInvocationMode = .allWindows
+    ) {
+        // OPTIMIZATION: Throttle space refresh - it's expensive and rarely changes
+        let now = Date()
+        if let lastRefresh = WindowSwitchingCoordinator.lastSpaceRefreshTime,
+           now.timeIntervalSince(lastRefresh) < WindowSwitchingCoordinator.spaceRefreshThrottleInterval
+        {
+            // Skip space refresh - use cached data
+        } else {
+            refreshSpacesInfo()
+            WindowUtil.updateSpaceInfoForAllWindows()
+            WindowSwitchingCoordinator.lastSpaceRefreshTime = now
+        }
+
+        // Get windows immediately from cache (fast with windowless apps cache)
+        var windows = WindowUtil.getAllWindowsOfAllApps()
+
+        // Apply space filter using sync version
+        let filterBySpace = (mode == .currentSpaceOnly || mode == .activeAppCurrentSpace)
+            || (mode == .allWindows && Defaults[.showWindowsFromCurrentSpaceOnlyInSwitcher])
+        if filterBySpace {
+            windows = WindowUtil.filterWindowsByCurrentSpaceSync(windows)
+        }
+
+        // Apply active app filter
+        let filterByApp = (mode == .activeAppOnly || mode == .activeAppCurrentSpace)
+            || (mode == .allWindows && Defaults[.limitSwitcherToFrontmostApp])
+        if filterByApp {
+            windows = WindowUtil.getWindowsForFrontmostApp(from: windows)
+        }
+
+        // Apply hidden windows filter
+        if !Defaults[.includeHiddenWindowsInSwitcher] {
+            windows = windows.filter { !$0.isHidden && !$0.isMinimized }
+        }
+
+        // Sort windows
+        windows = WindowUtil.sortWindowsForSwitcher(windows)
+
+        guard !windows.isEmpty else { return }
+
+        currentSessionId = UUID()
+        let sessionId = currentSessionId
+
+        stateManager.initializeWithWindows(windows)
+
+        let currentMouseLocation = DockObserver.getMousePosition()
+        let targetScreen = getTargetScreenForSwitcher()
+
+        uiRenderingTask?.cancel()
+
+        // Show UI synchronously
+        renderWindowSwitcherUISync(
+            previewCoordinator: previewCoordinator,
+            windows: windows,
+            currentMouseLocation: currentMouseLocation,
+            targetScreen: targetScreen,
+            sessionId: sessionId
+        )
+
+        // Uncomment for performance debugging (also uncomment timing variables above):
+        // let totalTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+        // print("TIMING[Switcher]: Total=\(String(format: "%.1f", totalTime))ms, windows=\(windows.count) | space=\(String(format: "%.1f", spaceRefreshTime))ms, get=\(String(format: "%.1f", getWindowsTime))ms, filter=\(String(format: "%.1f", filterSortTime))ms, render=\(String(format: "%.1f", renderTime))ms")
+
+        // Background tasks - don't block UI
+        Task.detached(priority: .low) {
+            await WindowUtil.discoverAllWindowsFromAllSpaces()
+        }
+    }
+
     @MainActor
     private func initializeWindowSwitching(
         previewCoordinator: SharedPreviewWindowCoordinator,
         mode: SwitcherInvocationMode = .allWindows
     ) async {
-        // Quick sync updates - no async/await blocking
+        // Quick sync updates
         refreshSpacesInfo()
         WindowUtil.updateSpaceInfoForAllWindows()
 
@@ -114,10 +230,10 @@ private class WindowSwitchingCoordinator {
         let targetScreen = getTargetScreenForSwitcher()
 
         uiRenderingTask?.cancel()
+
+        // Normal mode: use delayed Task
         uiRenderingTask = Task { @MainActor in
-            if !Defaults[.instantWindowSwitcher] {
-                try? await Task.sleep(nanoseconds: 100_000_000)
-            }
+            try? await Task.sleep(nanoseconds: 100_000_000)
             await renderWindowSwitcherUI(
                 previewCoordinator: previewCoordinator,
                 windows: windows,
@@ -142,6 +258,57 @@ private class WindowSwitchingCoordinator {
         }
     }
 
+    /// Synchronous version for instant mode - no async overhead
+    @MainActor
+    private func renderWindowSwitcherUISync(
+        previewCoordinator: SharedPreviewWindowCoordinator,
+        windows: [WindowInfo],
+        currentMouseLocation: CGPoint,
+        targetScreen: NSScreen,
+        sessionId: UUID
+    ) {
+        guard sessionId == currentSessionId else { return }
+        guard stateManager.isActive else { return }
+        guard isSwitcherBeingUsed else { return }
+
+        if previewCoordinator.isVisible, previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive {
+            previewCoordinator.windowSwitcherCoordinator.setIndex(to: stateManager.currentIndex)
+            return
+        }
+
+        let showWindowLambda = { (mouseLocation: NSPoint?, mouseScreen: NSScreen?) in
+            guard self.isSwitcherBeingUsed else { return }
+            previewCoordinator.showWindow(
+                appName: "Window Switcher",
+                windows: windows,
+                mouseLocation: mouseLocation,
+                mouseScreen: mouseScreen,
+                dockItemElement: nil,
+                overrideDelay: true,
+                centeredHoverWindowState: .windowSwitcher,
+                onWindowTap: {
+                    self.cancelSwitching()
+                    Task { @MainActor in
+                        previewCoordinator.hideWindow()
+                    }
+                },
+                initialIndex: self.stateManager.currentIndex
+            )
+        }
+
+        switch Defaults[.windowSwitcherPlacementStrategy] {
+        case .pinnedToScreen:
+            let screenCenter = NSPoint(x: targetScreen.frame.midX, y: targetScreen.frame.midY)
+            showWindowLambda(screenCenter, targetScreen)
+        case .screenWithLastActiveWindow:
+            showWindowLambda(nil, nil)
+        case .screenWithMouse:
+            let mouseScreen = NSScreen.screenContainingMouse(currentMouseLocation)
+            let convertedMouseLocation = DockObserver.nsPointFromCGPoint(currentMouseLocation, forScreen: mouseScreen)
+            showWindowLambda(convertedMouseLocation, mouseScreen)
+        }
+    }
+
     @MainActor
     private func renderWindowSwitcherUI(
         previewCoordinator: SharedPreviewWindowCoordinator,
@@ -153,12 +320,16 @@ private class WindowSwitchingCoordinator {
     ) async {
         guard sessionId == currentSessionId else { return }
         guard stateManager.isActive else { return }
+        // Check if switcher was cancelled during async wait (prevents race condition)
+        guard isSwitcherBeingUsed else { return }
 
         if previewCoordinator.isVisible, previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive {
             previewCoordinator.windowSwitcherCoordinator.setIndex(to: stateManager.currentIndex)
             return
         }
         let showWindowLambda = { (mouseLocation: NSPoint?, mouseScreen: NSScreen?) in
+            // Double-check before showing - release could have happened
+            guard self.isSwitcherBeingUsed else { return }
             previewCoordinator.showWindow(
                 appName: "Window Switcher",
                 windows: windows,
@@ -214,7 +385,31 @@ private class WindowSwitchingCoordinator {
         stateManager.isActive
     }
 
+    /// Synchronous cycling for Tab key - no async overhead
+    @MainActor
+    func cycleSelection(
+        previewCoordinator: SharedPreviewWindowCoordinator,
+        backward: Bool
+    ) {
+        guard stateManager.isActive else { return }
+
+        // Sync index if needed
+        let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
+        if uiIndex >= 0, uiIndex != stateManager.currentIndex {
+            stateManager.setIndex(uiIndex)
+        }
+
+        if backward {
+            stateManager.cycleBackward()
+        } else {
+            stateManager.cycleForward()
+        }
+
+        previewCoordinator.windowSwitcherCoordinator.setIndex(to: stateManager.currentIndex)
+    }
+
     func cancelSwitching() {
+        isSwitcherBeingUsed = false
         currentSessionId = UUID()
         stateManager.reset()
         uiRenderingTask?.cancel()
@@ -245,15 +440,34 @@ class KeybindHelper {
     private var tabCycleTimer: Timer?
     private var isTabKeyDown: Bool = false
 
+    // Carbon hotkey manager for instant response
+    private let carbonHotkeyManager = CarbonHotkeyManager.shared
+    private var useCarbonHotkeys: Bool { Defaults[.instantWindowSwitcher] }
+    private var hotkeyObservation: Defaults.Observation?
+
     init(previewCoordinator: SharedPreviewWindowCoordinator) {
         self.previewCoordinator = previewCoordinator
+        setupCarbonHotkeys()
         setupEventTap()
         startMonitoring()
+        setupHotkeyObservation()
+    }
+
+    private func setupHotkeyObservation() {
+        // Re-register Carbon hotkeys when settings change
+        hotkeyObservation = Defaults.observe(
+            keys: .UserKeybind, .alternateKeybindKey, .instantWindowSwitcher
+        ) { [weak self] in
+            DispatchQueue.main.async {
+                self?.carbonHotkeyManager.updateHotkeys()
+            }
+        }
     }
 
     func reset() {
         cleanup()
         resetState()
+        setupCarbonHotkeys()
         setupEventTap()
         startMonitoring()
     }
@@ -266,6 +480,7 @@ class KeybindHelper {
         tabCycleTimer?.invalidate()
         tabCycleTimer = nil
         isTabKeyDown = false
+        carbonHotkeyManager.cleanup()
         removeEventTap()
     }
 
@@ -274,6 +489,68 @@ class KeybindHelper {
         isShiftKeyPressedGeneral = false
         preventSwitcherHideOnRelease = false
         currentInvocationMode = .allWindows
+    }
+
+    // MARK: - Carbon Hotkey Setup
+
+    private func setupCarbonHotkeys() {
+        guard Defaults[.enableWindowSwitcher] else { return }
+        guard useCarbonHotkeys else { return }
+
+        // Setup Carbon hotkeys with callback - fires on main thread instantly
+        carbonHotkeyManager.setup { [weak self] hotkeyId, isPressed in
+            guard let self else { return }
+            if isPressed {
+                handleCarbonHotkeyPressed(hotkeyId)
+            }
+            // Release is handled by flagsChanged for modifier keys
+        }
+    }
+
+    /// Handle Carbon hotkey press - runs on main thread instantly
+    private func handleCarbonHotkeyPressed(_ hotkeyId: Int) {
+        guard Defaults[.enableWindowSwitcher] else { return }
+        guard useCarbonHotkeys else { return }
+
+        // Set flags synchronously - we're already on main thread!
+        windowSwitchingCoordinator.isSwitcherBeingUsed = true
+        hasProcessedModifierRelease = false
+
+        // Determine mode based on hotkey ID
+        let mode: SwitcherInvocationMode = if hotkeyId == CarbonHotkeyManager.HotkeyID.primary.rawValue {
+            .allWindows
+        } else if hotkeyId == CarbonHotkeyManager.HotkeyID.alternate.rawValue {
+            Defaults[.alternateKeybindMode]
+        } else {
+            .allWindows
+        }
+
+        currentInvocationMode = mode
+
+        // Update modifier state from current flags
+        let currentFlags = NSEvent.modifierFlags
+        let keyBoardShortcutSaved: UserKeyBind = Defaults[.UserKeybind]
+        updateModifierStateFromNSEventFlags(currentFlags, keyBoardShortcutSaved: keyBoardShortcutSaved)
+
+        // Call handleKeybindActivation directly - Carbon callbacks run on main thread
+        // Use MainActor.assumeIsolated since we know we're on main thread
+        MainActor.assumeIsolated {
+            self.handleKeybindActivation(mode: mode)
+        }
+    }
+
+    /// Update modifier state from NSEvent flags (used by Carbon callbacks)
+    private func updateModifierStateFromNSEventFlags(_ flags: NSEvent.ModifierFlags, keyBoardShortcutSaved: UserKeyBind) {
+        let wantsAlt = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskAlternate.rawValue)) != 0
+        let wantsCtrl = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskControl.rawValue)) != 0
+        let wantsCmd = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskCommand.rawValue)) != 0
+
+        let altPressed = flags.contains(.option)
+        let ctrlPressed = flags.contains(.control)
+        let cmdPressed = flags.contains(.command)
+
+        isSwitcherModifierKeyPressed = (wantsAlt && altPressed) || (wantsCtrl && ctrlPressed) || (wantsCmd && cmdPressed)
+        isShiftKeyPressedGeneral = flags.contains(.shift)
     }
 
     private func startMonitoring() {
@@ -295,7 +572,13 @@ class KeybindHelper {
     }
 
     private func setupEventTap() {
-        let eventMask = (1 << CGEventType.keyDown.rawValue) |
+        // Always listen for keyDown/keyUp because we need:
+        // 1. Tab key repeat for cycling when switcher is visible
+        // 2. Arrow keys, Escape, Enter for navigation
+        // 3. Search input when switcher is active
+        // Carbon hotkeys handle the INITIAL activation, but CGEventTap handles
+        // subsequent keys when the switcher is already open
+        let eventMask: Int = (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.keyUp.rawValue) |
             (1 << CGEventType.flagsChanged.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue)
@@ -367,7 +650,9 @@ class KeybindHelper {
             }
             isCommandKeyCurrentlyDown = cmdNowDown
 
-            Task { @MainActor [weak self] in
+            // Use DispatchQueue.main.async instead of Task for faster execution
+            // This is critical for catching quick modifier releases
+            DispatchQueue.main.async { [weak self] in
                 self?.handleModifierEvent(currentSwitcherModifierIsPressed: currentSwitcherModifierIsPressed, currentShiftState: currentShiftState)
             }
 
@@ -500,8 +785,17 @@ class KeybindHelper {
                 }
             }
 
-            let (shouldConsume, actionTask) = determineActionForKeyDown(event: event)
-            if let task = actionTask {
+            let (shouldConsume, actionTask, shouldSetSwitcherFlag, syncAction) = determineActionForKeyDown(event: event)
+            // Set isSwitcherBeingUsed SYNCHRONOUSLY before any async work - must be set before release can happen
+            if shouldSetSwitcherFlag {
+                windowSwitchingCoordinator.isSwitcherBeingUsed = true
+            }
+            // For instant mode, execute on MainActor to eliminate async overhead
+            if let syncAction {
+                Task { @MainActor in
+                    syncAction()
+                }
+            } else if let task = actionTask {
                 Task { @MainActor in
                     await task()
                 }
@@ -583,6 +877,39 @@ class KeybindHelper {
             hasProcessedModifierRelease = false
         }
 
+        // Safety check: Catches cases where modifier release events arrive out of order or are dropped
+        if windowSwitchingCoordinator.isSwitcherBeingUsed,
+           !currentSwitcherModifierIsPressed,
+           !Defaults[.preventSwitcherHide],
+           !preventSwitcherHideOnRelease,
+           !hasProcessedModifierRelease
+        {
+            // Verify modifier is truly released by checking current state
+            let currentModifiers = NSEvent.modifierFlags
+            let keyBoardShortcutSaved: UserKeyBind = Defaults[.UserKeybind]
+            let wantsAlt = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskAlternate.rawValue)) != 0
+            let wantsCtrl = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskControl.rawValue)) != 0
+            let wantsCmd = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskCommand.rawValue)) != 0
+
+            let modifierStillPressed = (wantsAlt && currentModifiers.contains(.option)) ||
+                (wantsCtrl && currentModifiers.contains(.control)) ||
+                (wantsCmd && currentModifiers.contains(.command))
+
+            if !modifierStillPressed {
+                hasProcessedModifierRelease = true
+                preventSwitcherHideOnRelease = false
+                stopShiftCycleTimer()
+                stopTabCycleTimer()
+                windowSwitchingCoordinator.isSwitcherBeingUsed = false
+                if previewCoordinator.isVisible {
+                    previewCoordinator.selectAndBringToFrontCurrentWindow()
+                }
+                windowSwitchingCoordinator.cancelSwitching()
+                previewCoordinator.hideWindow()
+                return
+            }
+        }
+
         let shouldCycleBackward = previewCoordinator.isVisible &&
             ((previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive && (currentSwitcherModifierIsPressed || Defaults[.preventSwitcherHide])) ||
                 (!previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive))
@@ -590,10 +917,11 @@ class KeybindHelper {
         if currentShiftState, shouldCycleBackward {
             if shiftCycleTimer == nil {
                 if windowSwitchingCoordinator.stateManager.isActive {
-                    syncStateManagerWithViewIndex()
-                    windowSwitchingCoordinator.stateManager.cycleBackward()
-                    let newIndex = windowSwitchingCoordinator.stateManager.currentIndex
-                    previewCoordinator.windowSwitcherCoordinator.setIndex(to: newIndex)
+                    // Direct synchronous cycling
+                    windowSwitchingCoordinator.cycleSelection(
+                        previewCoordinator: previewCoordinator,
+                        backward: true
+                    )
                 }
                 shiftCycleTimer = Timer.scheduledTimer(withTimeInterval: TimerConstants.initialDelay, repeats: false) { [weak self] _ in
                     guard let self else { return }
@@ -604,10 +932,11 @@ class KeybindHelper {
                             return
                         }
                         if windowSwitchingCoordinator.stateManager.isActive {
-                            windowSwitchingCoordinator.stateManager.cycleBackward()
-                            let newIndex = windowSwitchingCoordinator.stateManager.currentIndex
                             DispatchQueue.main.async {
-                                self.previewCoordinator.windowSwitcherCoordinator.setIndex(to: newIndex)
+                                self.windowSwitchingCoordinator.cycleSelection(
+                                    previewCoordinator: self.previewCoordinator,
+                                    backward: true
+                                )
                             }
                         }
                     }
@@ -624,13 +953,24 @@ class KeybindHelper {
                 preventSwitcherHideOnRelease = false
                 stopShiftCycleTimer()
                 stopTabCycleTimer()
-                Task { @MainActor in
-                    if self.previewCoordinator.isVisible, self.previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive {
-                        self.previewCoordinator.selectAndBringToFrontCurrentWindow()
-                        self.windowSwitchingCoordinator.cancelSwitching()
-                    } else if let selectedWindow = self.windowSwitchingCoordinator.selectCurrentWindow() {
-                        selectedWindow.bringToFront()
-                        self.previewCoordinator.hideWindow()
+
+                // Handle release synchronously - isSwitcherBeingUsed flag is set BEFORE UI opens
+                if windowSwitchingCoordinator.isSwitcherBeingUsed {
+                    windowSwitchingCoordinator.isSwitcherBeingUsed = false
+
+                    if previewCoordinator.isVisible, previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive {
+                        previewCoordinator.selectAndBringToFrontCurrentWindow()
+                        windowSwitchingCoordinator.cancelSwitching()
+                    } else if windowSwitchingCoordinator.stateManager.isActive {
+                        // Switcher was initializing but not yet visible - cancel and select
+                        if let selectedWindow = windowSwitchingCoordinator.selectCurrentWindow() {
+                            selectedWindow.bringToFront()
+                        }
+                        previewCoordinator.hideWindow()
+                    } else {
+                        // UI never opened - just cancel
+                        windowSwitchingCoordinator.cancelSwitching()
+                        previewCoordinator.hideWindow()
                     }
                 }
             }
@@ -640,13 +980,6 @@ class KeybindHelper {
     private enum TimerConstants {
         static let initialDelay: TimeInterval = 0.4
         static let repeatInterval: TimeInterval = 0.05
-    }
-
-    private func syncStateManagerWithViewIndex() {
-        let viewIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
-        if viewIndex >= 0, viewIndex != windowSwitchingCoordinator.stateManager.currentIndex {
-            windowSwitchingCoordinator.stateManager.setIndex(viewIndex)
-        }
     }
 
     private func stopShiftCycleTimer() {
@@ -664,15 +997,11 @@ class KeybindHelper {
     private func handleTabKeyDown(isShiftHeld: Bool) {
         guard windowSwitchingCoordinator.stateManager.isActive else { return }
 
-        syncStateManagerWithViewIndex()
-
-        if isShiftHeld {
-            windowSwitchingCoordinator.stateManager.cycleBackward()
-        } else {
-            windowSwitchingCoordinator.stateManager.cycleForward()
-        }
-        let newIndex = windowSwitchingCoordinator.stateManager.currentIndex
-        previewCoordinator.windowSwitcherCoordinator.setIndex(to: newIndex)
+        // Direct synchronous cycling - no async overhead
+        windowSwitchingCoordinator.cycleSelection(
+            previewCoordinator: previewCoordinator,
+            backward: isShiftHeld
+        )
 
         tabCycleTimer?.invalidate()
         tabCycleTimer = Timer.scheduledTimer(withTimeInterval: TimerConstants.initialDelay, repeats: false) { [weak self] _ in
@@ -684,23 +1013,20 @@ class KeybindHelper {
                     return
                 }
                 let currentShiftState = NSEvent.modifierFlags.contains(.shift)
-                if currentShiftState {
-                    windowSwitchingCoordinator.stateManager.cycleBackward()
-                } else {
-                    windowSwitchingCoordinator.stateManager.cycleForward()
-                }
-                let idx = windowSwitchingCoordinator.stateManager.currentIndex
                 DispatchQueue.main.async {
-                    self.previewCoordinator.windowSwitcherCoordinator.setIndex(to: idx)
+                    self.windowSwitchingCoordinator.cycleSelection(
+                        previewCoordinator: self.previewCoordinator,
+                        backward: currentShiftState
+                    )
                 }
             }
         }
     }
 
-    private func determineActionForKeyDown(event: CGEvent) -> (shouldConsume: Bool, actionTask: (() async -> Void)?) {
+    private func determineActionForKeyDown(event: CGEvent) -> (shouldConsume: Bool, actionTask: (() async -> Void)?, shouldSetSwitcherFlag: Bool, syncAction: (@MainActor () -> Void)?) {
         // Check if we should ignore keybinds for fullscreen blacklisted apps
         if WindowUtil.shouldIgnoreKeybindForFrontmostApp() {
-            return (false, nil)
+            return (false, nil, false, nil)
         }
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
@@ -717,13 +1043,13 @@ class KeybindHelper {
                     await self.previewCoordinator.hideWindow()
                     self.preventSwitcherHideOnRelease = false
                     self.hasProcessedModifierRelease = true
-                })
+                }, false, nil)
             }
 
             if flags.contains(.maskCommand), previewCoordinator.windowSwitcherCoordinator.currIndex >= 0 {
                 // Check configurable Cmd+key shortcuts
                 if let action = getActionForCmdShortcut(keyCode: keyCode) {
-                    return (true, { await self.previewCoordinator.performActionOnCurrentWindow(action: action) })
+                    return (true, { await self.previewCoordinator.performActionOnCurrentWindow(action: action) }, false, nil)
                 }
             }
         }
@@ -740,17 +1066,30 @@ class KeybindHelper {
             (!isDesiredModifierPressedNow && keyBoardShortcutSaved.modifierFlags == 0 && keyCode == keyBoardShortcutSaved.keyCode)
 
         if isExactSwitcherShortcutPressed {
-            guard Defaults[.enableWindowSwitcher] else { return (false, nil) }
-            return (true, { await self.handleKeybindActivation(mode: .allWindows) })
+            guard Defaults[.enableWindowSwitcher] else { return (false, nil, false, nil) }
+            // When Carbon hotkeys are enabled, PASS THROUGH the event so Carbon can see it
+            // shouldConsume = false means we don't eat the event
+            if useCarbonHotkeys {
+                // Let Carbon handle this - DON'T consume the event!
+                return (false, nil, false, nil)
+            }
+            // Fallback for non-instant mode: use async handling
+            return (true, { await self.handleKeybindActivation(mode: .allWindows) }, true, nil)
         }
 
         // Check alternate keybind (shares same modifier as primary keybind)
         if isDesiredModifierPressedNow {
             let alternateKey = Defaults[.alternateKeybindKey]
             if alternateKey != 0, keyCode == alternateKey {
-                guard Defaults[.enableWindowSwitcher] else { return (false, nil) }
+                guard Defaults[.enableWindowSwitcher] else { return (false, nil, false, nil) }
                 let mode = Defaults[.alternateKeybindMode]
-                return (true, { await self.handleKeybindActivation(mode: mode) })
+                // When Carbon hotkeys are enabled, PASS THROUGH the event so Carbon can see it
+                if useCarbonHotkeys {
+                    // Let Carbon handle this - DON'T consume the event!
+                    return (false, nil, false, nil)
+                }
+                // Fallback for non-instant mode: use async handling
+                return (true, { await self.handleKeybindActivation(mode: mode) }, true, nil)
             }
         }
 
@@ -769,10 +1108,10 @@ class KeybindHelper {
                 }
                 return (true, { @MainActor in
                     self.previewCoordinator.navigateWithArrowKey(direction: dir)
-                })
+                }, false, nil)
             case Int64(kVK_Return), Int64(kVK_ANSI_KeypadEnter):
                 if previewCoordinator.windowSwitcherCoordinator.currIndex >= 0 {
-                    return (true, makeEnterSelectionTask())
+                    return (true, makeEnterSelectionTask(), false, nil)
                 }
             default:
                 break
@@ -787,7 +1126,7 @@ class KeybindHelper {
             return (true, { @MainActor in
                 self.previewCoordinator.focusSearchWindow()
                 self.preventSwitcherHideOnRelease = true
-            })
+            }, false, nil)
         }
         if previewIsCurrentlyVisible,
            previewCoordinator.windowSwitcherCoordinator.windowSwitcherActive,
@@ -808,7 +1147,7 @@ class KeybindHelper {
                             self.preventSwitcherHideOnRelease = false
                         }
                     }
-                })
+                }, false, nil)
             }
 
             if !flags.contains(.maskCommand),
@@ -831,7 +1170,7 @@ class KeybindHelper {
                         if !newQuery.isEmpty {
                             self.preventSwitcherHideOnRelease = true
                         }
-                    })
+                    }, false, nil)
                 }
             }
         }
@@ -843,10 +1182,15 @@ class KeybindHelper {
            keyBoardShortcutSaved.modifierFlags != 0,
            !flags.hasSuperfluousModifiers(ignoring: [.maskShift, .maskAlphaShift, .maskNumericPad])
         {
-            return (true, { await self.handleKeybindActivation() })
+            // When Carbon hotkeys are enabled, they handle this directly
+            if useCarbonHotkeys {
+                return (true, nil, false, nil)
+            }
+            // Fallback for non-instant mode
+            return (true, { await self.handleKeybindActivation() }, true, nil)
         }
 
-        return (false, nil)
+        return (false, nil, false, nil)
     }
 
     private func makeEnterSelectionTask() -> (() async -> Void) {
@@ -873,13 +1217,25 @@ class KeybindHelper {
         guard Defaults[.enableWindowSwitcher] else { return }
         hasProcessedModifierRelease = false
         currentInvocationMode = mode
-        Task { @MainActor in
-            await windowSwitchingCoordinator.handleWindowSwitching(
+
+        if Defaults[.instantWindowSwitcher] {
+            // Instant mode: call synchronously for maximum speed
+            windowSwitchingCoordinator.handleWindowSwitchingSync(
                 previewCoordinator: previewCoordinator,
-                isModifierPressed: self.isSwitcherModifierKeyPressed,
-                isShiftPressed: self.isShiftKeyPressedGeneral,
+                isModifierPressed: isSwitcherModifierKeyPressed,
+                isShiftPressed: isShiftKeyPressedGeneral,
                 mode: mode
             )
+        } else {
+            // Normal mode: use async for delayed display
+            Task { @MainActor in
+                await windowSwitchingCoordinator.handleWindowSwitching(
+                    previewCoordinator: previewCoordinator,
+                    isModifierPressed: self.isSwitcherModifierKeyPressed,
+                    isShiftPressed: self.isShiftKeyPressedGeneral,
+                    mode: mode
+                )
+            }
         }
     }
 

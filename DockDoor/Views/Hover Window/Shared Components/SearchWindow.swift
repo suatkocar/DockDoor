@@ -182,6 +182,15 @@ class SearchWindow: NSPanel, NSTextFieldDelegate {
     }
 
     func hideSearch() {
+        // Resign key/main window status to fix scroll issues in other windows
+        if isKeyWindow {
+            resignKey()
+        }
+        if isMainWindow {
+            resignMain()
+        }
+        // Clear first responder
+        makeFirstResponder(nil)
         orderOut(nil)
         searchField.stringValue = ""
         previewCoordinator?.searchQuery = ""

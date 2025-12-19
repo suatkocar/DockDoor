@@ -176,13 +176,13 @@ func getVisibleSpaceIDs() -> [CGSSpaceID] {
     return visibleSpaces
 }
 
-// MARK: - Spaces Info Cache (like AltTab's Spaces class)
+// MARK: - Spaces Info Cache
 
 private var cachedSpaceIdsAndIndexes: [(CGSSpaceID, Int)] = []
 private var cachedCurrentSpaceId: CGSSpaceID = 1
 private var cachedVisibleSpaces: [CGSSpaceID] = []
 
-/// Refreshes all space information (like AltTab's Spaces.refresh())
+/// Refreshes all space information
 func refreshSpacesInfo() {
     cachedSpaceIdsAndIndexes.removeAll()
     cachedVisibleSpaces.removeAll()

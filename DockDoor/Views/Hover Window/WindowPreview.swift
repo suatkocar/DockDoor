@@ -19,64 +19,68 @@ struct WindowPreview: View {
     let onHoverIndexChange: ((Int?, CGPoint?) -> Bool)?
     var isEligibleForLivePreview: Bool = true
 
-    @Default(.windowSwitcherControlPosition) var windowSwitcherControlPosition
-    @Default(.dockPreviewControlPosition) var dockPreviewControlPosition
-    @Default(.selectionOpacity) var selectionOpacity
-    @Default(.unselectedContentOpacity) var unselectedContentOpacity
-    @Default(.hoverHighlightColor) var hoverHighlightColor
-    @Default(.allowDynamicImageSizing) var allowDynamicImageSizing
-    @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
-    @Default(.useEmbeddedWindowSwitcherElements) var useEmbeddedWindowSwitcherElements
-    @Default(.hidePreviewCardBackground) var hidePreviewCardBackground
-    @Default(.showMinimizedHiddenLabels) var showMinimizedHiddenLabels
-    @Default(.useLiquidGlass) var useLiquidGlass
-    @Default(.previewCardGlassVariant) var previewCardGlassVariant
-    @Default(.previewCardOpacity) var previewCardOpacity
-    @Default(.previewCardBorderOpacity) var previewCardBorderOpacity
-    @Default(.showPreviewCardBorder) var showPreviewCardBorder
+    /// Cached settings - passed from PreviewStateCoordinator to avoid repeated UserDefaults reads
+    let settings: WindowPreviewSettingsCache?
+
+    // Computed properties that read from cache or fall back to Defaults
+    private var windowSwitcherControlPosition: WindowSwitcherControlPosition { settings?.windowSwitcherControlPosition ?? Defaults[.windowSwitcherControlPosition] }
+    private var dockPreviewControlPosition: WindowSwitcherControlPosition { settings?.dockPreviewControlPosition ?? Defaults[.dockPreviewControlPosition] }
+    private var selectionOpacity: Double { settings?.selectionOpacity ?? Defaults[.selectionOpacity] }
+    private var unselectedContentOpacity: Double { settings?.unselectedContentOpacity ?? Defaults[.unselectedContentOpacity] }
+    private var hoverHighlightColor: Color? { settings?.hoverHighlightColor ?? Defaults[.hoverHighlightColor] }
+    private var allowDynamicImageSizing: Bool { settings?.allowDynamicImageSizing ?? Defaults[.allowDynamicImageSizing] }
+    private var useEmbeddedDockPreviewElements: Bool { settings?.useEmbeddedDockPreviewElements ?? Defaults[.useEmbeddedDockPreviewElements] }
+    private var useEmbeddedWindowSwitcherElements: Bool { settings?.useEmbeddedWindowSwitcherElements ?? Defaults[.useEmbeddedWindowSwitcherElements] }
+    private var hidePreviewCardBackground: Bool { settings?.hidePreviewCardBackground ?? Defaults[.hidePreviewCardBackground] }
+    private var showMinimizedHiddenLabels: Bool { settings?.showMinimizedHiddenLabels ?? Defaults[.showMinimizedHiddenLabels] }
+    private var useLiquidGlass: Bool { settings?.useLiquidGlass ?? Defaults[.useLiquidGlass] }
+    private var previewCardGlassVariant: Int { settings?.previewCardGlassVariant ?? Defaults[.previewCardGlassVariant] }
+    private var previewCardOpacity: Double { settings?.previewCardOpacity ?? Defaults[.previewCardOpacity] }
+    private var previewCardBorderOpacity: Double { settings?.previewCardBorderOpacity ?? Defaults[.previewCardBorderOpacity] }
+    private var showPreviewCardBorder: Bool { settings?.showPreviewCardBorder ?? Defaults[.showPreviewCardBorder] }
 
     // Dock embedded mode settings
-    @Default(.dockShowWindowTitle) var dockShowWindowTitle
-    @Default(.dockWindowTitleVisibility) var dockWindowTitleVisibility
-    @Default(.dockTrafficLightButtonsVisibility) var dockTrafficLightButtonsVisibility
-    @Default(.dockEnabledTrafficLightButtons) var dockEnabledTrafficLightButtons
-    @Default(.dockUseMonochromeTrafficLights) var dockUseMonochromeTrafficLights
-    @Default(.dockDisableDockStyleTrafficLights) var dockDisableDockStyleTrafficLights
-    @Default(.dockDisableDockStyleTitles) var dockDisableDockStyleTitles
-    @Default(.dockDisableButtonHoverEffects) var dockDisableButtonHoverEffects
-    @Default(.dockShowTrafficLightTooltips) var dockShowTrafficLightTooltips
+    private var dockShowWindowTitle: Bool { settings?.dockShowWindowTitle ?? Defaults[.dockShowWindowTitle] }
+    private var dockWindowTitleVisibility: WindowTitleVisibility { settings?.dockWindowTitleVisibility ?? Defaults[.dockWindowTitleVisibility] }
+    private var dockTrafficLightButtonsVisibility: TrafficLightButtonsVisibility { settings?.dockTrafficLightButtonsVisibility ?? Defaults[.dockTrafficLightButtonsVisibility] }
+    private var dockEnabledTrafficLightButtons: Set<WindowAction> { settings?.dockEnabledTrafficLightButtons ?? Defaults[.dockEnabledTrafficLightButtons] }
+    private var dockUseMonochromeTrafficLights: Bool { settings?.dockUseMonochromeTrafficLights ?? Defaults[.dockUseMonochromeTrafficLights] }
+    private var dockDisableDockStyleTrafficLights: Bool { settings?.dockDisableDockStyleTrafficLights ?? Defaults[.dockDisableDockStyleTrafficLights] }
+    private var dockDisableDockStyleTitles: Bool { settings?.dockDisableDockStyleTitles ?? Defaults[.dockDisableDockStyleTitles] }
+    private var dockDisableButtonHoverEffects: Bool { settings?.dockDisableButtonHoverEffects ?? Defaults[.dockDisableButtonHoverEffects] }
+    private var dockShowTrafficLightTooltips: Bool { settings?.dockShowTrafficLightTooltips ?? Defaults[.dockShowTrafficLightTooltips] }
 
     // Window Switcher header settings
-    @Default(.switcherShowHeaderAppIcon) var switcherShowHeaderAppIcon
-    @Default(.switcherShowHeaderAppName) var switcherShowHeaderAppName
-    @Default(.switcherShowHeaderWindowTitle) var switcherShowHeaderWindowTitle
-    @Default(.switcherHeaderAppIconVisibility) var switcherHeaderAppIconVisibility
-    @Default(.switcherHeaderAppNameVisibility) var switcherHeaderAppNameVisibility
-    @Default(.switcherHeaderTitleVisibility) var switcherHeaderTitleVisibility
+    private var switcherShowHeaderAppIcon: Bool { settings?.switcherShowHeaderAppIcon ?? Defaults[.switcherShowHeaderAppIcon] }
+    private var switcherShowHeaderAppName: Bool { settings?.switcherShowHeaderAppName ?? Defaults[.switcherShowHeaderAppName] }
+    private var switcherShowHeaderWindowTitle: Bool { settings?.switcherShowHeaderWindowTitle ?? Defaults[.switcherShowHeaderWindowTitle] }
+    private var switcherHeaderAppIconVisibility: WindowTitleVisibility { settings?.switcherHeaderAppIconVisibility ?? Defaults[.switcherHeaderAppIconVisibility] }
+    private var switcherHeaderAppNameVisibility: WindowTitleVisibility { settings?.switcherHeaderAppNameVisibility ?? Defaults[.switcherHeaderAppNameVisibility] }
+    private var switcherHeaderTitleVisibility: WindowTitleVisibility { settings?.switcherHeaderTitleVisibility ?? Defaults[.switcherHeaderTitleVisibility] }
 
     // Window Switcher embedded mode settings
-    @Default(.switcherShowWindowTitle) var switcherShowWindowTitle
-    @Default(.switcherWindowTitleVisibility) var switcherWindowTitleVisibility
-    @Default(.switcherTrafficLightButtonsVisibility) var switcherTrafficLightButtonsVisibility
-    @Default(.switcherEnabledTrafficLightButtons) var switcherEnabledTrafficLightButtons
-    @Default(.switcherUseMonochromeTrafficLights) var switcherUseMonochromeTrafficLights
-    @Default(.switcherDisableDockStyleTrafficLights) var switcherDisableDockStyleTrafficLights
-    @Default(.switcherDisableDockStyleTitles) var switcherDisableDockStyleTitles
-    @Default(.switcherDisableButtonHoverEffects) var switcherDisableButtonHoverEffects
-    @Default(.switcherShowTrafficLightTooltips) var switcherShowTrafficLightTooltips
+    private var switcherShowWindowTitle: Bool { settings?.switcherShowWindowTitle ?? Defaults[.switcherShowWindowTitle] }
+    private var switcherWindowTitleVisibility: WindowTitleVisibility { settings?.switcherWindowTitleVisibility ?? Defaults[.switcherWindowTitleVisibility] }
+    private var switcherTrafficLightButtonsVisibility: TrafficLightButtonsVisibility { settings?.switcherTrafficLightButtonsVisibility ?? Defaults[.switcherTrafficLightButtonsVisibility] }
+    private var switcherEnabledTrafficLightButtons: Set<WindowAction> { settings?.switcherEnabledTrafficLightButtons ?? Defaults[.switcherEnabledTrafficLightButtons] }
+    private var switcherUseMonochromeTrafficLights: Bool { settings?.switcherUseMonochromeTrafficLights ?? Defaults[.switcherUseMonochromeTrafficLights] }
+    private var switcherDisableDockStyleTrafficLights: Bool { settings?.switcherDisableDockStyleTrafficLights ?? Defaults[.switcherDisableDockStyleTrafficLights] }
+    private var switcherDisableDockStyleTitles: Bool { settings?.switcherDisableDockStyleTitles ?? Defaults[.switcherDisableDockStyleTitles] }
+    private var switcherDisableButtonHoverEffects: Bool { settings?.switcherDisableButtonHoverEffects ?? Defaults[.switcherDisableButtonHoverEffects] }
+    private var switcherShowTrafficLightTooltips: Bool { settings?.switcherShowTrafficLightTooltips ?? Defaults[.switcherShowTrafficLightTooltips] }
 
-    @Default(.tapEquivalentInterval) var tapEquivalentInterval
-    @Default(.previewHoverAction) var previewHoverAction
-    @Default(.showActiveWindowBorder) var showActiveWindowBorder
-    @Default(.activeAppIndicatorColor) var activeAppIndicatorColor
-    @Default(.enableLivePreview) var enableLivePreview
-    @Default(.enableLivePreviewForDock) var enableLivePreviewForDock
-    @Default(.enableLivePreviewForWindowSwitcher) var enableLivePreviewForWindowSwitcher
-    @Default(.dockLivePreviewQuality) var dockLivePreviewQuality
-    @Default(.dockLivePreviewFrameRate) var dockLivePreviewFrameRate
-    @Default(.windowSwitcherLivePreviewQuality) var windowSwitcherLivePreviewQuality
-    @Default(.windowSwitcherLivePreviewFrameRate) var windowSwitcherLivePreviewFrameRate
-    @Default(.showAnimations) var showAnimations
+    private var tapEquivalentInterval: Double { settings?.tapEquivalentInterval ?? Defaults[.tapEquivalentInterval] }
+    private var previewHoverAction: PreviewHoverAction { settings?.previewHoverAction ?? Defaults[.previewHoverAction] }
+    private var showActiveWindowBorder: Bool { settings?.showActiveWindowBorder ?? Defaults[.showActiveWindowBorder] }
+    private var activeAppIndicatorColor: Color { settings?.activeAppIndicatorColor ?? Defaults[.activeAppIndicatorColor] }
+    private var enableLivePreview: Bool { settings?.enableLivePreview ?? Defaults[.enableLivePreview] }
+    private var enableLivePreviewForDock: Bool { settings?.enableLivePreviewForDock ?? Defaults[.enableLivePreviewForDock] }
+    private var enableLivePreviewForWindowSwitcher: Bool { settings?.enableLivePreviewForWindowSwitcher ?? Defaults[.enableLivePreviewForWindowSwitcher] }
+    private var dockLivePreviewQuality: LivePreviewQuality { settings?.dockLivePreviewQuality ?? Defaults[.dockLivePreviewQuality] }
+    private var dockLivePreviewFrameRate: LivePreviewFrameRate { settings?.dockLivePreviewFrameRate ?? Defaults[.dockLivePreviewFrameRate] }
+    private var windowSwitcherLivePreviewQuality: LivePreviewQuality { settings?.windowSwitcherLivePreviewQuality ?? Defaults[.windowSwitcherLivePreviewQuality] }
+    private var windowSwitcherLivePreviewFrameRate: LivePreviewFrameRate { settings?.windowSwitcherLivePreviewFrameRate ?? Defaults[.windowSwitcherLivePreviewFrameRate] }
+    private var showAnimations: Bool { settings?.showAnimations ?? Defaults[.showAnimations] }
 
     @State private var isHoveringOverDockPeekPreview = false
     @State private var isHoveringOverWindowSwitcherPreview = false
@@ -215,7 +219,7 @@ struct WindowPreview: View {
         Group {
             // Check windowless app FIRST - these have no real window to preview
             if windowInfo.isWindowlessApp, let appIcon = windowInfo.app.icon {
-                // Windowless app - show large app icon in preview area (like AltTab)
+                // Windowless app - show large app icon in preview area
                 VStack {
                     Spacer()
                     Image(nsImage: appIcon)
@@ -246,8 +250,8 @@ struct WindowPreview: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.15), value: inactive)
-        .clipShape(uniformCardRadius ? AnyShape(RoundedRectangle(cornerRadius: 12, style: .continuous)) : AnyShape(Rectangle()))
+        .animation(showAnimations ? .easeInOut(duration: 0.15) : nil, value: inactive)
+        .clipShape(RoundedRectangle(cornerRadius: uniformCardRadius ? 12 : 0, style: .continuous))
         .dynamicWindowFrame(
             allowDynamicSizing: allowDynamicImageSizing,
             dimensions: dimensions ?? WindowPreviewHoverContainer.WindowDimensions(
