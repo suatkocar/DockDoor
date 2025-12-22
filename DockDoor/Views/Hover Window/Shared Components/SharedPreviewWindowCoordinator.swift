@@ -169,6 +169,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         // Hide search window
         searchWindow?.hideSearch()
 
+        // CRITICAL: Explicitly stop live preview streams to ensure cleanup
+        // SwiftUI's onDisappear may not fire reliably on quick modifier key releases
+        Task { await LiveCaptureManager.shared.panelClosed() }
+
         if let currentContent = contentView {
             currentContent.removeFromSuperview()
         }
