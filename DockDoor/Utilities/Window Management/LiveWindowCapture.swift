@@ -99,8 +99,9 @@ final class LiveCaptureManager {
     }
 
     func stopAllStreams() async {
+        // Stop all captures and wait for them to complete
         for capture in captures.values {
-            capture.forceStopNonBlocking()
+            await capture.forceStopBlocking()
         }
         captures.removeAll()
         accessOrder.removeAll()
@@ -138,22 +139,29 @@ final class WindowLiveCapture: ObservableObject {
         self.frameRate = frameRate
     }
 
+    private var isCancelled = false
+
     func startCapture() async {
-        stopGeneration += 1
+        let generationAtStart = stopGeneration
+        isCancelled = false
         guard stream == nil else { return }
 
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+
+            // Check if cancelled during async operation
+            guard !isCancelled, stopGeneration == generationAtStart else { return }
+
             guard let scWindow = content.windows.first(where: { $0.windowID == windowID }) else {
                 return
             }
-            await startStream(for: scWindow)
+            await startStream(for: scWindow, generationAtStart: generationAtStart)
         } catch {
             DebugLogger.log("LiveWindowCapture: Failed to get shareable content", details: error.localizedDescription)
         }
     }
 
-    private func startStream(for window: SCWindow) async {
+    private func startStream(for window: SCWindow, generationAtStart: Int) async {
         let filter = SCContentFilter(desktopIndependentWindow: window)
 
         let config = SCStreamConfiguration()
@@ -230,6 +238,9 @@ final class WindowLiveCapture: ObservableObject {
         }
 
         do {
+            // Check if cancelled before starting stream
+            guard !isCancelled, stopGeneration == generationAtStart else { return }
+
             let newStream = SCStream(filter: filter, configuration: config, delegate: nil)
 
             let output = StreamOutput { [weak self] image in
@@ -241,6 +252,12 @@ final class WindowLiveCapture: ObservableObject {
 
             try newStream.addStreamOutput(output, type: .screen, sampleHandlerQueue: .global(qos: .userInteractive))
             try await newStream.startCapture()
+
+            // Check if cancelled during startCapture - if so, immediately stop the stream
+            guard !isCancelled, stopGeneration == generationAtStart else {
+                try? await newStream.stopCapture()
+                return
+            }
 
             stream = newStream
             streamOutput = output
@@ -272,6 +289,8 @@ final class WindowLiveCapture: ObservableObject {
     }
 
     func stopAndCleanup() async {
+        isCancelled = true
+        stopGeneration += 1
         guard let stream else { return }
         streamOutput = nil
         self.stream = nil
@@ -281,6 +300,8 @@ final class WindowLiveCapture: ObservableObject {
     }
 
     func forceStopNonBlocking() {
+        isCancelled = true
+        stopGeneration += 1
         guard let stream else { return }
         let streamToStop = stream
         self.stream = nil
@@ -288,6 +309,17 @@ final class WindowLiveCapture: ObservableObject {
         Task.detached {
             try? await streamToStop.stopCapture()
         }
+    }
+
+    /// Stops the stream and waits for completion - use when you need to ensure stream is fully stopped
+    func forceStopBlocking() async {
+        isCancelled = true
+        stopGeneration += 1
+        guard let stream else { return }
+        self.stream = nil
+        streamOutput = nil
+        capturedImage = nil
+        try? await stream.stopCapture()
     }
 }
 
