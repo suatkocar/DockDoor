@@ -148,7 +148,6 @@ final class PreviewStateCoordinator {
         if windows.isEmpty {
             currIndex = -1
             if !isMockCoordinator {
-                print("HIDE_SOURCE[PreviewStateCoordinator.setWindows]: windows became empty")
                 SharedPreviewWindowCoordinator.activeInstance?.hideWindow()
             }
             return
@@ -223,7 +222,6 @@ final class PreviewStateCoordinator {
         windows.removeAll()
         currIndex = -1 // Reset to no selection
         if !isMockCoordinator {
-            print("HIDE_SOURCE[PreviewStateCoordinator.clearWindows]: clearWindows called")
             SharedPreviewWindowCoordinator.activeInstance?.hideWindow()
         }
     }

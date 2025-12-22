@@ -247,7 +247,6 @@ class MouseTrackingNSView: NSView {
     }
 
     private func performHideWindow(preventLastAppClear: Bool = false) {
-        print("HIDE_SOURCE[WindowDismissalContainer.performHideWindow]: Called for \(currentAppName)")
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
@@ -255,7 +254,6 @@ class MouseTrackingNSView: NSView {
             // This prevents old timers from hiding newer previews for different apps
             guard let coordinator = SharedPreviewWindowCoordinator.activeInstance else { return }
             guard coordinator.appName == currentAppName else {
-                print("HIDE_SOURCE[WindowDismissalContainer.performHideWindow]: SKIP - appName mismatch (current=\(coordinator.appName), expected=\(currentAppName))")
                 // Invalidate our timer since we're no longer relevant
                 clearTimers()
                 return

@@ -99,7 +99,7 @@ extension SharedPreviewWindowCoordinator {
 
         // Store and show
         pinnedWindows[key] = window
-        window.makeKeyAndOrderFront(nil)
+        window.orderFront(nil)
 
         print("✅ Created pinned window: \(key) - Embedded: \(isEmbedded)")
     }

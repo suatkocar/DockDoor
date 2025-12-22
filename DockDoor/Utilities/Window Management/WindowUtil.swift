@@ -311,6 +311,19 @@ extension WindowUtil {
             }
         }
     }
+
+    /// Update cached window image from live preview's last frame
+    static func updateCachedWindowImage(windowID: CGWindowID, pid: pid_t, image: CGImage) {
+        desktopSpaceWindowCacheManager.updateCache(pid: pid) { windowSet in
+            if let existingIndex = windowSet.firstIndex(where: { $0.id == windowID }) {
+                var updatedWindow = windowSet[existingIndex]
+                updatedWindow.image = image
+                updatedWindow.imageCapturedTime = Date()
+                windowSet.remove(at: existingIndex)
+                windowSet.insert(updatedWindow)
+            }
+        }
+    }
 }
 
 // MARK: - Window Capture

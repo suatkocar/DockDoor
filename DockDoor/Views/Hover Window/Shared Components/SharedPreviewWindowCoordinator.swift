@@ -169,6 +169,14 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         // Hide search window
         searchWindow?.hideSearch()
 
+        // Save last frames from live previews to the global cache before stopping streams
+        // This ensures thumbnails are updated with the most recent frame for next open
+        for window in windowSwitcherCoordinator.windows {
+            if let lastFrame = LiveCaptureManager.shared.getLastFrame(for: window.id) {
+                WindowUtil.updateCachedWindowImage(windowID: window.id, pid: window.app.processIdentifier, image: lastFrame)
+            }
+        }
+
         // CRITICAL: Explicitly stop live preview streams to ensure cleanup
         // SwiftUI's onDisappear may not fire reliably on quick modifier key releases
         Task { await LiveCaptureManager.shared.panelClosed() }
@@ -391,7 +399,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         fullPreviewWindow?.contentView = hostingView
 
         fullPreviewWindow?.setFrame(flippedIconRect, display: true)
-        fullPreviewWindow?.makeKeyAndOrderFront(nil)
+        fullPreviewWindow?.orderFront(nil)
     }
 
     @MainActor
@@ -504,7 +512,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         }
 
         alphaValue = 1.0
-        makeKeyAndOrderFront(nil)
+        orderFront(nil)
     }
 
     @MainActor
