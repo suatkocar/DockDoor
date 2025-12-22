@@ -428,9 +428,17 @@ final class DockObserver {
         let appUnderMouse = getDockItemAppStatusUnderMouse()
 
         if case let .success(app) = appUnderMouse.status {
-            if type == .rightMouseDown, event.flags.contains(.maskCommand), Defaults[.enableCmdRightClickQuit] {
-                handleCmdRightClickQuit(app: app, event: event)
-                return nil
+            if type == .rightMouseDown {
+                // Hide preview when right-clicking on dock icon to allow context menu to be visible
+                Task { @MainActor [weak self] in
+                    self?.previewCoordinator.hideWindow()
+                }
+
+                // Handle Cmd+Right-Click to quit app
+                if event.flags.contains(.maskCommand), Defaults[.enableCmdRightClickQuit] {
+                    handleCmdRightClickQuit(app: app, event: event)
+                    return nil
+                }
             }
 
             if type == .leftMouseDown {
