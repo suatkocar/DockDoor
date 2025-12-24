@@ -301,7 +301,7 @@ private class WindowSwitchingCoordinator {
             let screenCenter = NSPoint(x: targetScreen.frame.midX, y: targetScreen.frame.midY)
             showWindowLambda(screenCenter, targetScreen)
         case .screenWithLastActiveWindow:
-            showWindowLambda(nil, nil)
+            showWindowLambda(nil as NSPoint?, nil as NSScreen?)
         case .screenWithMouse:
             let mouseScreen = NSScreen.screenContainingMouse(currentMouseLocation)
             let convertedMouseLocation = DockObserver.nsPointFromCGPoint(currentMouseLocation, forScreen: mouseScreen)
@@ -353,7 +353,7 @@ private class WindowSwitchingCoordinator {
             let screenCenter = NSPoint(x: targetScreen.frame.midX, y: targetScreen.frame.midY)
             showWindowLambda(screenCenter, targetScreen)
         case .screenWithLastActiveWindow:
-            showWindowLambda(nil, nil)
+            showWindowLambda(nil as NSPoint?, nil as NSScreen?)
         case .screenWithMouse:
             let mouseScreen = NSScreen.screenContainingMouse(currentMouseLocation)
             let convertedMouseLocation = DockObserver.nsPointFromCGPoint(currentMouseLocation, forScreen: mouseScreen)

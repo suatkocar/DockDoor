@@ -48,6 +48,7 @@ final class DockObserver {
     var lastHoveredPID: pid_t?
     var lastHoveredAppWasFrontmost: Bool = false
     var lastHoveredAppNeedsRestore: Bool = false
+    var lastHoveredAppHadWindows: Bool = false
 
     // Scroll gesture state
     private var lastScrollActionTime: Date = .distantPast
@@ -217,6 +218,10 @@ final class DockObserver {
                 lastHoveredPID = currentApp.processIdentifier
                 lastHoveredAppWasFrontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier == currentApp.processIdentifier
                 lastHoveredAppNeedsRestore = currentApp.isHidden || combinedWindows.contains(where: \.isMinimized)
+                lastHoveredAppHadWindows = !combinedWindows.isEmpty
+
+                // Only show preview if dock previews are enabled
+                guard Defaults[.enableDockPreviews] else { return }
 
                 if combinedWindows.isEmpty {
                     let isSpecialApp = currentApp.bundleIdentifier == spotifyAppIdentifier ||
@@ -466,6 +471,13 @@ final class DockObserver {
 
         // Defer to native behavior for simple activation
         if hasValidHoverState, !lastHoveredAppWasFrontmost, !lastHoveredAppNeedsRestore {
+            lastHoveredPID = nil
+            return false
+        }
+
+        // If app had no windows at hover time, defer to native behavior
+        // This prevents minimizing newly created windows when clicking an app with no windows
+        if hasValidHoverState, !lastHoveredAppHadWindows, !app.isHidden {
             lastHoveredPID = nil
             return false
         }

@@ -38,6 +38,38 @@
 </style>
 <div class="donation-link" target="_blank">☕ Support kepler.cafe at https://buymeacoffee.com/keplercafe</div>
 
+<a id="1.29"></a>
+# [Release 1.29](https://github.com/ejbills/DockDoor/releases/tag/1.29) - 2025-12-23
+
+This is a re-release due to some issues with the original 1.29 release.
+## ✨ New Features 
+- Added window grouping option
+- Group windows per app
+- Calendar event filtering options
+- Media widget seek control
+- Restart option in menu
+
+## 🔧 Improvements & Stability
+- Improved dock observer efficiency
+- Enhanced volume control scrolling
+  - Natural scrolling support
+- Better permission checking performance
+- Improved window switcher positioning
+  - Alignment options added
+  - Position adjustment sliders
+
+## 🐛 Bug Fixes
+- Window names update correctly
+- Screen recording permission prompt
+- Dock click behavior fixed
+  - Apps without windows
+- Minimized windows label display
+- Hidden windows label display
+
+
+[Changes][1.29]
+
+
 <a id="1.28.1"></a>
 # [Release 1.28.1](https://github.com/ejbills/DockDoor/releases/tag/1.28.1) - 2025-12-16
 
@@ -1737,6 +1769,7 @@ v1.0
 [Changes][releases]
 
 
+[1.29]: https://github.com/ejbills/DockDoor/compare/1.28.1...1.29
 [1.28.1]: https://github.com/ejbills/DockDoor/compare/1.28...1.28.1
 [1.28]: https://github.com/ejbills/DockDoor/compare/1.27...1.28
 [1.27]: https://github.com/ejbills/DockDoor/compare/1.26...1.27

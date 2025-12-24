@@ -12,6 +12,7 @@
 		05C0C7182C60629C000ADAC6 /* AXUIElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C0C7172C60629C000ADAC6 /* AXUIElement.swift */; };
 		1A04FA16AC74448F83D0F964 /* ActiveAppIndicatorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F87422D4714171AD2CCC4A /* ActiveAppIndicatorCoordinator.swift */; };
 		27DC8C172CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27DC8C152CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift */; };
+		337B1BB3E0E1C17462D34C74 /* AppPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE87C548D56298ADFB3F389 /* AppPickerSheet.swift */; };
 		341691AA2EE37A6D004AFFC9 /* LiveWindowCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */; };
 		344FF97F2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */; };
 		344FF9812EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */; };
@@ -168,6 +169,7 @@
 		0531F8D12C3CC04600327808 /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
 		0596C2C22C3E060D00DCABEF /* PrivateApis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateApis.swift; sourceTree = "<group>"; };
 		05C0C7172C60629C000ADAC6 /* AXUIElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXUIElement.swift; sourceTree = "<group>"; };
+		1AE87C548D56298ADFB3F389 /* AppPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerSheet.swift; sourceTree = "<group>"; };
 		27DC8C152CFA4DA7005F8F31 /* NumberFormatter+Convenience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NumberFormatter+Convenience.swift"; sourceTree = "<group>"; };
 		341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWindowCapture.swift; sourceTree = "<group>"; };
 		344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbonHotkeyManager.swift; sourceTree = "<group>"; };
@@ -365,6 +367,7 @@
 				BBE153BD2D2126C000CD3D4A /* MaterialPill.swift */,
 				BBE153BF2D21FA2300CD3D4A /* StyledGroupBox.swift */,
 				BBE692182D17AD9C0093B4A5 /* DangerButton.swift */,
+				1AE87C548D56298ADFB3F389 /* AppPickerSheet.swift */,
 				3A1622C62C8D5A5C00D318EE /* EnabledActionRowView.swift */,
 				BBF383962C94A25B00B39A23 /* sliderSetting.swift */,
 				BB750D232C8E939A00245E3E /* FluidGradient */,
@@ -889,6 +892,7 @@
 				BBF4139A2C40A64A00AA6733 /* CustomizableFluidGradient.swift in Sources */,
 				344FF9812EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift in Sources */,
 				BBE692192D17AD9E0093B4A5 /* DangerButton.swift in Sources */,
+				337B1BB3E0E1C17462D34C74 /* AppPickerSheet.swift in Sources */,
 				3A1622BE2C8C218500D318EE /* FirstTimeViewInstructionsView.swift in Sources */,
 				BB1A85F52D05263C00326297 /* FiltersSettingsView.swift in Sources */,
 				BB638F002E0216FA0010077D /* MediaArtworkView.swift in Sources */,
@@ -1145,7 +1149,7 @@
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
-				DEVELOPMENT_TEAM = 2Q775S63Q3;
+				DEVELOPMENT_TEAM = YRUA367547;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
@@ -1192,7 +1196,7 @@
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
-				DEVELOPMENT_TEAM = 2Q775S63Q3;
+				DEVELOPMENT_TEAM = YRUA367547;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;

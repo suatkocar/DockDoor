@@ -183,6 +183,7 @@ extension Defaults.Keys {
     static let windowTitleFilters = Key<[String]>("windowTitleFilters", default: [])
     static let customAppDirectories = Key<[String]>("customAppDirectories", default: [])
     static let filteredCalendarIdentifiers = Key<[String]>("filteredCalendarIdentifiers", default: [])
+    static let groupedAppsInSwitcher = Key<[String]>("groupedAppsInSwitcher", default: [])
 
     // Onboarding / Hints
     static let hasSeenCmdTabFocusHint = Key<Bool>("hasSeenCmdTabFocusHint", default: false)
