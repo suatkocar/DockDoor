@@ -724,6 +724,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                     "com.anthropic.claudefordesktop", // Claude
                     "com.apple.Preview", // Preview
                     "com.linguee.DeepLCopyTranslator", // DeepL
+                    "com.sublimetext.4", // Sublime Text
                 ]
 
                 if appsNeedingLaunch.contains(bundleId) {
@@ -758,6 +759,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             "com.anthropic.claudefordesktop": "/Applications/Claude.app",
             "com.apple.Preview": "/System/Applications/Preview.app",
             "com.linguee.DeepLCopyTranslator": "/Applications/DeepL.app",
+            "com.sublimetext.4": "/Applications/Sublime Text.app",
         ]
 
         guard let appPath = appPaths[bundleId] else {
@@ -773,28 +775,23 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         configuration.activates = true
         configuration.hides = false
 
-        NSWorkspace.shared.openApplication(
-            at: appURL,
-            configuration: configuration,
-            completionHandler: { runningApp, error in
-                if let error {
-                    print("🔍 [activateWindowlessApp] Failed to launch \(appPath): \(error)")
-                } else {
-                    print("🔍 [activateWindowlessApp] Successfully launched \(appPath)")
-
-                    // Force immediate cache refresh after launch to detect the app's new window
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        print("🔍 [activateWindowlessApp] Forcing cache refresh to detect window")
+        NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
+            if let error {
+                print("🔍 [activateWindowlessApp] Failed to launch \(appPath): \(error)")
+            } else {
+                print("🔍 [activateWindowlessApp] Successfully launched \(appPath)")
+                // Fetch and cache windows for this app immediately
+                Task {
+                    print("🔍 [activateWindowlessApp] Fetching windows for \(app.localizedName ?? "app")")
+                    let windows = try? await WindowUtil.getActiveWindows(of: app)
+                    print("🔍 [activateWindowlessApp] Found \(windows?.count ?? 0) windows, cache updated")
+                    // Also refresh windowless apps cache to remove this app from windowless list
+                    await MainActor.run {
                         WindowUtil.manuallyRefreshWindowlessApps()
-
-                        // Also trigger a full window list refresh
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            self.refreshWindowList()
-                        }
                     }
                 }
             }
-        )
+        }
     }
 
     /// Force refresh the window list to update UI
