@@ -456,6 +456,9 @@ class KeybindHelper {
     private var tabCycleTimer: Timer?
     private var isTabKeyDown: Bool = false
 
+    // Watchdog timer to catch missed modifier release events
+    private var modifierWatchdogTimer: Timer?
+
     // Carbon hotkey manager for instant response
     private let carbonHotkeyManager = CarbonHotkeyManager.shared
     private var useCarbonHotkeys: Bool { Defaults[.instantWindowSwitcher] }
@@ -495,6 +498,8 @@ class KeybindHelper {
         shiftCycleTimer = nil
         tabCycleTimer?.invalidate()
         tabCycleTimer = nil
+        modifierWatchdogTimer?.invalidate()
+        modifierWatchdogTimer = nil
         isTabKeyDown = false
         carbonHotkeyManager.cleanup()
         removeEventTap()
@@ -844,6 +849,7 @@ class KeybindHelper {
                     }
                 } else {
                     Task { @MainActor in
+                        self.stopModifierWatchdog()
                         self.windowSwitchingCoordinator.cancelSwitching()
                         self.previewCoordinator.hideWindow()
                         self.preventSwitcherHideOnRelease = false
@@ -914,6 +920,7 @@ class KeybindHelper {
             if !modifierStillPressed {
                 hasProcessedModifierRelease = true
                 preventSwitcherHideOnRelease = false
+                stopModifierWatchdog()
                 stopShiftCycleTimer()
                 stopTabCycleTimer()
                 windowSwitchingCoordinator.isSwitcherBeingUsed = false
@@ -967,6 +974,7 @@ class KeybindHelper {
             if oldSwitcherModifierState, !isSwitcherModifierKeyPressed, !hasProcessedModifierRelease {
                 hasProcessedModifierRelease = true
                 preventSwitcherHideOnRelease = false
+                stopModifierWatchdog()
                 stopShiftCycleTimer()
                 stopTabCycleTimer()
 
@@ -996,6 +1004,60 @@ class KeybindHelper {
     private enum TimerConstants {
         static let initialDelay: TimeInterval = 0.4
         static let repeatInterval: TimeInterval = 0.05
+        static let watchdogInterval: TimeInterval = 0.1 // Check modifier state every 100ms
+    }
+
+    // MARK: - Modifier Watchdog Timer
+
+    /// Starts a watchdog timer that periodically checks if the modifier key has been released.
+    /// This catches cases where flagsChanged events are missed (e.g., after long uptime, system load).
+    private func startModifierWatchdog() {
+        stopModifierWatchdog()
+
+        modifierWatchdogTimer = Timer.scheduledTimer(withTimeInterval: TimerConstants.watchdogInterval, repeats: true) { [weak self] _ in
+            guard let self else { return }
+
+            // Only check when switcher is supposed to be active
+            guard windowSwitchingCoordinator.isSwitcherBeingUsed,
+                  previewCoordinator.isVisible,
+                  !Defaults[.preventSwitcherHide],
+                  !preventSwitcherHideOnRelease else { return }
+
+            // Check actual modifier state directly from system
+            let currentModifiers = NSEvent.modifierFlags
+            let keyBoardShortcutSaved: UserKeyBind = Defaults[.UserKeybind]
+            let wantsAlt = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskAlternate.rawValue)) != 0
+            let wantsCtrl = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskControl.rawValue)) != 0
+            let wantsCmd = (keyBoardShortcutSaved.modifierFlags & Int(CGEventFlags.maskCommand.rawValue)) != 0
+
+            let modifierStillPressed = (wantsAlt && currentModifiers.contains(.option)) ||
+                (wantsCtrl && currentModifiers.contains(.control)) ||
+                (wantsCmd && currentModifiers.contains(.command))
+
+            // If modifier is no longer pressed but we haven't processed release, handle it now
+            if !modifierStillPressed, !hasProcessedModifierRelease {
+                print("⚡️ [Watchdog] Detected missed modifier release - handling now")
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    hasProcessedModifierRelease = true
+                    stopModifierWatchdog()
+                    stopShiftCycleTimer()
+                    stopTabCycleTimer()
+                    windowSwitchingCoordinator.isSwitcherBeingUsed = false
+
+                    if previewCoordinator.isVisible {
+                        previewCoordinator.selectAndBringToFrontCurrentWindow()
+                    }
+                    windowSwitchingCoordinator.cancelSwitching()
+                    previewCoordinator.hideWindow()
+                }
+            }
+        }
+    }
+
+    private func stopModifierWatchdog() {
+        modifierWatchdogTimer?.invalidate()
+        modifierWatchdogTimer = nil
     }
 
     private func stopShiftCycleTimer() {
@@ -1053,6 +1115,7 @@ class KeybindHelper {
         if previewIsCurrentlyVisible {
             if keyCode == kVK_Escape {
                 return (true, {
+                    self.stopModifierWatchdog()
                     self.stopShiftCycleTimer()
                     self.stopTabCycleTimer()
                     self.windowSwitchingCoordinator.cancelSwitching()
@@ -1233,6 +1296,9 @@ class KeybindHelper {
         guard Defaults[.enableWindowSwitcher] else { return }
         hasProcessedModifierRelease = false
         currentInvocationMode = mode
+
+        // Start watchdog timer to catch missed modifier release events
+        startModifierWatchdog()
 
         if Defaults[.instantWindowSwitcher] {
             // Instant mode: call synchronously for maximum speed

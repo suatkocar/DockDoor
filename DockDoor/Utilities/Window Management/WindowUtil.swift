@@ -607,8 +607,8 @@ extension WindowUtil {
             windows.append(contentsOf: _cachedWindowlessApps)
         }
 
-        // Apply filters - these are fast operations
-        windows = windows.filter { !$0.isHidden && !$0.isMinimized && !isAppFiltered($0.app) }
+        // Apply filters - these are fast operations (keep minimized windows visible)
+        windows = windows.filter { !$0.isHidden && !isAppFiltered($0.app) }
         windows = filterOutTabbedWindows(windows)
 
         return windows
