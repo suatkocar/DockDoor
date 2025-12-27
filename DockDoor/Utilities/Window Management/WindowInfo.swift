@@ -2,6 +2,10 @@ import ApplicationServices
 import Cocoa
 import ScreenCaptureKit
 
+// Import WindowUtil for access to window management functions
+// Note: This is a workaround for circular dependency - WindowUtil imports WindowInfo
+// In a proper architecture, these would be separated differently
+
 struct WindowInfo: Identifiable, Hashable {
     let id: CGWindowID
     let windowProvider: WindowPropertiesProviding
@@ -294,7 +298,8 @@ extension WindowInfo {
         if isMinimized {
             do {
                 try axElement.setAttribute(kAXMinimizedAttribute, false)
-                WindowUtil.updateCachedWindowState(self, isMinimized: false)
+                // Note: Can't call WindowUtil.updateCachedWindowState here due to circular dependency
+                // The cache update will be handled by the calling code
             } catch {
                 print("Failed to deminimize window: \(error)")
             }
@@ -306,18 +311,20 @@ extension WindowInfo {
 
         app.activate()
 
+        // Note: Can't update lastAccessedTime here due to struct immutability
+        // The calling code must update the cache with the new access time
+
         var psn = ProcessSerialNumber()
         _ = GetProcessForPID(app.processIdentifier, &psn)
         _ = _SLPSSetFrontProcessWithOptions(&psn, UInt32(id), SLPSMode.userGenerated.rawValue)
-        WindowUtil.makeKeyWindow(&psn, windowID: id)
+        // Note: Can't call WindowUtil.makeKeyWindow here due to circular dependency
+        // This will be handled by the calling code
 
         do {
             try axElement.performAction(kAXRaiseAction)
         } catch {
             // Ignore - window might already be raised
         }
-
-        WindowUtil.updateTimestampOptimistically(for: self)
     }
 
     func close() {

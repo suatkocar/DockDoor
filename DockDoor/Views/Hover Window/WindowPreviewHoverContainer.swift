@@ -50,10 +50,13 @@ struct WindowPreviewHoverContainer: View {
     let embeddedContentType: EmbeddedContentType
     let hasScreenRecordingPermission: Bool
 
-    // NOTE: This is intentionally NOT @ObservedObject to prevent SwiftUI subscriptions
+    // NOTE: PreviewStateCoordinator itself is NOT @ObservedObject to prevent SwiftUI subscriptions
     // from interfering with scroll events in other windows when the switcher is hidden.
-    // The view is recreated with new state via SharedPreviewWindowCoordinator.updateRootView()
+    // However, we DO observe SelectionState for lightweight, reactive selection updates.
     let previewStateCoordinator: PreviewStateCoordinator
+
+    /// Observe SelectionState for reactive selection updates without full view recreation
+    @ObservedObject private var selectionState: SelectionState
 
     // Cached settings - accessed via computed properties for performance
     private var containerSettings: HoverContainerSettingsCache? { previewStateCoordinator.containerSettings }
@@ -102,8 +105,7 @@ struct WindowPreviewHoverContainer: View {
     @State private var edgeScrollIsHorizontal: Bool = true
     @State private var screenEdgeMonitor: Timer?
 
-    // State tracking for manual change detection (since PreviewStateCoordinator is not ObservableObject)
-    @State private var lastTrackedIndex: Int = -1
+    // State tracking for windowSwitcherActive change detection
     @State private var lastTrackedWindowSwitcherActive: Bool = false
 
     init(appName: String,
@@ -119,6 +121,8 @@ struct WindowPreviewHoverContainer: View {
          embeddedContentType: EmbeddedContentType = .none,
          hasScreenRecordingPermission: Bool)
     {
+        // DEBUG: Uncomment to verify view is not recreated on hover index change
+        // print("🔄 [WindowPreviewHoverContainer] init called - view recreated")
         self.appName = appName
         self.onWindowTap = onWindowTap
         self.dockPosition = dockPosition
@@ -126,6 +130,7 @@ struct WindowPreviewHoverContainer: View {
         self.bestGuessMonitor = bestGuessMonitor
         self.dockItemElement = dockItemElement
         previewStateCoordinator = windowSwitcherCoordinator
+        _selectionState = ObservedObject(wrappedValue: windowSwitcherCoordinator.selectionState)
         self.mockPreviewActive = mockPreviewActive
         self.disableActions = disableActions
         self.updateAvailable = updateAvailable
@@ -233,7 +238,8 @@ struct WindowPreviewHoverContainer: View {
             startScreenEdgeMonitor()
             // Initialize tracking state
             lastTrackedWindowSwitcherActive = previewStateCoordinator.windowSwitcherActive
-            lastTrackedIndex = previewStateCoordinator.currIndex
+            // PERFORMANCE: Removed redundant manuallyRefreshWindowlessApps() call
+            // The windowless cache is now managed efficiently in getAllWindowsOfAllApps()
         }
         .onDisappear {
             Task { await LiveCaptureManager.shared.panelClosed() }
@@ -579,14 +585,24 @@ struct WindowPreviewHoverContainer: View {
         }
     }
 
+    private func logBuildFlowStack(isHorizontal: Bool, currentMaxDimensionForPreviews: CGPoint) {
+        // Debug logging disabled for performance
+    }
+
     @ViewBuilder
     private func buildFlowStack(
         scrollProxy: ScrollViewProxy,
         _ isHorizontal: Bool,
         currentMaxDimensionForPreviews: CGPoint,
-        currentDimensionsMapForPreviews: [Int: WindowDimensions]
+        currentDimensionsMapForPreviews: [Int: WindowImageSizingCalculations.WindowDimensions]
     ) -> some View {
-        ScrollView(shouldUseCompactMode ? .vertical : (previewStateCoordinator.windowSwitcherActive ? [.horizontal, .vertical] : (isHorizontal ? .horizontal : .vertical)), showsIndicators: false) {
+        let _ = logBuildFlowStack(isHorizontal: isHorizontal, currentMaxDimensionForPreviews: currentMaxDimensionForPreviews)
+
+        // Window switcher needs both horizontal and vertical scrolling when there are many windows
+        let scrollDirection: Axis.Set = shouldUseCompactMode ? .vertical :
+            (previewStateCoordinator.windowSwitcherActive ? [.horizontal, .vertical] : (isHorizontal ? .horizontal : .vertical))
+
+        ScrollView(scrollDirection, showsIndicators: false) {
             Group {
                 // Show no results view when search is active and no results found
                 if shouldShowNoResultsView() {
@@ -640,21 +656,21 @@ struct WindowPreviewHoverContainer: View {
         .padding(2)
         // Force complete re-render when window count changes to avoid partial/animated layout transitions
         .id("grid-\(previewStateCoordinator.windows.count)-\(previewStateCoordinator.windowDimensionsMap.count)")
-        // Manual state change detection for currIndex (since PreviewStateCoordinator is not ObservableObject)
-        .onAppear {
-            handleCurrIndexChange(scrollProxy: scrollProxy)
+        // Reactive selection updates via SelectionState (@ObservedObject)
+        // This replaces the old manual tracking approach that required full view recreation
+        .onChange(of: selectionState.currentIndex) { newIndex in
+            handleSelectionChange(newIndex: newIndex, scrollProxy: scrollProxy)
         }
     }
 
-    /// Handle currIndex state changes manually - called when view is recreated
-    private func handleCurrIndexChange(scrollProxy: ScrollViewProxy) {
-        let newIndex = previewStateCoordinator.currIndex
-        guard lastTrackedIndex != newIndex else { return }
-        lastTrackedIndex = newIndex
+    /// Handle selection index changes reactively via SelectionState
+    /// This is triggered by @Published currentIndex changes, not by view recreation
+    private func handleSelectionChange(newIndex: Int, scrollProxy: ScrollViewProxy) {
+        // DEBUG: Uncomment to verify reactive updates work without view recreation
+        // print("✅ [SelectionState] Reactive update - index changed to \(newIndex) (no view recreation)")
+        guard selectionState.shouldScrollToIndex else { return }
 
-        guard previewStateCoordinator.shouldScrollToIndex else { return }
-
-        if previewStateCoordinator.lastInputWasKeyboard {
+        if selectionState.lastInputWasKeyboard {
             previewStateCoordinator.isKeyboardScrolling = true
         }
 
@@ -663,7 +679,7 @@ struct WindowPreviewHoverContainer: View {
                 scrollProxy.scrollTo("\(appName)-\(newIndex)", anchor: .center)
             }
             // Only delay reset when animating
-            if previewStateCoordinator.lastInputWasKeyboard {
+            if selectionState.lastInputWasKeyboard {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     previewStateCoordinator.isKeyboardScrolling = false
                 }
@@ -1068,7 +1084,7 @@ struct WindowPreviewHoverContainer: View {
         return isShake
     }
 
-    private func getDimensions(for index: Int, dimensionsMap: [Int: WindowDimensions]) -> WindowDimensions? {
+    private func getDimensions(for index: Int, dimensionsMap: [Int: WindowImageSizingCalculations.WindowDimensions]) -> WindowImageSizingCalculations.WindowDimensions? {
         dimensionsMap[index]
     }
 
@@ -1092,7 +1108,6 @@ struct WindowPreviewHoverContainer: View {
 
     private func createChunkedItems() -> [[FlowItem]] {
         let isHorizontal = dockPosition.isHorizontalFlow || previewStateCoordinator.windowSwitcherActive
-
         var itemsToProcess: [FlowItem] = []
 
         if embeddedContentType != .none {
@@ -1103,7 +1118,7 @@ struct WindowPreviewHoverContainer: View {
             itemsToProcess.append(.window(index))
         }
 
-        var (maxColumns, maxRows) = WindowPreviewHoverContainer.calculateEffectiveMaxColumnsAndRows(
+        var (maxColumns, maxRows) = WindowImageSizingCalculations.calculateEffectiveMaxColumnsAndRows(
             bestGuessMonitor: bestGuessMonitor,
             overallMaxDimensions: previewStateCoordinator.overallMaxPreviewDimension,
             dockPosition: dockPosition,
@@ -1125,8 +1140,7 @@ struct WindowPreviewHoverContainer: View {
         }
 
         let shouldReverse = (dockPosition == .bottom || dockPosition == .right) && !previewStateCoordinator.windowSwitcherActive
-
-        let chunks = WindowPreviewHoverContainer.chunkArray(
+        let chunks = WindowImageSizingCalculations.chunkArray(
             items: itemsToProcess,
             isHorizontal: isHorizontal,
             maxColumns: maxColumns,
@@ -1141,7 +1155,7 @@ struct WindowPreviewHoverContainer: View {
     private func buildFlowItem(
         item: FlowItem,
         currentMaxDimensionForPreviews: CGPoint,
-        currentDimensionsMapForPreviews: [Int: WindowDimensions]
+        currentDimensionsMapForPreviews: [Int: WindowImageSizingCalculations.WindowDimensions]
     ) -> some View {
         switch item {
         case .embedded:

@@ -85,8 +85,14 @@ struct WindowPreviewInteractionModifier: ViewModifier {
     }
 
     private func handleSwipe(_ direction: SwipeDirection) {
+        print("🔍 [handleSwipe] Swipe detected: \(direction), windowSwitcherActive: \(windowSwitcherActive)")
+        print("🔍 [handleSwipe] enableWindowSwitcherGestures: \(enableWindowSwitcherGestures), enableDockPreviewGestures: \(enableDockPreviewGestures)")
+
         if windowSwitcherActive {
-            guard enableWindowSwitcherGestures else { return }
+            guard enableWindowSwitcherGestures else {
+                print("🔍 [handleSwipe] Window switcher gestures disabled")
+                return
+            }
             // In compact mode, use horizontal gestures (left/right) since vertical is for scrolling
             if useCompactMode {
                 switch direction {
@@ -110,7 +116,10 @@ struct WindowPreviewInteractionModifier: ViewModifier {
                 }
             }
         } else {
-            guard enableDockPreviewGestures else { return }
+            guard enableDockPreviewGestures else {
+                print("🔍 [handleSwipe] Dock preview gestures disabled")
+                return
+            }
             // In compact mode, use horizontal gestures (left/right) since vertical is for scrolling
             if useCompactMode {
                 switch direction {
@@ -164,7 +173,12 @@ struct WindowPreviewInteractionModifier: ViewModifier {
         } else if windowInfo.isHidden {
             handleWindowAction(.hide)
         } else {
+            // Bring window to front
             windowInfo.bringToFront()
+
+            // Note: WindowUtil cache update is handled by the coordinator
+            // which has access to WindowUtil and can update the cache properly
+
             onTap?()
         }
     }

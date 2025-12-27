@@ -1,16 +1,34 @@
 import Defaults
 import SwiftUI
 
+// Import WindowImageSizingCalculations for dimension calculations
+// WindowImageSizingCalculations is defined in Window Image Sizing Calculations.swift
+
 // Pure UI state container for window preview presentation
-// NOTE: This is intentionally NOT an ObservableObject to prevent SwiftUI subscriptions
-// from interfering with scroll events in other windows when the switcher is hidden.
-// State changes trigger view updates via SharedPreviewWindowCoordinator.refreshUI()
+// ARCHITECTURE NOTE:
+// - PreviewStateCoordinator itself is NOT an ObservableObject to prevent SwiftUI subscriptions
+//   from interfering with scroll events in other windows when the switcher is hidden.
+// - SelectionState is a separate ObservableObject used ONLY for selection index changes.
+//   This allows lightweight, reactive updates for hover/selection without recreating the entire view.
+// - Heavy state changes (windows array, dimensions) still use SharedPreviewWindowCoordinator.refreshUI()
 final class PreviewStateCoordinator {
-    var currIndex: Int = -1
+    /// Lightweight ObservableObject for selection state - used by SwiftUI views for reactive updates
+    let selectionState = SelectionState()
+
+    /// Current selection index - proxied through selectionState for reactive updates
+    var currIndex: Int {
+        get { selectionState.currentIndex }
+        set { selectionState.currentIndex = newValue }
+    }
+
     var windowSwitcherActive: Bool = false
 
     var hasMovedSinceOpen: Bool = false
-    var lastInputWasKeyboard: Bool = true
+    var lastInputWasKeyboard: Bool {
+        get { selectionState.lastInputWasKeyboard }
+        set { selectionState.lastInputWasKeyboard = newValue }
+    }
+
     var initialHoverLocation: CGPoint?
     var isKeyboardScrolling: Bool = false
     var fullWindowPreviewActive: Bool = false
@@ -18,7 +36,11 @@ final class PreviewStateCoordinator {
 
     /// When true, this coordinator is used for settings preview and should NOT interact with SharedPreviewWindowCoordinator
     var isMockCoordinator: Bool = false
-    var shouldScrollToIndex: Bool = true
+    var shouldScrollToIndex: Bool {
+        get { selectionState.shouldScrollToIndex }
+        set { selectionState.shouldScrollToIndex = newValue }
+    }
+
     var searchQuery: String = "" {
         didSet {
             if windowSwitcherActive {
@@ -34,7 +56,7 @@ final class PreviewStateCoordinator {
     }
 
     var overallMaxPreviewDimension: CGPoint = .zero
-    var windowDimensionsMap: [Int: WindowPreviewHoverContainer.WindowDimensions] = [:]
+    var windowDimensionsMap: [Int: WindowImageSizingCalculations.WindowDimensions] = [:]
     private var lastKnownBestGuessMonitor: NSScreen?
 
     // Cached settings - read once when window is shown, not on every render
@@ -88,8 +110,6 @@ final class PreviewStateCoordinator {
     @MainActor
     func setIndex(to: Int, shouldScroll: Bool = true, fromKeyboard: Bool = true) {
         let oldIndex = currIndex
-        shouldScrollToIndex = shouldScroll
-        lastInputWasKeyboard = fromKeyboard
         if fromKeyboard {
             initialHoverLocation = nil
             hasMovedSinceOpen = false
@@ -109,15 +129,11 @@ final class PreviewStateCoordinator {
             }
         }
 
-        if to >= 0, to < windows.count {
-            currIndex = to
-        } else {
-            currIndex = -1
-        }
-        // Trigger UI refresh when index changes (since we're not using ObservableObject)
-        if currIndex != oldIndex, !isMockCoordinator {
-            SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
-        }
+        let newIndex = (to >= 0 && to < windows.count) ? to : -1
+
+        // Use SelectionState for reactive updates - this triggers SwiftUI view updates
+        // without recreating the entire view hierarchy (fixes cursor disappearance)
+        selectionState.setIndex(newIndex, shouldScroll: shouldScroll, fromKeyboard: fromKeyboard)
     }
 
     @MainActor
@@ -230,7 +246,7 @@ final class PreviewStateCoordinator {
     func recomputeAndPublishDimensions(dockPosition: DockPosition, bestGuessMonitor: NSScreen, isMockPreviewActive: Bool = false) {
         let panelSize = getWindowSize()
 
-        let newOverallMaxDimension = WindowPreviewHoverContainer.calculateOverallMaxDimensions(
+        let newOverallMaxDimension = WindowImageSizingCalculations.calculateOverallMaxDimensions(
             windows: windows,
             dockPosition: dockPosition,
             isWindowSwitcherActive: windowSwitcherActive,
@@ -238,7 +254,7 @@ final class PreviewStateCoordinator {
             sharedPanelWindowSize: panelSize
         )
 
-        let newDimensionsMap = WindowPreviewHoverContainer.precomputeWindowDimensions(
+        let newDimensionsMap = WindowImageSizingCalculations.precomputeWindowDimensions(
             windows: windows,
             overallMaxDimensions: newOverallMaxDimension,
             bestGuessMonitor: bestGuessMonitor,

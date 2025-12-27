@@ -16,6 +16,13 @@
 		341691AA2EE37A6D004AFFC9 /* LiveWindowCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */; };
 		344FF97F2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */; };
 		344FF9812EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */; };
+		3450CAC72EFF345B001F9192 /* WindowManagementConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CAC62EFF345B001F9192 /* WindowManagementConstants.swift */; };
+		3450CAC82EFF345B001F9192 /* ElectronAppRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CAC52EFF345B001F9192 /* ElectronAppRegistry.swift */; };
+		3450CAD12EFF4EAF001F9192 /* WindowlessAppDetectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CACF2EFF4EAF001F9192 /* WindowlessAppDetectable.swift */; };
+		3450CAD22EFF4EAF001F9192 /* IndexManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CACD2EFF4EAF001F9192 /* IndexManaging.swift */; };
+		3450CAD32EFF4EAF001F9192 /* TimeBasedCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CACE2EFF4EAF001F9192 /* TimeBasedCache.swift */; };
+		3450CAD42EFF4EAF001F9192 /* WindowManaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CAD02EFF4EAF001F9192 /* WindowManaging.swift */; };
+		3450CAD62EFF736D001F9192 /* SelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3450CAD52EFF736D001F9192 /* SelectionState.swift */; };
 		3A105FD62C1BED660015EC66 /* BlurView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FD52C1BED660015EC66 /* BlurView.swift */; };
 		3A105FD92C1C049E0015EC66 /* dockStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FD82C1C049E0015EC66 /* dockStyle.swift */; };
 		3A105FDD2C1C0EE20015EC66 /* DynStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A105FDC2C1C0EE20015EC66 /* DynStack.swift */; };
@@ -174,6 +181,13 @@
 		341691A92EE37A6D004AFFC9 /* LiveWindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWindowCapture.swift; sourceTree = "<group>"; };
 		344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbonHotkeyManager.swift; sourceTree = "<group>"; };
 		344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPreviewSettingsCache.swift; sourceTree = "<group>"; };
+		3450CAC52EFF345B001F9192 /* ElectronAppRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElectronAppRegistry.swift; sourceTree = "<group>"; };
+		3450CAC62EFF345B001F9192 /* WindowManagementConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementConstants.swift; sourceTree = "<group>"; };
+		3450CACD2EFF4EAF001F9192 /* IndexManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndexManaging.swift; sourceTree = "<group>"; };
+		3450CACE2EFF4EAF001F9192 /* TimeBasedCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeBasedCache.swift; sourceTree = "<group>"; };
+		3450CACF2EFF4EAF001F9192 /* WindowlessAppDetectable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowlessAppDetectable.swift; sourceTree = "<group>"; };
+		3450CAD02EFF4EAF001F9192 /* WindowManaging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManaging.swift; sourceTree = "<group>"; };
+		3450CAD52EFF736D001F9192 /* SelectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionState.swift; sourceTree = "<group>"; };
 		3A105FD52C1BED660015EC66 /* BlurView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurView.swift; sourceTree = "<group>"; };
 		3A105FD82C1C049E0015EC66 /* dockStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dockStyle.swift; sourceTree = "<group>"; };
 		3A105FDC2C1C0EE20015EC66 /* DynStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynStack.swift; sourceTree = "<group>"; };
@@ -516,6 +530,12 @@
 		BB157B772C0E32EF00997315 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				3450CACD2EFF4EAF001F9192 /* IndexManaging.swift */,
+				3450CACE2EFF4EAF001F9192 /* TimeBasedCache.swift */,
+				3450CACF2EFF4EAF001F9192 /* WindowlessAppDetectable.swift */,
+				3450CAD02EFF4EAF001F9192 /* WindowManaging.swift */,
+				3450CAC52EFF345B001F9192 /* ElectronAppRegistry.swift */,
+				3450CAC62EFF345B001F9192 /* WindowManagementConstants.swift */,
 				344FF97E2EF5CEE100DA0D64 /* CarbonHotkeyManager.swift */,
 				205C45E5266848C9B4F622AA /* ActiveAppIndicator */,
 				BB5D35532ED4C4CC006ECE15 /* DebugLogger.swift */,
@@ -605,6 +625,7 @@
 		BB6021CE2D1E60C700D47C86 /* WindowPreview Supporting */ = {
 			isa = PBXGroup;
 			children = (
+				3450CAD52EFF736D001F9192 /* SelectionState.swift */,
 				344FF9802EF5EAE800DA0D64 /* WindowPreviewSettingsCache.swift */,
 				BB7CD3C82EE54DDC00412546 /* TrackpadGestureModifier.swift */,
 				BBE63DFE2DEA58040079D2B9 /* PreviewStateCoordinator.swift */,
@@ -860,6 +881,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3450CAD62EFF736D001F9192 /* SelectionState.swift in Sources */,
 				1A04FA16AC74448F83D0F964 /* ActiveAppIndicatorCoordinator.swift in Sources */,
 				C3D4E5F6789012345678901B /* ActiveAppIndicatorDockDetection.swift in Sources */,
 				F3A2B8C1D5E6489AAB123456 /* ActiveAppIndicatorPositioning.swift in Sources */,
@@ -927,6 +949,10 @@
 				BB709B3D2EF21E9E007809A2 /* VolumeScrollModifier.swift in Sources */,
 				BB0440602C77AD2C009F1D33 /* CodableColor.swift in Sources */,
 				BB52EDF02C5BEFE3006A64A4 /* HiddenModifier.swift in Sources */,
+				3450CAD12EFF4EAF001F9192 /* WindowlessAppDetectable.swift in Sources */,
+				3450CAD22EFF4EAF001F9192 /* IndexManaging.swift in Sources */,
+				3450CAD32EFF4EAF001F9192 /* TimeBasedCache.swift in Sources */,
+				3450CAD42EFF4EAF001F9192 /* WindowManaging.swift in Sources */,
 				BBBAA15B2DE6998B00FF8F8F /* UpdaterState.swift in Sources */,
 				BBE63DFF2DEA583C0079D2B9 /* PreviewStateCoordinator.swift in Sources */,
 				BB44474F2C507F950047EB92 /* LimitedTaskGroup.swift in Sources */,
@@ -968,6 +994,8 @@
 				BB15E1E22C8E9435002ECFB9 /* FluidGradient.swift in Sources */,
 				BB638F142E0218BB0010077D /* SharedHoverAppTitle.swift in Sources */,
 				BB15E1E32C8E9435002ECFB9 /* ResizableLayer.swift in Sources */,
+				3450CAC72EFF345B001F9192 /* WindowManagementConstants.swift in Sources */,
+				3450CAC82EFF345B001F9192 /* ElectronAppRegistry.swift in Sources */,
 				BB15E1E42C8E9435002ECFB9 /* FluidGradientView.swift in Sources */,
 				BB15E1E52C8E9435002ECFB9 /* BlobLayer.swift in Sources */,
 				BB21067D2E83565A002F87D6 /* KeyboardLabel.swift in Sources */,

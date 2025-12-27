@@ -25,7 +25,16 @@ class SpaceWindowCacheManager {
             DispatchQueue.main.async { [weak self] in
                 guard self != nil else { return }
                 if let coordinator = SharedPreviewWindowCoordinator.activeInstance?.windowSwitcherCoordinator {
-                    coordinator.addWindows(Array(addedWindows))
+                    // Filter out windows for apps that are currently windowless
+                    // This prevents ghost windows from appearing when an app's window was closed
+                    let windowlessBundleIds = Set(WindowUtil.cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
+                    let filteredWindows = addedWindows.filter { window in
+                        guard let bundleId = window.app.bundleIdentifier else { return true }
+                        return !windowlessBundleIds.contains(bundleId)
+                    }
+                    if !filteredWindows.isEmpty {
+                        coordinator.addWindows(Array(filteredWindows))
+                    }
                 }
             }
         }
@@ -138,6 +147,17 @@ class SpaceWindowCacheManager {
         cacheLock.lock()
         defer { cacheLock.unlock() }
         return Array(windowCache.values.flatMap { $0 }).sorted(by: { $0.lastAccessedTime > $1.lastAccessedTime })
+    }
+
+    func getAllWindows(excludingWindowlessBundleIds bundleIds: Set<String>) -> [WindowInfo] {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        let allWindows = Array(windowCache.values.flatMap { $0 })
+        let filteredWindows = allWindows.filter { window in
+            let bundleId = window.app.bundleIdentifier ?? ""
+            return !bundleIds.contains(bundleId)
+        }
+        return filteredWindows.sorted(by: { $0.lastAccessedTime > $1.lastAccessedTime })
     }
 
     func updateWindow(_ window: WindowInfo) {

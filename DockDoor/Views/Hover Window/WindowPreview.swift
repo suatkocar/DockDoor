@@ -13,7 +13,7 @@ struct WindowPreview: View {
     let handleWindowAction: (WindowAction) -> Void
     var currIndex: Int
     var windowSwitcherActive: Bool
-    let dimensions: WindowPreviewHoverContainer.WindowDimensions?
+    let dimensions: WindowImageSizingCalculations.WindowDimensions?
     let mockPreviewActive: Bool
     let disableActions: Bool
     let onHoverIndexChange: ((Int?, CGPoint?) -> Bool)?
@@ -232,6 +232,19 @@ struct WindowPreview: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black.opacity(0.3))
+                .windowPreviewInteractions(
+                    windowInfo: windowInfo,
+                    windowSwitcherActive: windowSwitcherActive,
+                    dockPosition: dockPosition,
+                    handleWindowAction: { action in
+                        cancelFullPreviewHover()
+                        handleWindowAction(action)
+                    },
+                    onTap: {
+                        cancelFullPreviewHover()
+                        onTap?()
+                    }
+                )
             } else if useLivePreview {
                 LivePreviewImage(windowID: windowInfo.id, fallbackImage: windowInfo.image, quality: quality, frameRate: frameRate)
                     .scaledToFit()
@@ -252,16 +265,16 @@ struct WindowPreview: View {
             }
         }
         .animation(showAnimations ? .easeInOut(duration: 0.15) : nil, value: inactive)
-        .clipShape(RoundedRectangle(cornerRadius: uniformCardRadius ? 12 : 0, style: .continuous))
         .dynamicWindowFrame(
             allowDynamicSizing: allowDynamicImageSizing,
-            dimensions: dimensions ?? WindowPreviewHoverContainer.WindowDimensions(
+            dimensions: dimensions ?? WindowImageSizingCalculations.WindowDimensions(
                 size: CGSize(width: 150, height: 150),
                 maxDimensions: CGSize(width: bestGuessMonitor.frame.width * 0.75, height: bestGuessMonitor.frame.height * 0.75)
             ),
             dockPosition: dockPosition,
             windowSwitcherActive: windowSwitcherActive
         )
+        .clipShape(RoundedRectangle(cornerRadius: uniformCardRadius ? 12 : 0, style: .continuous))
         .opacity(isSelected ? 1.0 : unselectedContentOpacity)
     }
 

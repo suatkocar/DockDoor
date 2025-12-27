@@ -21,6 +21,24 @@ protocol WindowPropertiesProviding {
     var windowLayer: Int { get }
 }
 
+// Mock window provider for windowless apps
+class MockWindowProvider: WindowPropertiesProviding {
+    let windowID: CGWindowID
+    let frame: CGRect
+    let title: String?
+
+    init(windowID: CGWindowID, title: String?, frame: CGRect) {
+        self.windowID = windowID
+        self.title = title
+        self.frame = frame
+    }
+
+    var owningApplicationBundleIdentifier: String? { nil }
+    var owningApplicationProcessID: pid_t? { nil }
+    var isOnScreen: Bool { false }
+    var windowLayer: Int { 0 }
+}
+
 extension SCWindow: WindowPropertiesProviding {
     var owningApplicationBundleIdentifier: String? { owningApplication?.bundleIdentifier }
     var owningApplicationProcessID: pid_t? { owningApplication?.processID }
@@ -300,7 +318,7 @@ extension WindowUtil {
         }
     }
 
-    static func updateCachedWindowState(_ windowInfo: WindowInfo, isMinimized: Bool? = nil, isHidden: Bool? = nil) {
+    static func updateCachedWindowState(_ windowInfo: WindowInfo, isMinimized: Bool? = nil, isHidden: Bool? = nil, updateAccessTime: Bool = false) {
         desktopSpaceWindowCacheManager.updateCache(pid: windowInfo.app.processIdentifier) { windowSet in
             if let existingIndex = windowSet.firstIndex(of: windowInfo) {
                 var updatedWindow = windowSet[existingIndex]
@@ -309,6 +327,9 @@ extension WindowUtil {
                 }
                 if let isHidden {
                     updatedWindow.isHidden = isHidden
+                }
+                if updateAccessTime {
+                    updatedWindow.lastAccessedTime = Date()
                 }
                 windowSet.remove(at: existingIndex)
                 windowSet.insert(updatedWindow)
@@ -499,124 +520,164 @@ extension WindowUtil {
 // MARK: - Window Discovery
 
 extension WindowUtil {
-    // Cache for windowless apps to avoid expensive CGWindowListCopyWindowInfo call on every activation
-    private static var cachedWindowlessApps: [WindowInfo] = []
-    private static var windowlessAppsCacheTime: Date?
-    private static let windowlessAppsCacheValiditySeconds: TimeInterval = 5.0 // Refresh every 5 seconds
+    // Alt-tab-macos style: disable automatic cache refresh for stability
+    private static let windowlessAppsCacheValiditySeconds: TimeInterval = 30.0 // Very long cache - only refresh manually
     private static var isRefreshingWindowlessApps = false
+    private static var lastManualRefreshTime: Date?
+
+    // Alt-tab-macos style: manual refresh function for windowless apps
+    static func manuallyRefreshWindowlessApps() {
+        // Get ALL current windows (don't exclude windowless apps yet)
+        let allCurrentWindows = desktopSpaceWindowCacheManager.getAllWindows()
+
+        // Get bundle IDs of currently cached windowless apps
+        let windowlessBundleIds = Set(_cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
+
+        // PERFORMANCE: Removed Thread.sleep - it was blocking the main thread!
+        // Window creation detection is handled by the cache manager instead
+
+        let windowlessApps = getWindowlessApps(existingWindows: allCurrentWindows)
+
+        // Only update cache if we found different windowless apps
+        let newWindowlessBundleIds = Set(windowlessApps.compactMap(\.app.bundleIdentifier))
+        if newWindowlessBundleIds != windowlessBundleIds {
+            _cachedWindowlessApps = windowlessApps
+            _windowlessAppsCacheTime = Date()
+        }
+
+        lastManualRefreshTime = Date()
+    }
+
+    /// Returns the time of the last manual refresh for rate limiting
+    static func getLastManualRefreshTime() -> Date? {
+        lastManualRefreshTime
+    }
+
+    // Cache for windowless apps - alt-tab-macos style: very stable
+    private static var _cachedWindowlessApps: [WindowInfo] = []
+    private static var _windowlessAppsCacheTime: Date?
+
+    // Public getters for access from other classes
+    static var cachedWindowlessApps: [WindowInfo] { _cachedWindowlessApps }
+    static var windowlessAppsCacheTime: Date? { _windowlessAppsCacheTime }
+
+    /// Updates the lastAccessedTime for a windowless app in the cache
+    static func updateWindowlessAppAccessTime(pid: pid_t) {
+        if let index = _cachedWindowlessApps.firstIndex(where: { $0.app.processIdentifier == pid }) {
+            _cachedWindowlessApps[index].lastAccessedTime = Date()
+        }
+    }
+
+    // PERFORMANCE OPTIMIZATION: Rate limit for windowless refresh
+    // Using nonisolated(unsafe) for simple boolean flag - worst case is one extra refresh which is acceptable
+    private nonisolated(unsafe) static var isRefreshingWindowlessAppsAsync = false
 
     static func getAllWindowsOfAllApps(skipWindowlessApps: Bool = false) -> [WindowInfo] {
+        // PERFORMANCE: Get cached windows immediately - this is fast
         var windows = desktopSpaceWindowCacheManager.getAllWindows()
 
-        // Add windowless apps (like DeepL) - apps that are running but have no windows
-        // OPTIMIZATION: Always return cached data immediately, refresh in background if stale
+        // Add windowless apps if needed
         if !skipWindowlessApps {
-            // Always use cached data for instant response
-            windows.append(contentsOf: cachedWindowlessApps)
+            let timeSinceLastRefresh = lastManualRefreshTime.map { Date().timeIntervalSince($0) } ?? Double.infinity
+            let needsRefresh = timeSinceLastRefresh > WindowManagementConstants.windowlessRefreshMinInterval
 
-            // Check if we need to refresh in background
-            let now = Date()
-            let needsRefresh = windowlessAppsCacheTime == nil ||
-                now.timeIntervalSince(windowlessAppsCacheTime!) >= windowlessAppsCacheValiditySeconds
-
-            if needsRefresh, !isRefreshingWindowlessApps {
-                isRefreshingWindowlessApps = true
-                let currentWindows = windows // Capture for background task
+            // If cache is empty, do sync refresh (first time)
+            if _cachedWindowlessApps.isEmpty, needsRefresh {
+                manuallyRefreshWindowlessApps()
+            }
+            // If cache is stale, do async refresh in background (don't block UI)
+            else if needsRefresh, !isRefreshingWindowlessAppsAsync {
+                isRefreshingWindowlessAppsAsync = true
                 Task.detached(priority: .utility) {
-                    let windowlessApps = getWindowlessApps(existingWindows: currentWindows)
-                    await MainActor.run {
-                        cachedWindowlessApps = windowlessApps
-                        windowlessAppsCacheTime = Date()
-                        isRefreshingWindowlessApps = false
-                    }
+                    manuallyRefreshWindowlessApps()
+                    isRefreshingWindowlessAppsAsync = false
                 }
             }
+
+            // Filter out cached windows for apps that are now windowless (ghost window prevention)
+            let windowlessBundleIds = Set(_cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
+            if !windowlessBundleIds.isEmpty {
+                windows = windows.filter { window in
+                    guard let bundleId = window.app.bundleIdentifier else { return true }
+                    return !windowlessBundleIds.contains(bundleId)
+                }
+            }
+
+            // Add windowless apps from cache
+            windows.append(contentsOf: _cachedWindowlessApps)
         }
 
-        var filteredWindows = !Defaults[.includeHiddenWindowsInSwitcher]
-            ? windows.filter { !$0.isHidden && !$0.isMinimized }
-            : windows
+        // Apply filters - these are fast operations
+        windows = windows.filter { !$0.isHidden && !$0.isMinimized && !isAppFiltered($0.app) }
+        windows = filterOutTabbedWindows(windows)
 
-        // Filter out apps that are in the user's filter list (applies immediately when filter changes)
-        filteredWindows = filteredWindows.filter { !isAppFiltered($0.app) }
-
-        // Filter out tabbed windows if showTabsAsWindows is disabled
-        if !Defaults[.showTabsAsWindows] {
-            filteredWindows = filterOutTabbedWindows(filteredWindows)
-        }
-
-        // Filter by frontmost app if enabled
-        if Defaults[.limitSwitcherToFrontmostApp] {
-            filteredWindows = getWindowsForFrontmostApp(from: filteredWindows)
-        }
-
-        return sortWindowsForSwitcher(filteredWindows)
+        return windows
     }
 
     /// Returns windowless app entries for running apps that have no windows
     private static func getWindowlessApps(existingWindows: [WindowInfo]) -> [WindowInfo] {
+        // Alt-tab-macos style: use isActualApplication for better filtering
         let runningApps = NSWorkspace.shared.runningApplications.filter {
-            $0.activationPolicy == .regular && !$0.isTerminated
+            $0.activationPolicy == .regular && !$0.isTerminated && isActualApplication($0.processIdentifier, $0.bundleIdentifier)
         }
 
-        // Get PIDs that already have windows
-        let pidsWithWindows = Set(existingWindows.map(\.app.processIdentifier))
+        // Note: pidsWithWindows was removed as it's not used in current logic
+        // The hasVisibleCachedWindows check handles window detection more accurately
 
-        // Get all window info from system to double-check.
-        // IMPORTANT: Many apps keep tiny/transparent helper windows around even when "no real window" is open.
-        // We only consider a window "real" if it's layer 0 AND non-trivial size AND mostly visible.
-        let cgWindowList = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        // Get current space IDs and window IDs in current spaces
+        let currentSpaceIDs = Set(getVisibleSpaceIDs())
+        let windowIDsInCurrentSpaces = windowIDsInSpaces(Array(currentSpaceIDs), includeInvisible: true)
+
+        // Get window info for windows in current spaces to find which PIDs have windows
+        let cgWindowListAll = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+
+        // PERFORMANCE: Pre-fetch on-screen window list once for all visibility checks
+        let cgWindowListOnScreen = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+
         var pidsWithSystemWindows = Set<pid_t>()
-        for windowInfo in cgWindowList {
+        for windowInfo in cgWindowListAll {
             guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  let layer = windowInfo[kCGWindowLayer as String] as? Int,
-                  layer == 0 else { continue }
-
-            let alpha = windowInfo[kCGWindowAlpha as String] as? Double ?? 1.0
-            if alpha <= 0.01 {
-                continue
-            }
-
-            if let boundsDict = windowInfo[kCGWindowBounds as String] as? NSDictionary {
-                var bounds = CGRect.zero
-                if CGRectMakeWithDictionaryRepresentation(boundsDict, &bounds) {
-                    // Ignore tiny helper windows (tooltips, overlays, offscreen stubs)
-                    if bounds.width < 100 || bounds.height < 100 {
-                        continue
-                    }
-                }
-            }
-
+                  let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID,
+                  windowIDsInCurrentSpaces.contains(windowID) else { continue }
             pidsWithSystemWindows.insert(pid)
         }
 
         var windowlessEntries: [WindowInfo] = []
 
         for app in runningApps {
+            let pid = app.processIdentifier
+
             guard !isAppFiltered(app) else { continue }
             guard let bundleId = app.bundleIdentifier, !filteredBundleIdentifiers.contains(bundleId) else { continue }
 
-            let pid = app.processIdentifier
+            // Check hasVisibleCachedWindows to detect when a window was closed
+            // PERFORMANCE: Pass pre-fetched window list to avoid N+1 system calls
+            let hasCachedWindows = hasVisibleCachedWindows(for: pid, in: existingWindows, cgWindowList: cgWindowListOnScreen)
+            let isRegularApp = app.activationPolicy == .regular
 
-            // Only add if app has NO windows in cache AND NO windows in system
-            if !pidsWithWindows.contains(pid), !pidsWithSystemWindows.contains(pid) {
-                let windowProvider = WindowlessAppProvider(app: app)
+            // Enhanced logic: Check if this app should be windowless based on bundle identifier behavior
+            // This handles apps like Claude that change PIDs frequently but should be consistently windowless when no visible windows
+            // PERFORMANCE: Pass pre-fetched window list to avoid additional system calls
+            let shouldTreatAsWindowless = shouldTreatAsWindowlessApp(for: app, existingWindows: existingWindows, cgWindowList: cgWindowListOnScreen)
 
+            // For regular apps like Claude, we should be more lenient about system windows
+            // Many Electron apps have invisible background windows that shouldn't prevent windowless status
+            // The key insight: if an app has no VISIBLE cached windows, it should be windowless
+            let shouldAddAsWindowless = shouldTreatAsWindowless || (!hasCachedWindows && isRegularApp)
+
+            if shouldAddAsWindowless {
+                let mockWindowProvider = MockWindowProvider(windowID: 0, title: app.localizedName ?? "Unknown", frame: CGRect.zero)
                 let windowlessEntry = WindowInfo(
-                    windowProvider: windowProvider,
+                    windowProvider: mockWindowProvider,
                     app: app,
                     image: nil,
                     axElement: AXUIElementCreateApplication(pid),
                     appAxElement: AXUIElementCreateApplication(pid),
                     closeButton: nil,
                     lastAccessedTime: Date(),
-                    creationTime: Date(),
-                    imageCapturedTime: nil,
-                    spaceID: nil,
                     isMinimized: false,
-                    isHidden: app.isHidden
+                    isHidden: false
                 )
-
                 windowlessEntries.append(windowlessEntry)
             }
         }
@@ -624,10 +685,87 @@ extension WindowUtil {
         return windowlessEntries
     }
 
-    private static func filterOutTabbedWindows(_ windows: [WindowInfo]) -> [WindowInfo] {
-        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
-            return windows
+    /// Checks if an app has any VISIBLE cached windows (not hidden, minimized, or windowless apps)
+    /// PERFORMANCE: Uses pre-fetched cgWindowList to avoid multiple CGWindowListCopyWindowInfo calls
+    private static func hasVisibleCachedWindows(for pid: pid_t, in existingWindows: [WindowInfo], cgWindowList: [[String: Any]]) -> Bool {
+        let appWindows = existingWindows.filter { $0.app.processIdentifier == pid }
+        let nonWindowlessWindows = appWindows.filter { !$0.isWindowlessApp }
+
+        // Check for truly visible windows using pre-fetched window list
+        let visibleWindows = nonWindowlessWindows.filter { isUserVisibleWindow($0, cgWindowList: cgWindowList) }
+        if !visibleWindows.isEmpty { return true }
+
+        // Special handling for Electron-like apps
+        if let bundleId = nonWindowlessWindows.first?.app.bundleIdentifier,
+           ElectronAppRegistry.isKnownBundleId(bundleId)
+        {
+            if !nonWindowlessWindows.isEmpty { return true }
         }
+
+        return false
+    }
+
+    /// Checks if a window is truly user-visible by examining its layer and properties
+    /// PERFORMANCE: Accepts pre-fetched cgWindowList to avoid repeated CGWindowListCopyWindowInfo calls
+    private static func isUserVisibleWindow(_ window: WindowInfo, cgWindowList: [[String: Any]]? = nil) -> Bool {
+        // Use provided window list or fetch if not provided (fallback for backward compatibility)
+        let windowList: [[String: Any]] = if let provided = cgWindowList {
+            provided
+        } else {
+            CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        }
+
+        if let cgWindow = windowList.first(where: { $0[kCGWindowNumber as String] as? CGWindowID == window.id }) {
+            let layer = cgWindow[kCGWindowLayer as String] as? Int ?? 0
+            let alpha = cgWindow[kCGWindowAlpha as String] as? Double ?? 1.0
+            let bounds = cgWindow[kCGWindowBounds as String] as? [String: Any]
+            let width = bounds?["Width"] as? Double ?? 0
+            let height = bounds?["Height"] as? Double ?? 0
+
+            // Skip non-layer-0, transparent, or too small windows
+            if layer != 0 || alpha < WindowManagementConstants.minimumVisibleWindowAlpha ||
+                width < WindowManagementConstants.minimumVisibleWindowDimension ||
+                height < WindowManagementConstants.minimumVisibleWindowDimension { return false }
+            return true
+        }
+
+        // Electron apps: if not found in CG window list, treat as non-visible
+        if ElectronAppRegistry.isElectronApp(window.app.bundleIdentifier) {
+            return false
+        }
+
+        return true
+    }
+
+    /// Checks if an app should be treated as windowless based on bundle identifier behavior
+    /// PERFORMANCE: Accepts pre-fetched cgWindowList to avoid repeated system calls
+    private static func shouldTreatAsWindowlessApp(for app: NSRunningApplication, existingWindows: [WindowInfo], cgWindowList: [[String: Any]]) -> Bool {
+        guard let bundleId = app.bundleIdentifier else { return false }
+
+        // Use centralized ElectronAppRegistry for app detection
+        guard ElectronAppRegistry.isElectronApp(bundleId) else { return false }
+
+        // Recently launched apps - check if they have ANY windows
+        let launchDate = app.launchDate ?? Date.distantPast
+        let isRecentlyLaunched = Date().timeIntervalSince(launchDate) < WindowManagementConstants.recentlyLaunchedThreshold
+
+        let allProcesses = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
+        var allWindows: [WindowInfo] = []
+        for process in allProcesses {
+            allWindows.append(contentsOf: existingWindows.filter { $0.app.processIdentifier == process.processIdentifier })
+        }
+
+        if isRecentlyLaunched {
+            return allWindows.isEmpty
+        }
+
+        // Use pre-fetched window list for visibility checks
+        let visibleWindows = allWindows.filter { !$0.isHidden && !$0.isMinimized && isUserVisibleWindow($0, cgWindowList: cgWindowList) }
+        return visibleWindows.isEmpty
+    }
+
+    private static func filterOutTabbedWindows(_ windows: [WindowInfo]) -> [WindowInfo] {
+        let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
 
         let visibleWindowIDs = Set(windowList.compactMap { $0[kCGWindowNumber as String] as? CGWindowID })
 
@@ -645,19 +783,18 @@ extension WindowUtil {
                 return true
             }
 
+            // Special handling for Electron apps (exempt from tabbed window filtering)
+            if ElectronAppRegistry.isExemptFromTabbedWindowFiltering(windowInfo.app.bundleIdentifier) {
+                return true
+            }
+
             // Keep windows that are visible on current screen
-            if visibleWindowIDs.contains(windowInfo.id) {
-                return true
-            }
+            if visibleWindowIDs.contains(windowInfo.id) { return true }
 
-            // Keep windows that are in another space (not tabbed, just different space)
+            // Keep windows that are in another space
             let windowSpaceIDs = windowInfo.id.cgsSpaces()
-            let isInOtherSpace = !windowSpaceIDs.isEmpty && windowSpaceIDs.allSatisfy { !currentSpaceIDs.contains($0) }
-            if isInOtherSpace {
-                return true
-            }
+            if !windowSpaceIDs.isEmpty, windowSpaceIDs.allSatisfy({ !currentSpaceIDs.contains($0) }) { return true }
 
-            // Filter out tabbed windows (in current space but not visible)
             return false
         }
     }
@@ -1623,6 +1760,72 @@ extension WindowUtil {
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x2D, keyDown: false)
         keyUp?.flags = .maskCommand
         keyUp?.postToPid(app.processIdentifier)
+    }
+}
+
+// MARK: - Alt-tab-macos Compatibility Functions
+
+extension WindowUtil {
+    // Alt-tab-macos isActualApplication logic - DockDoor uyarlaması
+    private static func isActualApplication(_ processIdentifier: pid_t, _ bundleIdentifier: String?) -> Bool {
+        // Alt-tab-macos: use exact same logic as alt-tab-macos
+        (isNotXpc(processIdentifier) || isPasswords(bundleIdentifier) || isAndroidEmulator(bundleIdentifier, processIdentifier)) && !isProcessZombie(processIdentifier)
+    }
+
+    private static func isNotXpc(_ processIdentifier: pid_t) -> Bool {
+        // Use bundle identifier based detection since GetProcessInformation is unavailable
+        guard let runningApp = NSRunningApplication(processIdentifier: processIdentifier) else { return true }
+        let bundleId = runningApp.bundleIdentifier ?? ""
+
+        // XPC and system process patterns
+        return !bundleId.contains("com.apple.dock.etci") &&
+            !bundleId.contains(".xpc") &&
+            !bundleId.contains("com.apple.systemuiserver") &&
+            runningApp.activationPolicy != .accessory
+    }
+
+    private static func isPasswords(_ bundleIdentifier: String?) -> Bool {
+        bundleIdentifier == "com.apple.Passwords"
+    }
+
+    private static func isAndroidEmulator(_ bundleIdentifier: String?, _ processIdentifier: pid_t) -> Bool {
+        if bundleIdentifier == nil,
+           let executablePath = getExecutablePath(for: processIdentifier)
+        {
+            return executablePath.range(of: "qemu-system[^/]*$", options: .regularExpression, range: nil, locale: nil) != nil
+        }
+        return false
+    }
+
+    private static func getExecutablePath(for pid: pid_t) -> String? {
+        var mib: [Int32] = [CTL_KERN, KERN_PROCARGS, pid]
+        var size = 0
+        sysctl(&mib, u_int(mib.count), nil, &size, nil, 0)
+
+        var buffer = [CChar](repeating: 0, count: size)
+        sysctl(&mib, u_int(mib.count), &buffer, &size, nil, 0)
+
+        let executablePath = String(cString: buffer)
+        return executablePath.components(separatedBy: "\0").first
+    }
+
+    private static func isXpcProcess(_ pid: pid_t) -> Bool {
+        // XPC process'lerini bundle identifier'dan tespit et
+        guard let runningApp = NSRunningApplication(processIdentifier: pid) else { return true }
+        let bundleId = runningApp.bundleIdentifier ?? ""
+
+        // Common XPC and system process patterns
+        return bundleId.contains("com.apple.dock.etci") ||
+            bundleId.contains(".xpc") ||
+            bundleId.contains("com.apple.systemuiserver") ||
+            runningApp.activationPolicy == .accessory
+    }
+
+    private static func isProcessZombie(_ pid: pid_t) -> Bool {
+        let size = MemoryLayout<proc_bsdinfo>.size
+        var info = proc_bsdinfo()
+        let result = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, Int32(size))
+        return result <= 0
     }
 }
 

@@ -1,8 +1,11 @@
 import SwiftUI
 
+// Import WindowImageSizingCalculations for dimension calculations
+// WindowImageSizingCalculations is defined in Window Image Sizing Calculations.swift
+
 struct DynamicWindowFrameModifier: ViewModifier {
     let allowDynamicSizing: Bool
-    let dimensions: WindowPreviewHoverContainer.WindowDimensions
+    let dimensions: WindowImageSizingCalculations.WindowDimensions
     let dockPosition: DockPosition
     let windowSwitcherActive: Bool
 
@@ -12,17 +15,19 @@ struct DynamicWindowFrameModifier: ViewModifier {
             let isHorizontalFlow = dockPosition.isHorizontalFlow || windowSwitcherActive
 
             if isHorizontalFlow {
-                // Horizontal flow: fixed height, let width scale naturally
+                // Horizontal flow: use exact calculated dimensions for both width and height
                 content
-                    .frame(height: dimensions.size.height > 0 ? dimensions.size.height : nil)
-                    .scaledToFit()
+                    .frame(width: dimensions.size.width > 0 ? dimensions.size.width : nil,
+                           height: dimensions.size.height > 0 ? dimensions.size.height : nil)
+                    .clipped()
                     .frame(maxWidth: dimensions.maxDimensions.width,
                            maxHeight: dimensions.maxDimensions.height)
             } else {
-                // Vertical flow: fixed width, let height scale naturally
+                // Vertical flow: use exact calculated dimensions for both width and height
                 content
-                    .frame(width: dimensions.size.width > 0 ? dimensions.size.width : nil)
-                    .scaledToFit()
+                    .frame(width: dimensions.size.width > 0 ? dimensions.size.width : nil,
+                           height: dimensions.size.height > 0 ? dimensions.size.height : nil)
+                    .clipped()
                     .frame(maxWidth: dimensions.maxDimensions.width,
                            maxHeight: dimensions.maxDimensions.height)
             }
@@ -41,7 +46,7 @@ struct DynamicWindowFrameModifier: ViewModifier {
 extension View {
     func dynamicWindowFrame(
         allowDynamicSizing: Bool,
-        dimensions: WindowPreviewHoverContainer.WindowDimensions,
+        dimensions: WindowImageSizingCalculations.WindowDimensions,
         dockPosition: DockPosition,
         windowSwitcherActive: Bool
     ) -> some View {

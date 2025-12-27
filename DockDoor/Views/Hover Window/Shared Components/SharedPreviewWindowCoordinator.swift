@@ -1,7 +1,10 @@
+import Combine
 import Defaults
-import QuartzCore
 import Sparkle
 import SwiftUI
+
+// Import WindowUtil for cache management
+// Note: This file can access WindowUtil since it's in the same module
 
 enum ArrowDirection {
     case left, right, up, down
@@ -679,7 +682,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                 goBackwards ? .up : .down
             }
 
-            newIndex = WindowPreviewHoverContainer.navigateWindowSwitcher(
+            newIndex = WindowImageSizingCalculations.navigateWindowSwitcher(
                 from: coordinator.currIndex,
                 direction: direction,
                 totalItems: windowsCount,
@@ -703,8 +706,99 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         }
 
         let selectedWindow = coordinator.windows[currentIndex]
+
+        // Update cache to reflect the new access time for proper sorting
+        WindowUtil.updateCachedWindowState(selectedWindow, updateAccessTime: true)
+
+        // For windowless apps, also directly update the windowless apps cache
+        if selectedWindow.isWindowlessApp {
+            print(" [selectWindow] Windowless app selected, updating lastAccessedTime")
+
+            // Directly update the windowless apps cache with new access time
+            WindowUtil.updateWindowlessAppAccessTime(pid: selectedWindow.app.processIdentifier)
+
+            // Special handling for apps that need to be launched/activated when windowless
+            if let bundleId = selectedWindow.app.bundleIdentifier {
+                // List of apps that need special activation when windowless
+                let appsNeedingLaunch = [
+                    "com.anthropic.claudefordesktop", // Claude
+                    "com.apple.Preview", // Preview
+                    "com.linguee.DeepLCopyTranslator", // DeepL
+                ]
+
+                if appsNeedingLaunch.contains(bundleId) {
+                    print(" [selectWindow] Windowless app \(bundleId) detected - using special activation method")
+                    activateWindowlessApp(app: selectedWindow.app)
+                }
+            }
+
+            // Force a cache refresh to ensure the windowless app appears first
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                print(" [selectWindow] Forcing cache refresh after windowless app selection")
+                WindowUtil.manuallyRefreshWindowlessApps()
+            }
+        }
+
         selectedWindow.bringToFront()
         hideWindow()
+    }
+
+    /// Special activation method for windowless apps that don't respond to standard bringToFront
+    private func activateWindowlessApp(app: NSRunningApplication) {
+        guard let bundleId = app.bundleIdentifier else {
+            print("🔍 [activateWindowlessApp] No bundle ID available")
+            return
+        }
+
+        // Map bundle IDs to their app paths
+        let appPaths: [String: String] = [
+            "com.anthropic.claudefordesktop": "/Applications/Claude.app",
+            "com.apple.Preview": "/System/Applications/Preview.app",
+            "com.linguee.DeepLCopyTranslator": "/Applications/DeepL.app",
+        ]
+
+        guard let appPath = appPaths[bundleId] else {
+            print("🔍 [activateWindowlessApp] No app path found for \(bundleId)")
+            return
+        }
+
+        print("🔍 [activateWindowlessApp] Launching \(appPath) directly")
+
+        let appURL = URL(fileURLWithPath: appPath)
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.hides = false
+
+        NSWorkspace.shared.openApplication(
+            at: appURL,
+            configuration: configuration,
+            completionHandler: { runningApp, error in
+                if let error {
+                    print("🔍 [activateWindowlessApp] Failed to launch \(appPath): \(error)")
+                } else {
+                    print("🔍 [activateWindowlessApp] Successfully launched \(appPath)")
+
+                    // Force immediate cache refresh after launch to detect the app's new window
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        print("🔍 [activateWindowlessApp] Forcing cache refresh to detect window")
+                        WindowUtil.manuallyRefreshWindowlessApps()
+
+                        // Also trigger a full window list refresh
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self.refreshWindowList()
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    /// Force refresh the window list to update UI
+    private func refreshWindowList() {
+        print("🔍 [refreshWindowList] Refreshing window list")
+        // Trigger a notification to refresh the window list
+        NotificationCenter.default.post(name: NSNotification.Name("WindowListRefresh"), object: nil)
     }
 
     @MainActor
@@ -745,7 +839,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                 return
             }
 
-            let newFilteredPos = WindowPreviewHoverContainer.navigateWindowSwitcher(
+            let newFilteredPos = WindowImageSizingCalculations.navigateWindowSwitcher(
                 from: currentFilteredPos,
                 direction: direction,
                 totalItems: filteredIndices.count,
@@ -765,7 +859,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         } else {
             let dockPosition = DockUtils.getDockPosition()
 
-            newIndex = WindowPreviewHoverContainer.navigateWindowSwitcher(
+            newIndex = WindowImageSizingCalculations.navigateWindowSwitcher(
                 from: coordinator.currIndex,
                 direction: direction,
                 totalItems: windowsCount,

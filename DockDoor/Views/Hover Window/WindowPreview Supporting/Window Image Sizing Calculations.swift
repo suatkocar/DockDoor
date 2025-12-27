@@ -1,8 +1,67 @@
 import Cocoa
 import Defaults
 
+// Base struct for window image sizing calculations
+enum WindowImageSizingCalculations {
+    // Alt-tab-macos thumbnailSize logic
+    static func calculateThumbnailSize(imageSize: CGSize, isWindowlessApp: Bool, maxWidth: CGFloat, maxHeight: CGFloat) -> CGSize {
+        let imageWidth = imageSize.width
+        let imageHeight = imageSize.height
+
+        // Don't stretch very small windows
+        if !isWindowlessApp, imageWidth < maxWidth, imageHeight < maxHeight {
+            return imageSize
+        }
+
+        let thumbnailHeight = min(imageHeight, maxHeight)
+        let thumbnailWidth = min(imageWidth, maxWidth)
+        let imageRatio = imageWidth / imageHeight
+        let thumbnailRatio = thumbnailWidth / thumbnailHeight
+
+        var width: CGFloat
+        var height: CGFloat
+
+        if thumbnailRatio > imageRatio {
+            width = imageWidth * thumbnailHeight / imageHeight
+            height = thumbnailHeight
+        } else if thumbnailRatio < imageRatio {
+            width = thumbnailWidth
+            height = imageHeight * thumbnailWidth / imageWidth
+        } else {
+            width = maxHeight / imageHeight * imageWidth
+            height = maxHeight
+        }
+
+        return CGSize(width: width.rounded(), height: height.rounded())
+    }
+
+    // Performance optimization: caches
+    private static var overallMaxDimensionsCache: CGPoint?
+    private static var cachedWindowCount: Int = 0
+    private static var cachedPanelSize: CGSize = .zero
+
+    private static var precomputeCache: [Int: WindowDimensions]?
+    private static var cachedPrecomputeWindowsHash: Int = 0
+    private static var cachedPrecomputeMaxDimensions: CGPoint = .zero
+    private static var cachedPrecomputeSwitcherActive: Bool = false
+
+    private static func resetAllCaches() {
+        overallMaxDimensionsCache = nil
+        cachedWindowCount = 0
+        cachedPanelSize = .zero
+        precomputeCache = nil
+        cachedPrecomputeWindowsHash = 0
+        cachedPrecomputeMaxDimensions = .zero
+        cachedPrecomputeSwitcherActive = false
+    }
+}
+
 // Holds logic related to precomputing image thumbnail sizes
-extension WindowPreviewHoverContainer {
+extension WindowImageSizingCalculations {
+    private static func resetCache() {
+        resetAllCaches()
+    }
+
     struct WindowDimensions {
         let size: CGSize
         let maxDimensions: CGSize
@@ -15,37 +74,62 @@ extension WindowPreviewHoverContainer {
         isMockPreviewActive: Bool,
         sharedPanelWindowSize: CGSize
     ) -> CGPoint {
+        // Cache validation
+        let isFirstRun = overallMaxDimensionsCache == nil
+        let windowsChanged = windows.count != cachedWindowCount
+        let sizeChanged = sharedPanelWindowSize != cachedPanelSize
+
+        if !isFirstRun, !windowsChanged, !sizeChanged, let cached = overallMaxDimensionsCache {
+            return cached
+        }
+
+        cachedWindowCount = windows.count
+        cachedPanelSize = sharedPanelWindowSize
+
         if Defaults[.allowDynamicImageSizing] {
-            // Use the old dynamic sizing logic based on actual window aspect ratios
-            let thickness = isMockPreviewActive ? 200 : sharedPanelWindowSize.height
-            var maxWidth: CGFloat = 300 // Default/min
-            var maxHeight: CGFloat = 300 // Default/min
-
+            let thickness = max(WindowManagementConstants.minPreviewThickness,
+                                min(WindowManagementConstants.maxPreviewThickness, Defaults[.previewHeight]))
+            var maxWidth: CGFloat = WindowManagementConstants.defaultPreviewMaxWidth
+            var maxHeight: CGFloat = WindowManagementConstants.defaultPreviewMaxHeight
             let orientationIsHorizontal = dockPosition == .bottom || dockPosition == .cmdTab || isWindowSwitcherActive
-            let maxAspectRatio: CGFloat = 1.5
+            let maxAspectRatio: CGFloat = WindowManagementConstants.maxPreviewAspectRatio
 
-            for window in windows {
-                if let cgImage = window.image {
-                    let cgSize = CGSize(width: cgImage.width, height: cgImage.height)
-                    if orientationIsHorizontal {
-                        let rawWidthBasedOnHeight = (cgSize.width * thickness) / cgSize.height
-                        let widthBasedOnHeight = min(rawWidthBasedOnHeight, thickness * maxAspectRatio)
-                        maxWidth = max(maxWidth, widthBasedOnHeight)
-                        maxHeight = thickness
+            if !windows.isEmpty {
+                for window in windows {
+                    if let cgImage = window.image {
+                        let cgSize = CGSize(width: cgImage.width, height: cgImage.height)
+                        if orientationIsHorizontal {
+                            let widthBasedOnHeight = min((cgSize.width * thickness) / cgSize.height, thickness * maxAspectRatio)
+                            maxWidth = max(maxWidth, widthBasedOnHeight)
+                            maxHeight = thickness
+                        } else {
+                            let heightBasedOnWidth = min((cgSize.height * thickness) / cgSize.width, thickness * maxAspectRatio)
+                            maxHeight = max(maxHeight, heightBasedOnWidth)
+                            maxWidth = thickness
+                        }
                     } else {
-                        let rawHeightBasedOnWidth = (cgSize.height * thickness) / cgSize.width
-                        let heightBasedOnWidth = min(rawHeightBasedOnWidth, thickness * maxAspectRatio)
-                        maxHeight = max(maxHeight, heightBasedOnWidth)
-                        maxWidth = thickness
+                        // Windowless apps fallback
+                        if orientationIsHorizontal {
+                            maxWidth = max(maxWidth, WindowManagementConstants.defaultPreviewMaxWidth)
+                            maxHeight = thickness
+                        } else {
+                            maxWidth = thickness
+                            maxHeight = max(maxHeight, WindowManagementConstants.defaultPreviewMaxHeight)
+                        }
                     }
                 }
+            } else {
+                maxWidth = thickness
+                maxHeight = thickness
             }
-            return CGPoint(x: max(1, maxWidth), y: max(1, maxHeight)) // Ensure positive dimensions
+
+            let result = CGPoint(x: max(1, maxWidth), y: max(1, maxHeight))
+            overallMaxDimensionsCache = result
+            return result
         } else {
-            // Use fixed sizing from user settings
-            let width = Defaults[.previewWidth]
-            let height = Defaults[.previewHeight]
-            return CGPoint(x: width, y: height)
+            let result = CGPoint(x: Defaults[.previewWidth], y: Defaults[.previewHeight])
+            overallMaxDimensionsCache = result
+            return result
         }
     }
 
@@ -60,11 +144,30 @@ extension WindowPreviewHoverContainer {
         switcherMaxRows: Int,
         switcherMaxColumns: Int
     ) -> [Int: WindowDimensions] {
+        // Create hash for windows to detect changes
+        let currentWindowsHash = windows.reduce(0) { hash, window in
+            var windowHash = hash
+            windowHash ^= window.app.processIdentifier.hashValue
+            if let windowName = window.windowName {
+                windowHash ^= windowName.hashValue
+            }
+            return windowHash
+        }
+
+        // Check if we can use cached results
+        if let cached = precomputeCache,
+           currentWindowsHash == cachedPrecomputeWindowsHash,
+           overallMaxDimensions == cachedPrecomputeMaxDimensions,
+           isWindowSwitcherActive == cachedPrecomputeSwitcherActive
+        {
+            return cached
+        }
+
         var dimensionsMap: [Int: WindowDimensions] = [:]
 
         let cardMaxFrameDimensions = CGSize(
-            width: bestGuessMonitor.frame.width * 0.75,
-            height: bestGuessMonitor.frame.height * 0.75
+            width: bestGuessMonitor.frame.width * WindowManagementConstants.cardMaxFrameScreenPercentage,
+            height: bestGuessMonitor.frame.height * WindowManagementConstants.cardMaxFrameScreenPercentage
         )
 
         if Defaults[.allowDynamicImageSizing] {
@@ -82,12 +185,32 @@ extension WindowPreviewHoverContainer {
                 totalItems: windows.count
             )
 
-            let windowChunks = createWindowChunks(
-                totalWindows: windows.count,
-                isHorizontal: orientationIsHorizontal,
-                maxColumns: effectiveMaxColumns,
-                maxRows: effectiveMaxRows
-            )
+            // Use bin-packing for horizontal layouts to maximize space utilization
+            let windowChunks: [[Int]]
+            if orientationIsHorizontal {
+                let thickness = overallMaxDimensions.y
+                let screenWidth = bestGuessMonitor.frame.width * 0.80 // Use 80% of screen width
+                let itemSpacing: CGFloat = 24
+                let globalPadding: CGFloat = 40
+                let maxRowWidth = screenWidth - globalPadding
+
+                windowChunks = createBinPackedChunks(
+                    windows: windows,
+                    maxRowWidth: maxRowWidth,
+                    thickness: thickness,
+                    itemSpacing: itemSpacing,
+                    maxColumns: effectiveMaxColumns,
+                    maxRows: effectiveMaxRows
+                )
+            } else {
+                // For vertical layouts, use traditional chunking
+                windowChunks = createWindowChunks(
+                    totalWindows: windows.count,
+                    isHorizontal: orientationIsHorizontal,
+                    maxColumns: effectiveMaxColumns,
+                    maxRows: effectiveMaxRows
+                )
+            }
 
             for (_, chunk) in windowChunks.enumerated() {
                 var unifiedHeight: CGFloat = 0
@@ -96,8 +219,12 @@ extension WindowPreviewHoverContainer {
                 if orientationIsHorizontal {
                     let thickness = overallMaxDimensions.y
                     for windowIndex in chunk {
-                        guard windowIndex < windows.count,
-                              let cgImage = windows[windowIndex].image else { continue }
+                        guard windowIndex < windows.count else { continue }
+                        let windowInfo = windows[windowIndex]
+
+                        guard let cgImage = windowInfo.image else {
+                            continue
+                        }
 
                         let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
                         let aspectRatio = originalSize.width / originalSize.height
@@ -105,14 +232,25 @@ extension WindowPreviewHoverContainer {
                         let rawWidthAtThickness = thickness * aspectRatio
                         let widthAtThickness = min(rawWidthAtThickness, thickness * 1.5)
 
-                        unifiedWidth = max(unifiedWidth, widthAtThickness)
+                        // For low aspect ratio apps like Slack (aspectRatio < 1.0),
+                        // don't force them to be as wide as high aspect ratio apps
+                        let finalWidth = aspectRatio < 1.0 ?
+                            min(rawWidthAtThickness, thickness * 1.2) : widthAtThickness
+
+                        if aspectRatio < 1.0 {}
+
+                        unifiedWidth = max(unifiedWidth, finalWidth)
                     }
                     unifiedHeight = thickness
                 } else {
                     let thickness = overallMaxDimensions.x
                     for windowIndex in chunk {
-                        guard windowIndex < windows.count,
-                              let cgImage = windows[windowIndex].image else { continue }
+                        guard windowIndex < windows.count else { continue }
+                        let windowInfo = windows[windowIndex]
+
+                        guard let cgImage = windowInfo.image else {
+                            continue
+                        }
 
                         let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
                         let aspectRatio = originalSize.width / originalSize.height
@@ -127,22 +265,30 @@ extension WindowPreviewHoverContainer {
 
                 for windowIndex in chunk {
                     guard windowIndex < windows.count else { continue }
+                    let windowInfo = windows[windowIndex]
 
-                    if windows[windowIndex].image != nil {
-                        let windowSize = if orientationIsHorizontal {
-                            CGSize(width: 0, height: max(unifiedHeight, 50))
-                        } else {
-                            CGSize(width: max(unifiedWidth, 50), height: 0)
-                        }
+                    if windowInfo.image != nil {
+                        // Alt-tab-macos thumbnailSize logic - birebir aynı
+                        let cgImage = windowInfo.image!
+                        let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
+                        let isWindowlessApp = windowInfo.windowProvider.windowID == 0 // Windowless apps have windowID 0
+
+                        let windowSize = WindowImageSizingCalculations.calculateThumbnailSize(
+                            imageSize: originalSize,
+                            isWindowlessApp: isWindowlessApp,
+                            maxWidth: unifiedWidth,
+                            maxHeight: unifiedHeight
+                        )
 
                         dimensionsMap[windowIndex] = WindowDimensions(
                             size: windowSize,
                             maxDimensions: cardMaxFrameDimensions
                         )
                     } else {
-                        // Windowless apps and windows without images use fallback
-                        let fallbackSize = CGSize(width: min(300, overallMaxDimensions.x),
-                                                  height: min(300, overallMaxDimensions.y))
+                        // Windowless apps and windows without images use fallback with proper aspect ratio
+                        let fallbackWidth = min(300, overallMaxDimensions.x)
+                        let fallbackHeight = min(300, overallMaxDimensions.y)
+                        let fallbackSize = CGSize(width: fallbackWidth, height: fallbackHeight)
                         dimensionsMap[windowIndex] = WindowDimensions(
                             size: fallbackSize,
                             maxDimensions: cardMaxFrameDimensions
@@ -153,15 +299,21 @@ extension WindowPreviewHoverContainer {
         } else {
             let width = Defaults[.previewWidth]
             let height = Defaults[.previewHeight]
-            let fixedBoxSize = CGSize(width: width, height: height)
 
             for (index, _) in windows.enumerated() {
                 dimensionsMap[index] = WindowDimensions(
-                    size: fixedBoxSize,
+                    size: CGSize(width: width, height: height),
                     maxDimensions: cardMaxFrameDimensions
                 )
             }
         }
+
+        // Update cache
+        precomputeCache = dimensionsMap
+        cachedPrecomputeWindowsHash = currentWindowsHash
+        cachedPrecomputeMaxDimensions = overallMaxDimensions
+        cachedPrecomputeSwitcherActive = isWindowSwitcherActive
+
         return dimensionsMap
     }
 
@@ -182,26 +334,6 @@ extension WindowPreviewHoverContainer {
         return WindowDimensions(
             size: fixedBoxSize,
             maxDimensions: cardMaxFrameDimensions
-        )
-    }
-
-    func getDimensions(for index: Int, dimensionsMap: [Int: WindowDimensions]) -> WindowDimensions {
-        guard index >= 0, index < previewStateCoordinator.windows.count else {
-            return WindowDimensions(
-                size: CGSize(width: 100, height: 100),
-                maxDimensions: CGSize(
-                    width: bestGuessMonitor.frame.width * 0.75,
-                    height: bestGuessMonitor.frame.height * 0.75
-                )
-            )
-        }
-
-        return dimensionsMap[index] ?? WindowDimensions(
-            size: CGSize(width: 100, height: 100),
-            maxDimensions: CGSize(
-                width: bestGuessMonitor.frame.width * 0.75,
-                height: bestGuessMonitor.frame.height * 0.75
-            )
         )
     }
 
@@ -229,8 +361,8 @@ extension WindowPreviewHoverContainer {
         switcherMaxColumns: Int,
         totalItems: Int? = nil
     ) -> (maxColumns: Int, maxRows: Int) {
-        let screenWidth = bestGuessMonitor.frame.width * 0.75
-        let screenHeight = bestGuessMonitor.frame.height * 0.75
+        let screenWidth = bestGuessMonitor.frame.width * 0.80 // Use 80% of screen width
+        let screenHeight = bestGuessMonitor.frame.height * 0.80
         let itemSpacing: CGFloat = 24
         let globalPadding: CGFloat = 40
 
@@ -244,6 +376,8 @@ extension WindowPreviewHoverContainer {
         var effectiveMaxRows: Int
 
         if isWindowSwitcherActive {
+            // For window switcher, use user's column setting directly
+            // Bin-packing will handle fitting windows within screen width
             effectiveMaxColumns = switcherMaxColumns
             effectiveMaxRows = switcherMaxRows
         } else if dockPosition == .bottom || dockPosition == .cmdTab {
@@ -254,7 +388,8 @@ extension WindowPreviewHoverContainer {
             effectiveMaxRows = calculatedMaxRows
         }
 
-        return (effectiveMaxColumns, effectiveMaxRows)
+        let result = (effectiveMaxColumns, effectiveMaxRows)
+        return result
     }
 
     /// Organizes items into rows/columns based on flow direction
@@ -281,13 +416,13 @@ extension WindowPreviewHoverContainer {
         var chunks: [[T]]
 
         if isHorizontal {
-            let rowsNeededAtMaxColumns = Int(ceil(Double(totalItems) / Double(maxColumns)))
-            let actualRowsNeeded = min(maxRows, rowsNeededAtMaxColumns)
-            let actualColumnsNeeded = Int(ceil(Double(totalItems) / Double(actualRowsNeeded)))
-            let itemsPerRow = min(maxColumns, actualColumnsNeeded)
+            // Fill rows up to maxColumns, then create new rows
+            // This ensures 9 items with maxColumns=5 becomes 5+4, not 3+3+3
+            let itemsPerRow = maxColumns
 
             chunks = []
             var startIndex = 0
+            var rowIndex = 0
 
             while startIndex < totalItems {
                 let endIndex = min(startIndex + itemsPerRow, totalItems)
@@ -298,15 +433,15 @@ extension WindowPreviewHoverContainer {
                 }
 
                 startIndex = endIndex
+                rowIndex += 1
             }
         } else {
-            let columnsNeededAtMaxRows = Int(ceil(Double(totalItems) / Double(maxRows)))
-            let actualColumnsNeeded = min(maxColumns, columnsNeededAtMaxRows)
-            let actualRowsNeeded = Int(ceil(Double(totalItems) / Double(actualColumnsNeeded)))
-            let itemsPerColumn = min(maxRows, actualRowsNeeded)
+            // Fill columns up to maxRows, then create new columns
+            let itemsPerColumn = maxRows
 
             chunks = []
             var startIndex = 0
+            var columnIndex = 0
 
             while startIndex < totalItems {
                 let endIndex = min(startIndex + itemsPerColumn, totalItems)
@@ -317,6 +452,7 @@ extension WindowPreviewHoverContainer {
                 }
 
                 startIndex = endIndex
+                columnIndex += 1
             }
         }
 
@@ -341,6 +477,113 @@ extension WindowPreviewHoverContainer {
             maxColumns: maxColumns,
             maxRows: maxRows
         )
+    }
+
+    // MARK: - Bin-Packing Layout
+
+    /// Calculates the estimated width of a window preview based on its aspect ratio
+    /// - Parameters:
+    ///   - window: The window to calculate width for
+    ///   - thickness: The fixed height (thickness) for horizontal layout
+    ///   - maxPreviewWidth: Maximum preview width from user settings (optional)
+    /// - Returns: Estimated width of the window preview
+    private static func estimateWindowWidth(for window: WindowInfo, thickness: CGFloat, maxPreviewWidth: CGFloat? = nil) -> CGFloat {
+        // Use user's preview width setting as upper bound if provided
+        let userMaxWidth = maxPreviewWidth ?? CGFloat(Defaults[.previewWidth])
+
+        guard let cgImage = window.image else {
+            // Default width for windowless apps or missing images
+            return min(thickness * 0.8, userMaxWidth)
+        }
+
+        let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let aspectRatio = originalSize.width / originalSize.height
+
+        // Calculate width based on aspect ratio
+        let rawWidthAtThickness = thickness * aspectRatio
+        let widthAtThickness = min(rawWidthAtThickness, thickness * 1.5)
+
+        // For low aspect ratio apps (like Slack), use narrower width
+        var finalWidth = aspectRatio < 1.0 ?
+            min(rawWidthAtThickness, thickness * 1.2) : widthAtThickness
+
+        // Respect user's preview width setting as maximum
+        finalWidth = min(finalWidth, userMaxWidth)
+
+        return finalWidth
+    }
+
+    /// Creates bin-packed chunks of window indices based on actual window widths
+    /// Windows are placed in rows to maximize space utilization
+    /// - Parameters:
+    ///   - windows: Array of windows to pack
+    ///   - maxRowWidth: Maximum width available for each row
+    ///   - thickness: The fixed height (thickness) for horizontal layout
+    ///   - itemSpacing: Spacing between items
+    ///   - maxColumns: Maximum items per row (user setting)
+    ///   - maxRows: Maximum rows allowed
+    /// - Returns: Array of chunks (rows) with window indices
+    static func createBinPackedChunks(
+        windows: [WindowInfo],
+        maxRowWidth: CGFloat,
+        thickness: CGFloat,
+        itemSpacing: CGFloat = 24,
+        maxColumns: Int,
+        maxRows: Int
+    ) -> [[Int]] {
+        guard !windows.isEmpty else { return [] }
+
+        // Calculate widths for all windows
+        let windowWidths: [(index: Int, width: CGFloat)] = windows.enumerated().map { index, window in
+            (index, estimateWindowWidth(for: window, thickness: thickness))
+        }
+
+        var chunks: [[Int]] = []
+        var currentRow: [Int] = []
+        var currentRowWidth: CGFloat = 0
+        var currentRowCount = 0
+
+        for (index, width) in windowWidths {
+            let widthWithSpacing = currentRow.isEmpty ? width : width + itemSpacing
+
+            // Check if this window fits in current row
+            let fitsInRow = currentRowWidth + widthWithSpacing <= maxRowWidth
+            let underMaxColumns = currentRowCount < maxColumns
+
+            if fitsInRow, underMaxColumns {
+                // Add to current row
+                currentRow.append(index)
+                currentRowWidth += widthWithSpacing
+                currentRowCount += 1
+            } else {
+                // Start new row
+                if !currentRow.isEmpty {
+                    chunks.append(currentRow)
+                }
+
+                // Check if we've hit max rows
+                if chunks.count >= maxRows {
+                    // Add remaining windows to last row anyway
+                    currentRow = [index]
+                    for remaining in windowWidths.dropFirst(index + 1) {
+                        currentRow.append(remaining.index)
+                    }
+                    chunks[chunks.count - 1].append(contentsOf: currentRow.dropFirst())
+                    return chunks
+                }
+
+                currentRow = [index]
+                currentRowWidth = width
+                currentRowCount = 1
+            }
+        }
+
+        // Don't forget the last row
+        if !currentRow.isEmpty {
+            chunks.append(currentRow)
+        }
+
+        return chunks
     }
 
     /// Navigates window switcher grid

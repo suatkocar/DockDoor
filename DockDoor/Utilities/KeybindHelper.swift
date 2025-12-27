@@ -25,7 +25,7 @@ private class WindowSwitchingCoordinator {
     var isSwitcherBeingUsed = false
 
     private static var lastUpdateAllWindowsTime: Date?
-    private static let updateAllWindowsThrottleInterval: TimeInterval = 60.0
+    private static let updateAllWindowsThrottleInterval: TimeInterval = WindowManagementConstants.updateAllWindowsThrottleInterval
 
     /// Synchronous version for instant mode - no async overhead, no blocking guard
     @MainActor
@@ -78,7 +78,8 @@ private class WindowSwitchingCoordinator {
         }
 
         if stateManager.isActive {
-            // TODO: Consolidate WindowSwitcherStateManager and PreviewStateCoordinator into a single index system
+            // NOTE: Both coordinators now conform to IndexManaging protocol for unified index management
+            // See: IndexManaging.swift for the shared protocol definition
             let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
             if uiIndex >= 0, uiIndex != stateManager.currentIndex {
                 stateManager.setIndex(uiIndex)
@@ -104,7 +105,7 @@ private class WindowSwitchingCoordinator {
 
     // Cache for space refresh to avoid calling every activation
     private static var lastSpaceRefreshTime: Date?
-    private static let spaceRefreshThrottleInterval: TimeInterval = 0.5 // Refresh at most every 500ms
+    private static let spaceRefreshThrottleInterval: TimeInterval = WindowManagementConstants.spaceRefreshThrottleInterval
 
     /// Fully synchronous initialization for instant mode - maximum speed
     @MainActor
@@ -112,6 +113,14 @@ private class WindowSwitchingCoordinator {
         previewCoordinator: SharedPreviewWindowCoordinator,
         mode: SwitcherInvocationMode = .allWindows
     ) {
+        // TIMING: Performance measurement
+        let startTime = CFAbsoluteTimeGetCurrent()
+        var spaceRefreshTime: Double = 0
+        var getWindowsTime: Double = 0
+        var filterSortTime: Double = 0
+        var renderTime: Double = 0
+        var stepStart = CFAbsoluteTimeGetCurrent()
+
         // OPTIMIZATION: Throttle space refresh - it's expensive and rarely changes
         let now = Date()
         if let lastRefresh = WindowSwitchingCoordinator.lastSpaceRefreshTime,
@@ -123,9 +132,13 @@ private class WindowSwitchingCoordinator {
             WindowUtil.updateSpaceInfoForAllWindows()
             WindowSwitchingCoordinator.lastSpaceRefreshTime = now
         }
+        spaceRefreshTime = (CFAbsoluteTimeGetCurrent() - stepStart) * 1000
+        stepStart = CFAbsoluteTimeGetCurrent()
 
         // Get windows immediately from cache (fast with windowless apps cache)
         var windows = WindowUtil.getAllWindowsOfAllApps()
+        getWindowsTime = (CFAbsoluteTimeGetCurrent() - stepStart) * 1000
+        stepStart = CFAbsoluteTimeGetCurrent()
 
         // Apply space filter using sync version
         let filterBySpace = (mode == .currentSpaceOnly || mode == .activeAppCurrentSpace)
@@ -148,6 +161,8 @@ private class WindowSwitchingCoordinator {
 
         // Sort windows
         windows = WindowUtil.sortWindowsForSwitcher(windows)
+        filterSortTime = (CFAbsoluteTimeGetCurrent() - stepStart) * 1000
+        stepStart = CFAbsoluteTimeGetCurrent()
 
         guard !windows.isEmpty else { return }
 
@@ -169,10 +184,11 @@ private class WindowSwitchingCoordinator {
             targetScreen: targetScreen,
             sessionId: sessionId
         )
+        renderTime = (CFAbsoluteTimeGetCurrent() - stepStart) * 1000
 
-        // Uncomment for performance debugging (also uncomment timing variables above):
-        // let totalTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-        // print("TIMING[Switcher]: Total=\(String(format: "%.1f", totalTime))ms, windows=\(windows.count) | space=\(String(format: "%.1f", spaceRefreshTime))ms, get=\(String(format: "%.1f", getWindowsTime))ms, filter=\(String(format: "%.1f", filterSortTime))ms, render=\(String(format: "%.1f", renderTime))ms")
+        // Performance debugging
+        let totalTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+        print("TIMING[Switcher]: Total=\(String(format: "%.1f", totalTime))ms, windows=\(windows.count) | space=\(String(format: "%.1f", spaceRefreshTime))ms, get=\(String(format: "%.1f", getWindowsTime))ms, filter=\(String(format: "%.1f", filterSortTime))ms, render=\(String(format: "%.1f", renderTime))ms")
 
         // Background tasks - don't block UI
         Task.detached(priority: .low) {

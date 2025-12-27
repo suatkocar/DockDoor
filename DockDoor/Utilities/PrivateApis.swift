@@ -79,10 +79,8 @@ let kAXFullscreenAttribute = "AXFullScreen"
 
 // MARK: - Process Serial Number
 
-struct ProcessSerialNumber {
-    var highLongOfPSN: UInt32 = 0
-    var lowLongOfPSN: UInt32 = 0
-}
+typealias ProcessSerialNumber = Darwin.ProcessSerialNumber
+typealias ProcessInfoRec = ApplicationServices.ProcessInfoRec
 
 enum SLPSMode: UInt32 {
     case allWindows = 0x100
@@ -98,7 +96,9 @@ func CGSMainConnectionID() -> CGSConnectionID
 // MARK: - AXUIElement Private APIs
 
 @_silgen_name("_AXUIElementGetWindow") @discardableResult
-func _AXUIElementGetWindow(_ axUiElement: AXUIElement, _ wid: inout CGWindowID) -> AXError
+func _AXUIElementGetWindow(_ axUiElement: AXUIElement, _ wid: UnsafeMutablePointer<CGWindowID>) -> AXError
+
+// MARK: - Process Information APIs
 
 @_silgen_name("_AXUIElementCreateWithRemoteToken")
 func _AXUIElementCreateWithRemoteToken(_ token: CFData) -> Unmanaged<AXUIElement>?

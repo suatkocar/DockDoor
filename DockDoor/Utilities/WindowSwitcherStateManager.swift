@@ -3,14 +3,21 @@ import Defaults
 import Foundation
 import ScreenCaptureKit
 
-final class WindowSwitcherStateManager: ObservableObject {
-    @Published private(set) var currentIndex: Int = -1
+/// Manages window switcher state including index tracking, window IDs, and search filtering
+/// Conforms to IndexManaging protocol for unified index management across coordinators
+final class WindowSwitcherStateManager: ObservableObject, IndexManaging {
+    // IndexManaging protocol requires settable currentIndex
+    @Published var currentIndex: Int = -1
     @Published private(set) var windowIDs: [CGWindowID] = []
     @Published private(set) var isActive: Bool = false
     @Published private(set) var filteredIndices: [Int] = []
 
     private var isInitialized: Bool = false
     private var searchQuery: String = ""
+
+    // MARK: - IndexManaging Protocol
+
+    var itemCount: Int { windowIDs.count }
 
     var hasActiveSearch: Bool {
         !searchQuery.isEmpty
@@ -83,7 +90,7 @@ final class WindowSwitcherStateManager: ObservableObject {
             return
         }
 
-        currentIndex = WindowPreviewHoverContainer.navigateWindowSwitcher(
+        currentIndex = WindowImageSizingCalculations.navigateWindowSwitcher(
             from: currentIndex,
             direction: .right,
             totalItems: windowIDs.count,
@@ -105,7 +112,7 @@ final class WindowSwitcherStateManager: ObservableObject {
             return
         }
 
-        currentIndex = WindowPreviewHoverContainer.navigateWindowSwitcher(
+        currentIndex = WindowImageSizingCalculations.navigateWindowSwitcher(
             from: currentIndex,
             direction: .left,
             totalItems: windowIDs.count,
@@ -154,7 +161,7 @@ final class WindowSwitcherStateManager: ObservableObject {
             return
         }
 
-        let newFilteredPos = WindowPreviewHoverContainer.navigateWindowSwitcher(
+        let newFilteredPos = WindowImageSizingCalculations.navigateWindowSwitcher(
             from: currentFilteredPos,
             direction: direction,
             totalItems: filteredIndices.count,

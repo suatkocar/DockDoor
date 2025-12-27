@@ -130,9 +130,15 @@ struct TrackpadEventMonitor: NSViewRepresentable {
         }
 
         private func handleScroll(_ event: NSEvent) -> NSEvent? {
-            guard isActive else { return event }
+            guard isActive else {
+                print(" [handleScroll] Not active, ignoring scroll")
+                return event
+            }
             // IMPORTANT: Pass through non-trackpad events to allow scrolling in other windows
-            guard event.hasPreciseScrollingDeltas else { return event }
+            guard event.hasPreciseScrollingDeltas else {
+                print(" [handleScroll] Not precise scrolling, ignoring")
+                return event
+            }
 
             switch event.phase {
             case .began:
@@ -174,18 +180,26 @@ struct TrackpadEventMonitor: NSViewRepresentable {
 
             let normalizedY = isNaturalScrolling ? -cumulativeScrollY : cumulativeScrollY
 
+            print("🔍 [finishScroll] Final scroll: X=\(cumulativeScrollX), Y=\(cumulativeScrollY), normalizedY=\(normalizedY)")
+
             if abs(cumulativeScrollY) > abs(cumulativeScrollX), abs(cumulativeScrollY) > minDelta {
                 if cumulativeScrollY < 0 {
+                    print("🔍 [finishScroll] Triggering swipe DOWN")
                     DispatchQueue.main.async { self.onSwipeDown() }
                 } else {
+                    print("🔍 [finishScroll] Triggering swipe UP")
                     DispatchQueue.main.async { self.onSwipeUp() }
                 }
             } else if abs(cumulativeScrollX) > abs(cumulativeScrollY), abs(cumulativeScrollX) > minDelta {
                 if cumulativeScrollX > 0 {
+                    print("🔍 [finishScroll] Triggering swipe LEFT")
                     DispatchQueue.main.async { self.onSwipeLeft() }
                 } else {
+                    print("🔍 [finishScroll] Triggering swipe RIGHT")
                     DispatchQueue.main.async { self.onSwipeRight() }
                 }
+            } else {
+                print("🔍 [finishScroll] Scroll too small, no gesture triggered")
             }
 
             cumulativeScrollX = 0
