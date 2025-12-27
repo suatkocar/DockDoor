@@ -754,22 +754,13 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             return
         }
 
-        // Map bundle IDs to their app paths
-        let appPaths: [String: String] = [
-            "com.anthropic.claudefordesktop": "/Applications/Claude.app",
-            "com.apple.Preview": "/System/Applications/Preview.app",
-            "com.linguee.DeepLCopyTranslator": "/Applications/DeepL.app",
-            "com.sublimetext.4": "/Applications/Sublime Text.app",
-        ]
-
-        guard let appPath = appPaths[bundleId] else {
-            print("🔍 [activateWindowlessApp] No app path found for \(bundleId)")
+        // Use system URL resolution instead of hardcoded paths for better reliability and speed
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
+            print("🔍 [activateWindowlessApp] No app URL found for \(bundleId)")
             return
         }
 
-        print("🔍 [activateWindowlessApp] Launching \(appPath) directly")
-
-        let appURL = URL(fileURLWithPath: appPath)
+        print("🔍 [activateWindowlessApp] Launching \(appURL.path) via bundle ID \(bundleId)")
 
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
@@ -777,9 +768,9 @@ final class SharedPreviewWindowCoordinator: NSPanel {
 
         NSWorkspace.shared.openApplication(at: appURL, configuration: configuration) { _, error in
             if let error {
-                print("🔍 [activateWindowlessApp] Failed to launch \(appPath): \(error)")
+                print("🔍 [activateWindowlessApp] Failed to launch \(bundleId): \(error)")
             } else {
-                print("🔍 [activateWindowlessApp] Successfully launched \(appPath)")
+                print("🔍 [activateWindowlessApp] Successfully launched \(bundleId)")
                 // Fetch and cache windows for this app immediately
                 Task {
                     print("🔍 [activateWindowlessApp] Fetching windows for \(app.localizedName ?? "app")")
