@@ -762,6 +762,9 @@
         }
       }
     },
+    "%" : {
+
+    },
     "%@" : {
       "localizations" : {
         "af" : {
@@ -63141,6 +63144,9 @@
         }
       }
     },
+    "Layout Width" : {
+
+    },
     "Let's set things up" : {
       "localizations" : {
         "af" : {
@@ -78391,6 +78397,9 @@
           }
         }
       }
+    },
+    "Percentage of screen width used for window layout. Higher values use more screen space." : {
+
     },
     "Performance Profiles" : {
       "localizations" : {
@@ -126102,6 +126111,9 @@
         }
       }
     },
+    "When enabled, windows fill each row based on their actual width until no more space remains. Ignores the Max Columns setting. When disabled, strictly respects the Max Columns limit." : {
+
+    },
     "When hovering over the preview" : {
       "comment" : "Window title visibility option",
       "localizations" : {
@@ -127629,6 +127641,9 @@
           }
         }
       }
+    },
+    "Width-Based Layout" : {
+
     },
     "Window Background" : {
       "localizations" : {

@@ -189,7 +189,7 @@ extension WindowImageSizingCalculations {
             let windowChunks: [[Int]]
             if orientationIsHorizontal {
                 let thickness = overallMaxDimensions.y
-                let screenWidth = bestGuessMonitor.frame.width * 0.80 // Use 80% of screen width
+                let screenWidth = bestGuessMonitor.frame.width * Defaults[.layoutWidthPercentage]
                 let itemSpacing: CGFloat = 24
                 let globalPadding: CGFloat = 40
                 let maxRowWidth = screenWidth - globalPadding
@@ -361,7 +361,7 @@ extension WindowImageSizingCalculations {
         switcherMaxColumns: Int,
         totalItems: Int? = nil
     ) -> (maxColumns: Int, maxRows: Int) {
-        let screenWidth = bestGuessMonitor.frame.width * 0.80 // Use 80% of screen width
+        let screenWidth = bestGuessMonitor.frame.width * Defaults[.layoutWidthPercentage]
         let screenHeight = bestGuessMonitor.frame.height * 0.80
         let itemSpacing: CGFloat = 24
         let globalPadding: CGFloat = 40
@@ -520,7 +520,7 @@ extension WindowImageSizingCalculations {
     ///   - maxRowWidth: Maximum width available for each row
     ///   - thickness: The fixed height (thickness) for horizontal layout
     ///   - itemSpacing: Spacing between items
-    ///   - maxColumns: Maximum items per row (user setting)
+    ///   - maxColumns: Maximum items per row (user setting, ignored if useWidthBasedLayout is true)
     ///   - maxRows: Maximum rows allowed
     /// - Returns: Array of chunks (rows) with window indices
     static func createBinPackedChunks(
@@ -532,6 +532,9 @@ extension WindowImageSizingCalculations {
         maxRows: Int
     ) -> [[Int]] {
         guard !windows.isEmpty else { return [] }
+
+        // Check if width-based layout is enabled (ignores column limits entirely)
+        let useWidthBasedLayout = Defaults[.useWidthBasedLayout]
 
         // Calculate widths for all windows
         let windowWidths: [(index: Int, width: CGFloat)] = windows.enumerated().map { index, window in
@@ -546,11 +549,25 @@ extension WindowImageSizingCalculations {
         for (index, width) in windowWidths {
             let widthWithSpacing = currentRow.isEmpty ? width : width + itemSpacing
 
-            // Check if this window fits in current row
+            // Check if this window fits in current row physically
             let fitsInRow = currentRowWidth + widthWithSpacing <= maxRowWidth
-            let underMaxColumns = currentRowCount < maxColumns
 
-            if fitsInRow, underMaxColumns {
+            // Determine if we should add to current row
+            let shouldAddToRow: Bool
+            if useWidthBasedLayout {
+                // WIDTH-BASED LAYOUT: Only check physical fit, ignore column limit entirely
+                // Windows fill the row until there's no more physical space
+                shouldAddToRow = fitsInRow
+            } else {
+                // COLUMN-BASED LAYOUT: Respect maxColumns but allow smart overflow
+                let underMaxColumns = currentRowCount < maxColumns
+                let canOverflowIfSpaceAvailable = fitsInRow && currentRowCount >= maxColumns
+                let remainingSpaceRatio = (maxRowWidth - currentRowWidth) / maxRowWidth
+                let hasSignificantSpace = remainingSpaceRatio > 0.15
+                shouldAddToRow = fitsInRow && (underMaxColumns || (canOverflowIfSpaceAvailable && hasSignificantSpace))
+            }
+
+            if shouldAddToRow {
                 // Add to current row
                 currentRow.append(index)
                 currentRowWidth += widthWithSpacing

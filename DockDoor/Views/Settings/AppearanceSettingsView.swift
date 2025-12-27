@@ -112,6 +112,8 @@ struct AppearanceSettingsView: View {
     @Default(.previewMaxRows) var previewMaxRows
     @Default(.switcherMaxRows) var switcherMaxRows
     @Default(.switcherMaxColumns) var switcherMaxColumns
+    @Default(.useWidthBasedLayout) var useWidthBasedLayout
+    @Default(.layoutWidthPercentage) var layoutWidthPercentage
     @Default(.globalPaddingMultiplier) var globalPaddingMultiplier
     @Default(.previewWindowSpacing) var previewWindowSpacing
     @Default(.useEmbeddedDockPreviewElements) var useEmbeddedDockPreviewElements
@@ -855,6 +857,41 @@ struct AppearanceSettingsView: View {
                 Text(String(localized: "Controls how many columns of windows are shown in the window switcher. Limited by screen width."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(isOn: $useWidthBasedLayout) {
+                    Text(String(localized: "Width-Based Layout"))
+                }
+                .toggleStyle(.switch)
+
+                Text(String(localized: "When enabled, windows fill each row based on their actual width until no more space remains. Ignores the Max Columns setting. When disabled, strictly respects the Max Columns limit."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            if useWidthBasedLayout {
+                VStack(alignment: .leading, spacing: 4) {
+                    let layoutWidthBinding = Binding<Double>(
+                        get: { Double(layoutWidthPercentage * 100) },
+                        set: { layoutWidthPercentage = CGFloat($0 / 100) }
+                    )
+                    sliderSetting(title: "Layout Width",
+                                  value: layoutWidthBinding,
+                                  range: 70.0 ... 98.0,
+                                  step: 1.0,
+                                  unit: "%",
+                                  formatter: {
+                                      let f = NumberFormatter()
+                                      f.minimumFractionDigits = 0
+                                      f.maximumFractionDigits = 0
+                                      return f
+                                  }())
+
+                    Text(String(localized: "Percentage of screen width used for window layout. Higher values use more screen space."))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }

@@ -166,6 +166,8 @@ extension Defaults.Keys {
     static let switcherMaxRows = Key<Int>("switcherMaxRows", default: 2) // For window switcher
     static let switcherMaxColumns = Key<Int>("switcherMaxColumns", default: 6) // For window switcher
     static let previewWindowSpacing = Key<CGFloat>("previewWindowSpacing", default: 24) // Gap between preview windows
+    static let useWidthBasedLayout = Key<Bool>("useWidthBasedLayout", default: true) // Use width-based bin-packing instead of column limit
+    static let layoutWidthPercentage = Key<CGFloat>("layoutWidthPercentage", default: 0.90) // Percentage of screen width to use for layout (0.70-0.98)
 
     static let windowSwitcherPlacementStrategy = Key<WindowSwitcherPlacementStrategy>("windowSwitcherPlacementStrategy", default: .screenWithMouse)
     static let windowSwitcherControlPosition = Key<WindowSwitcherControlPosition>("windowSwitcherControlPosition", default: .topTrailing)

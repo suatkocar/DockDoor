@@ -739,8 +739,11 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             }
         }
 
-        selectedWindow.bringToFront()
+        // IMPORTANT: hideWindow() must be called BEFORE bringToFront()
+        // because hideWindow() calls resignKey()/resignMain() which would steal focus
+        // from the window we just brought to front
         hideWindow()
+        selectedWindow.bringToFront()
     }
 
     /// Special activation method for windowless apps that don't respond to standard bringToFront

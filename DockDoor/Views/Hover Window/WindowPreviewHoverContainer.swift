@@ -1114,7 +1114,8 @@ struct WindowPreviewHoverContainer: View {
             itemsToProcess.append(.embedded)
         }
 
-        for index in filteredWindowIndices() {
+        let windowIndices = filteredWindowIndices()
+        for index in windowIndices {
             itemsToProcess.append(.window(index))
         }
 
@@ -1140,6 +1141,73 @@ struct WindowPreviewHoverContainer: View {
         }
 
         let shouldReverse = (dockPosition == .bottom || dockPosition == .right) && !previewStateCoordinator.windowSwitcherActive
+
+        // Use width-based bin-packing for horizontal layouts when enabled
+        let useWidthBasedLayout = Defaults[.useWidthBasedLayout]
+        if useWidthBasedLayout, isHorizontal, !mockPreviewActive {
+            // Get windows for bin-packing calculation
+            let windows = previewStateCoordinator.windows
+            let windowsForPacking = windowIndices.compactMap { index -> WindowInfo? in
+                guard index < windows.count else { return nil }
+                return windows[index]
+            }
+
+            // Calculate layout parameters
+            let thickness = previewStateCoordinator.overallMaxPreviewDimension.y
+            let layoutWidthPercentage = Defaults[.layoutWidthPercentage]
+            let screenWidth = bestGuessMonitor.frame.width * layoutWidthPercentage
+            let globalPadding: CGFloat = 40
+            let maxRowWidth = screenWidth - globalPadding
+
+            // Create bin-packed chunks based on actual window widths
+            let binPackedIndices = WindowImageSizingCalculations.createBinPackedChunks(
+                windows: windowsForPacking,
+                maxRowWidth: maxRowWidth,
+                thickness: thickness,
+                itemSpacing: previewWindowSpacing,
+                maxColumns: maxColumns,
+                maxRows: maxRows
+            )
+
+            // Convert indices back to FlowItems
+            var result: [[FlowItem]] = []
+
+            // Handle embedded content in first row if present
+            var embeddedHandled = false
+            for rowIndices in binPackedIndices {
+                var rowItems: [FlowItem] = []
+
+                // Add embedded to first row if not handled yet
+                if !embeddedHandled, embeddedContentType != .none {
+                    rowItems.append(.embedded)
+                    embeddedHandled = true
+                }
+
+                for localIndex in rowIndices {
+                    if localIndex < windowIndices.count {
+                        let originalIndex = windowIndices[localIndex]
+                        rowItems.append(.window(originalIndex))
+                    }
+                }
+
+                if !rowItems.isEmpty {
+                    result.append(rowItems)
+                }
+            }
+
+            // If embedded wasn't added (no windows), add it in its own row
+            if !embeddedHandled, embeddedContentType != .none {
+                result.insert([.embedded], at: 0)
+            }
+
+            if shouldReverse {
+                result = result.reversed()
+            }
+
+            return result.isEmpty ? [[]] : result
+        }
+
+        // Fallback to column-based chunking
         let chunks = WindowImageSizingCalculations.chunkArray(
             items: itemsToProcess,
             isHorizontal: isHorizontal,
