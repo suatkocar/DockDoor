@@ -725,6 +725,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                     "com.apple.Preview", // Preview
                     "com.linguee.DeepLCopyTranslator", // DeepL
                     "com.sublimetext.4", // Sublime Text
+                    "org.videolan.vlc", // VLC
                 ]
 
                 if appsNeedingLaunch.contains(bundleId) {
