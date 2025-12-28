@@ -870,7 +870,7 @@ extension WindowUtil {
         }
     }
 
-    static func getActiveWindows(of app: NSRunningApplication, context: WindowFetchContext = .dockPreview) async throws -> [WindowInfo] {
+    static func getActiveWindows(of app: NSRunningApplication, context: WindowFetchContext = .dockPreview, forceRefresh: Bool = false) async throws -> [WindowInfo] {
         if isAppFiltered(app) {
             purgeAppCache(with: app.processIdentifier)
             return []
@@ -892,7 +892,7 @@ extension WindowUtil {
 
                 // Process SCK windows
                 for window in content.windows where window.owningApplication?.processID == app.processIdentifier {
-                    await group.addTask { try await captureAndCacheWindowInfo(window: window, app: app) }
+                    await group.addTask { try await captureAndCacheWindowInfo(window: window, app: app, forceRefresh: forceRefresh) }
                 }
 
                 _ = try await group.waitForAll()
@@ -902,7 +902,7 @@ extension WindowUtil {
         }
 
         // Discover windows via AX (minimized, hidden, other spaces, SCK-missed, or all when compact mode)
-        await discoverNonSCKWindowsViaAX(app: app, sckWindowIDs: sckWindowIDs)
+        await discoverNonSCKWindowsViaAX(app: app, sckWindowIDs: sckWindowIDs, forceRefresh: forceRefresh)
 
         // Discover invisible windows using CGS private API (catches windows that SCK and AX miss)
         await discoverInvisibleWindows(for: app, excludeWindowIDs: sckWindowIDs)
@@ -916,8 +916,8 @@ extension WindowUtil {
         return []
     }
 
-    private static func discoverNonSCKWindowsViaAX(app: NSRunningApplication, sckWindowIDs: Set<CGWindowID>) async {
-        _ = await discoverWindowsViaAX(app: app, excludeWindowIDs: sckWindowIDs)
+    private static func discoverNonSCKWindowsViaAX(app: NSRunningApplication, sckWindowIDs: Set<CGWindowID>, forceRefresh: Bool = false) async {
+        _ = await discoverWindowsViaAX(app: app, excludeWindowIDs: sckWindowIDs, forceRefresh: forceRefresh)
     }
 
     /// Discovers invisible/minimized windows using CGSCopyWindowsWithOptionsAndTags
@@ -1204,7 +1204,8 @@ extension WindowUtil {
 
     static func discoverWindowsViaAX(
         app: NSRunningApplication,
-        excludeWindowIDs: Set<CGWindowID> = []
+        excludeWindowIDs: Set<CGWindowID> = [],
+        forceRefresh: Bool = false
     ) async -> Int {
         let pid = app.processIdentifier
 
@@ -1230,7 +1231,8 @@ extension WindowUtil {
                     axWindow: axWin,
                     appAxElement: appAX,
                     app: app,
-                    excludeWindowIDs: excludeWindowIDs
+                    excludeWindowIDs: excludeWindowIDs,
+                    forceRefresh: forceRefresh
                 )
             }
         }
@@ -1273,11 +1275,11 @@ extension WindowUtil {
     // MARK: - AX Fallback Discovery
 
     /// Discovers and caches windows via AX + CGS when SCK misses them (e.g., certain Adobe apps)
-    private static func discoverNewWindowsViaAXFallback(app: NSRunningApplication) async {
-        _ = await discoverWindowsViaAX(app: app)
+    private static func discoverNewWindowsViaAXFallback(app: NSRunningApplication, forceRefresh: Bool = false) async {
+        _ = await discoverWindowsViaAX(app: app, forceRefresh: forceRefresh)
     }
 
-    static func updateAllWindowsInCurrentSpace() async {
+    static func updateAllWindowsInCurrentSpace(forceRefresh: Bool = false) async {
         var processedPIDs = Set<pid_t>()
 
         // SCK block - only runs if permission is granted
@@ -1294,7 +1296,7 @@ extension WindowUtil {
                     if let nsApp = NSRunningApplication(processIdentifier: scApp.processID) {
                         processedPIDs.insert(nsApp.processIdentifier)
                         await group.addTask {
-                            try? await captureAndCacheWindowInfo(window: window, app: nsApp)
+                            try? await captureAndCacheWindowInfo(window: window, app: nsApp, forceRefresh: forceRefresh)
                         }
                     }
                 }
@@ -1316,7 +1318,7 @@ extension WindowUtil {
         for app in runningApps {
             let pid = app.processIdentifier
             // Discover windows via AX (works without screen recording permission)
-            await discoverNewWindowsViaAXFallback(app: app)
+            await discoverNewWindowsViaAXFallback(app: app, forceRefresh: forceRefresh)
             processedPIDs.insert(pid)
         }
 
@@ -1324,12 +1326,12 @@ extension WindowUtil {
         for pid in processedPIDs {
             _ = await purifyAppCache(with: pid, removeAll: false)
             // Refresh images for AX-fallback windows
-            await refreshAXFallbackWindowImages(for: pid)
+            await refreshAXFallbackWindowImages(for: pid, forceRefresh: forceRefresh)
         }
     }
 
     /// Refresh images for windows discovered via AX fallback (no SCWindow available)
-    private static func refreshAXFallbackWindowImages(for pid: pid_t) async {
+    private static func refreshAXFallbackWindowImages(for pid: pid_t, forceRefresh: Bool = false) async {
         let windows = desktopSpaceWindowCacheManager.readCache(pid: pid)
         guard !windows.isEmpty else { return }
 
@@ -1349,7 +1351,7 @@ extension WindowUtil {
             }
 
             await group.addTask {
-                if let image = try? await captureWindowImage(windowID: window.id, pid: pid, windowTitle: window.windowName) {
+                if let image = try? await captureWindowImage(windowID: window.id, pid: pid, windowTitle: window.windowName, forceRefresh: forceRefresh) {
                     var updated = window
                     updated.image = image
                     updated.spaceID = window.id.cgsSpaces().first.map { Int($0) }
@@ -1361,7 +1363,7 @@ extension WindowUtil {
         _ = try? await group.waitForAll()
     }
 
-    static func captureAndCacheWindowInfo(window: SCWindow, app: NSRunningApplication) async throws {
+    static func captureAndCacheWindowInfo(window: SCWindow, app: NSRunningApplication, forceRefresh: Bool = false) async throws {
         let windowID = window.windowID
 
         guard window.owningApplication != nil,
@@ -1441,7 +1443,7 @@ extension WindowUtil {
                 isHidden: hiddenState
             )
 
-            if let image = try? await captureWindowImage(window: window) {
+            if let image = try? await captureWindowImage(window: window, forceRefresh: forceRefresh) {
                 windowInfo.image = image
                 windowInfo.imageCapturedTime = Date()
             }
@@ -1453,7 +1455,8 @@ extension WindowUtil {
         axWindow: AXUIElement,
         appAxElement: AXUIElement,
         app: NSRunningApplication,
-        excludeWindowIDs: Set<CGWindowID>
+        excludeWindowIDs: Set<CGWindowID>,
+        forceRefresh: Bool = false
     ) async throws {
         let pid = app.processIdentifier
 
@@ -1515,7 +1518,7 @@ extension WindowUtil {
         )
         info.windowName = windowTitle
 
-        if let image = try? await captureWindowImage(windowID: cgID, pid: pid, windowTitle: windowTitle) {
+        if let image = try? await captureWindowImage(windowID: cgID, pid: pid, windowTitle: windowTitle, forceRefresh: forceRefresh) {
             info.image = image
             info.imageCapturedTime = Date()
         }

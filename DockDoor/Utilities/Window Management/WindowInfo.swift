@@ -58,7 +58,10 @@ struct WindowInfo: Identifiable, Hashable {
     static func == (lhs: WindowInfo, rhs: WindowInfo) -> Bool {
         lhs.id == rhs.id &&
             lhs.app.processIdentifier == rhs.app.processIdentifier &&
-            lhs.axElement == rhs.axElement
+            lhs.axElement == rhs.axElement &&
+            lhs.imageCapturedTime == rhs.imageCapturedTime &&
+            lhs.isMinimized == rhs.isMinimized &&
+            lhs.isHidden == rhs.isHidden
     }
 }
 

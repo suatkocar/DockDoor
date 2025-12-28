@@ -191,7 +191,10 @@ private class WindowSwitchingCoordinator {
         print("TIMING[Switcher]: Total=\(String(format: "%.1f", totalTime))ms, windows=\(windows.count) | space=\(String(format: "%.1f", spaceRefreshTime))ms, get=\(String(format: "%.1f", getWindowsTime))ms, filter=\(String(format: "%.1f", filterSortTime))ms, render=\(String(format: "%.1f", renderTime))ms")
 
         // Background tasks - don't block UI
-        Task.detached(priority: .low) {
+        Task.detached(priority: .userInitiated) {
+            // Immediately refresh thumbnails for all windows in the background
+            // This ensures switcher shows the most recent state for all apps
+            await WindowUtil.updateAllWindowsInCurrentSpace(forceRefresh: true)
             await WindowUtil.discoverAllWindowsFromAllSpaces()
         }
     }
@@ -208,8 +211,10 @@ private class WindowSwitchingCoordinator {
         // Get windows immediately from cache (fast)
         var windows = WindowUtil.getAllWindowsOfAllApps()
 
-        // Discover windows from all spaces in background (don't block switcher opening)
+        // Background refresh - don't block switcher opening
         Task.detached(priority: .userInitiated) {
+            // Immediately refresh thumbnails for all windows in the background
+            await WindowUtil.updateAllWindowsInCurrentSpace(forceRefresh: true)
             await WindowUtil.discoverAllWindowsFromAllSpaces()
         }
 

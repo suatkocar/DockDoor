@@ -152,6 +152,11 @@ final class PreviewStateCoordinator {
     func updateWindow(at index: Int, with newInfo: WindowInfo) {
         guard index >= 0, index < windows.count else { return }
         windows[index] = newInfo
+
+        // Trigger UI refresh when a window is updated (e.g., thumbnail refresh)
+        if !isMockCoordinator {
+            SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
+        }
     }
 
     @MainActor
@@ -230,6 +235,11 @@ final class PreviewStateCoordinator {
         if windowsWereAdded, let monitor = lastKnownBestGuessMonitor {
             let dockPosition = DockUtils.getDockPosition()
             recomputeAndPublishDimensions(dockPosition: dockPosition, bestGuessMonitor: monitor)
+
+            // Trigger UI refresh after adding windows
+            if !isMockCoordinator {
+                SharedPreviewWindowCoordinator.activeInstance?.refreshUI()
+            }
         }
     }
 
