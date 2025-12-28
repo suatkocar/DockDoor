@@ -459,7 +459,6 @@ struct WindowPreview: View {
                 if switcherShowHeaderWindowTitle, hasWindowTitleContent {
                     MarqueeText(text: windowTitle, startDelay: 1)
                         .foregroundStyle(switcherShowHeaderAppName ? .secondary : .primary)
-                        .lineLimit(1)
                         .opacity(titleOpacity)
                 }
 
@@ -491,7 +490,6 @@ struct WindowPreview: View {
                 MarqueeText(text: windowTitle, startDelay: 1)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
                     .opacity(titleOpacity)
             }
         }

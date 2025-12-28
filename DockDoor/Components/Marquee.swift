@@ -27,6 +27,7 @@ struct MarqueeText: View {
         ) {
             Text(text)
                 .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
                 .measure($textSize)
         }
     }
