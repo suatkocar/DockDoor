@@ -717,22 +717,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             // Directly update the windowless apps cache with new access time
             WindowUtil.updateWindowlessAppAccessTime(pid: selectedWindow.app.processIdentifier)
 
-            // Special handling for apps that need to be launched/activated when windowless
-            if let bundleId = selectedWindow.app.bundleIdentifier {
-                // List of apps that need special activation when windowless
-                let appsNeedingLaunch = [
-                    "com.anthropic.claudefordesktop", // Claude
-                    "com.apple.Preview", // Preview
-                    "com.linguee.DeepLCopyTranslator", // DeepL
-                    "com.sublimetext.4", // Sublime Text
-                    "org.videolan.vlc", // VLC
-                ]
-
-                if appsNeedingLaunch.contains(bundleId) {
-                    print(" [selectWindow] Windowless app \(bundleId) detected - using special activation method")
-                    activateWindowlessApp(app: selectedWindow.app)
-                }
-            }
+            // All windowless apps need special activation - launch them via NSWorkspace
+            // This works universally instead of maintaining a hardcoded bundle ID list
+            print(" [selectWindow] Windowless app \(selectedWindow.app.bundleIdentifier ?? "unknown") detected - using special activation method")
+            activateWindowlessApp(app: selectedWindow.app)
 
             // Force a cache refresh to ensure the windowless app appears first
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
