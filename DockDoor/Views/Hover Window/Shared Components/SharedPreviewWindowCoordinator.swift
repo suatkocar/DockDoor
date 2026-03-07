@@ -47,6 +47,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     private var cachedWindowSize: CGSize?
     private var cachedWindowCount: Int = 0
     private var cachedIsWindowSwitcher: Bool = false
+    private var cachedImageCount: Int = 0
 
     init() {
         let styleMask: NSWindow.StyleMask = [.nonactivatingPanel, .fullSizeContentView, .borderless]
@@ -201,6 +202,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         cachedWindowSize = nil
         cachedWindowCount = 0
         cachedIsWindowSwitcher = false
+        cachedImageCount = 0
         appName = ""
         currentlyDisplayedPID = nil
         mouseIsWithinPreviewWindow = false
@@ -236,7 +238,12 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         }
         contentView = hostingView
 
-        let newHoverWindowSize = hostingView.fittingSize
+        let fittingSize = hostingView.fittingSize
+        // Clamp window size to screen bounds so content doesn't overflow
+        let newHoverWindowSize = CGSize(
+            width: min(fittingSize.width, mouseScreen.frame.width),
+            height: min(fittingSize.height, mouseScreen.frame.height)
+        )
         let position: CGPoint
 
         if let validDockItemElement = dockItemElement {
@@ -315,23 +322,31 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             contentView = hostingView
         }
 
-        // OPTIMIZATION: Use cached size when window count is same to avoid expensive fittingSize
+        // OPTIMIZATION: Use cached size when window count and image count are same to avoid expensive fittingSize
         // fittingSize triggers full SwiftUI layout calculation (~20-30ms)
+        let imageCount = windowSwitcherCoordinator.windows.filter { $0.image != nil }.count
         let newHoverWindowSize: CGSize
 
         if let cached = cachedWindowSize,
            cachedWindowCount == windowCount,
            cachedIsWindowSwitcher == isWindowSwitcher,
+           cachedImageCount == imageCount,
            windowCount > 0
         {
             // Use cached size for instant positioning
             newHoverWindowSize = cached
         } else {
-            // Calculate new size and cache it
-            newHoverWindowSize = hostingView.fittingSize
-            cachedWindowSize = newHoverWindowSize
+            // Calculate new size, clamp to screen bounds, and cache it
+            let fittingSize = hostingView.fittingSize
+            let clamped = CGSize(
+                width: min(fittingSize.width, mouseScreen.frame.width),
+                height: min(fittingSize.height, mouseScreen.frame.height)
+            )
+            newHoverWindowSize = clamped
+            cachedWindowSize = clamped
             cachedWindowCount = windowCount
             cachedIsWindowSwitcher = isWindowSwitcher
+            cachedImageCount = imageCount
         }
 
         let position: CGPoint

@@ -598,9 +598,10 @@ struct WindowPreviewHoverContainer: View {
     ) -> some View {
         let _ = logBuildFlowStack(isHorizontal: isHorizontal, currentMaxDimensionForPreviews: currentMaxDimensionForPreviews)
 
-        // Window switcher needs both horizontal and vertical scrolling when there are many windows
+        // Window switcher uses vertical-only scroll so items wrap down instead of shifting right
+        // Dock preview keeps its original scroll direction
         let scrollDirection: Axis.Set = shouldUseCompactMode ? .vertical :
-            (previewStateCoordinator.windowSwitcherActive ? [.horizontal, .vertical] : (isHorizontal ? .horizontal : .vertical))
+            (previewStateCoordinator.windowSwitcherActive ? .vertical : (isHorizontal ? .horizontal : .vertical))
 
         ScrollView(scrollDirection, showsIndicators: false) {
             Group {
@@ -654,8 +655,8 @@ struct WindowPreviewHoverContainer: View {
             .globalPadding(20)
         }
         .padding(2)
-        // Force complete re-render when window count changes to avoid partial/animated layout transitions
-        .id("grid-\(previewStateCoordinator.windows.count)-\(previewStateCoordinator.windowDimensionsMap.count)")
+        // Force complete re-render when windows or dimensions change to avoid stale layout
+        .id("grid-\(previewStateCoordinator.windows.count)-\(previewStateCoordinator.windows.filter { $0.image != nil }.count)-\(previewStateCoordinator.windowDimensionsMap.count)")
         // Reactive selection updates via SelectionState (@ObservedObject)
         // This replaces the old manual tracking approach that required full view recreation
         .onChange(of: selectionState.currentIndex) { newIndex in
@@ -1159,8 +1160,8 @@ struct WindowPreviewHoverContainer: View {
             let globalPadding: CGFloat = 40
             let maxRowWidth = screenWidth - globalPadding
 
-            // Create bin-packed chunks based on actual window widths
-            let binPackedIndices = WindowImageSizingCalculations.createBinPackedChunks(
+            // Create bin-packed chunks based on actual window widths (no maxRows enforcement)
+            var binPackedIndices = WindowImageSizingCalculations.createBinPackedChunks(
                 windows: windowsForPacking,
                 maxRowWidth: maxRowWidth,
                 thickness: thickness,
@@ -1168,6 +1169,16 @@ struct WindowPreviewHoverContainer: View {
                 maxColumns: maxColumns,
                 maxRows: maxRows
             )
+
+            // For dock previews (not window switcher), enforce maxRows by merging overflow into last row
+            if !previewStateCoordinator.windowSwitcherActive, binPackedIndices.count > maxRows {
+                let kept = Array(binPackedIndices.prefix(maxRows))
+                let overflow = binPackedIndices.dropFirst(maxRows).flatMap { $0 }
+                binPackedIndices = kept
+                if !overflow.isEmpty {
+                    binPackedIndices[binPackedIndices.count - 1].append(contentsOf: overflow)
+                }
+            }
 
             // Convert indices back to FlowItems
             var result: [[FlowItem]] = []

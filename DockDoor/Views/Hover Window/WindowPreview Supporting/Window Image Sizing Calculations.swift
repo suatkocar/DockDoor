@@ -38,6 +38,7 @@ enum WindowImageSizingCalculations {
     // Performance optimization: caches
     private static var overallMaxDimensionsCache: CGPoint?
     private static var cachedWindowCount: Int = 0
+    private static var cachedImageCount: Int = 0
     private static var cachedPanelSize: CGSize = .zero
 
     private static var precomputeCache: [Int: WindowDimensions]?
@@ -74,9 +75,10 @@ extension WindowImageSizingCalculations {
         isMockPreviewActive: Bool,
         sharedPanelWindowSize: CGSize
     ) -> CGPoint {
-        // Cache validation
+        // Cache validation - include image availability to invalidate when thumbnails arrive
         let isFirstRun = overallMaxDimensionsCache == nil
-        let windowsChanged = windows.count != cachedWindowCount
+        let currentImageCount = windows.filter { $0.image != nil }.count
+        let windowsChanged = windows.count != cachedWindowCount || currentImageCount != cachedImageCount
         let sizeChanged = sharedPanelWindowSize != cachedPanelSize
 
         if !isFirstRun, !windowsChanged, !sizeChanged, let cached = overallMaxDimensionsCache {
@@ -84,6 +86,7 @@ extension WindowImageSizingCalculations {
         }
 
         cachedWindowCount = windows.count
+        cachedImageCount = currentImageCount
         cachedPanelSize = sharedPanelWindowSize
 
         if Defaults[.allowDynamicImageSizing] {
@@ -144,13 +147,14 @@ extension WindowImageSizingCalculations {
         switcherMaxRows: Int,
         switcherMaxColumns: Int
     ) -> [Int: WindowDimensions] {
-        // Create hash for windows to detect changes
+        // Create hash for windows to detect changes (includes image availability)
         let currentWindowsHash = windows.reduce(0) { hash, window in
             var windowHash = hash
             windowHash ^= window.app.processIdentifier.hashValue
             if let windowName = window.windowName {
                 windowHash ^= windowName.hashValue
             }
+            windowHash ^= (window.image != nil) ? 1 : 0
             return windowHash
         }
 
@@ -576,17 +580,6 @@ extension WindowImageSizingCalculations {
                 // Start new row
                 if !currentRow.isEmpty {
                     chunks.append(currentRow)
-                }
-
-                // Check if we've hit max rows
-                if chunks.count >= maxRows {
-                    // Add remaining windows to last row anyway
-                    currentRow = [index]
-                    for remaining in windowWidths.dropFirst(index + 1) {
-                        currentRow.append(remaining.index)
-                    }
-                    chunks[chunks.count - 1].append(contentsOf: currentRow.dropFirst())
-                    return chunks
                 }
 
                 currentRow = [index]
