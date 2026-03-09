@@ -120,13 +120,14 @@ final class SharedPreviewWindowCoordinator: NSPanel {
 
         let updateAvailable = (NSApp.delegate as? AppDelegate)?.updaterState.anUpdateIsAvailable ?? false
         let currentDockPosition = DockUtils.getDockPosition()
+        let screen = NSScreen.main ?? NSScreen.screens.first!
 
         let hoverView = WindowPreviewHoverContainer(
             appName: appName,
             onWindowTap: onWindowTap,
             dockPosition: currentDockPosition,
             mouseLocation: nil,
-            bestGuessMonitor: NSScreen.main ?? NSScreen.screens.first!,
+            bestGuessMonitor: screen,
             dockItemElement: nil,
             windowSwitcherCoordinator: windowSwitcherCoordinator,
             mockPreviewActive: false,
@@ -136,6 +137,28 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         )
 
         cached.rootView = AnyView(hoverView)
+
+        // Resize panel when window count or image count changed (e.g., addWindows/removeWindow)
+        let currentWindowCount = windowSwitcherCoordinator.windows.count
+        let currentImageCount = windowSwitcherCoordinator.windows.filter { $0.image != nil }.count
+        if windowSwitcherCoordinator.windowSwitcherActive,
+           currentWindowCount != cachedWindowCount || currentImageCount != cachedImageCount
+        {
+            cached.layoutSubtreeIfNeeded()
+            let newFitting = cached.fittingSize
+            let clampedSize = CGSize(
+                width: min(newFitting.width, screen.frame.width),
+                height: min(newFitting.height, screen.frame.height)
+            )
+            let newPosition = centerWindowOnScreen(size: clampedSize, screen: screen)
+            let newFrame = CGRect(origin: newPosition, size: clampedSize)
+            setFrame(newFrame, display: true)
+            cachedWindowSize = clampedSize
+            cachedWindowCount = currentWindowCount
+            cachedIsWindowSwitcher = true
+            cachedImageCount = currentImageCount
+            previousHoverWindowOrigin = newPosition
+        }
     }
 
     private func isMediaApp(bundleIdentifier: String?) -> Bool {
@@ -343,10 +366,17 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             // view hierarchy hasn't completed its initial layout pass yet
             hostingView.layoutSubtreeIfNeeded()
             let fittingSize = hostingView.fittingSize
+            let intrinsic = hostingView.intrinsicContentSize
+            // Use the larger of fittingSize and intrinsicContentSize — fittingSize can underestimate
+            // on first activation when the hosting view hasn't fully settled its layout
+            let bestWidth = max(fittingSize.width, intrinsic.width > 0 ? intrinsic.width : fittingSize.width)
+            let bestHeight = max(fittingSize.height, intrinsic.height > 0 ? intrinsic.height : fittingSize.height)
             let clamped = CGSize(
-                width: min(fittingSize.width, mouseScreen.frame.width),
-                height: min(fittingSize.height, mouseScreen.frame.height)
+                width: min(bestWidth, mouseScreen.frame.width),
+                height: min(bestHeight, mouseScreen.frame.height)
             )
+            // let sizeMsg = "📐 [SIZE] fittingSize=\(fittingSize), intrinsic=\(intrinsic), clamped=\(clamped), screen=\(mouseScreen.frame.size), windows=\(windowCount), images=\(imageCount), center=\(centerOnScreen)\n"
+            // try? sizeMsg.write(toFile: "/tmp/dockdoor_size.log", atomically: false, encoding: .utf8)
             newHoverWindowSize = clamped
             cachedWindowSize = clamped
             cachedWindowCount = windowCount
@@ -389,18 +419,50 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                     width: min(correctedFitting.width, mouseScreen.frame.width),
                     height: min(correctedFitting.height, mouseScreen.frame.height)
                 )
-                // Only update if the size actually changed (avoid unnecessary frame sets)
-                if abs(correctedSize.width - newHoverWindowSize.width) > 1 ||
-                    abs(correctedSize.height - newHoverWindowSize.height) > 1
-                {
-                    let correctedPosition = centerWindowOnScreen(size: correctedSize, screen: mouseScreen)
-                    let correctedFrame = CGRect(origin: correctedPosition, size: correctedSize)
+                // let defMsg = "📐 [DEFERRED] correctedFitting=\(correctedFitting), correctedSize=\(correctedSize), original=\(newHoverWindowSize), panelFrame=\(frame)\n"
+                // if let existing = try? String(contentsOfFile: "/tmp/dockdoor_size.log", encoding: .utf8) {
+                //     try? (existing + defMsg).write(toFile: "/tmp/dockdoor_size.log", atomically: false, encoding: .utf8)
+                // }
+                // Only GROW the panel — never shrink, since fittingSize can underestimate
+                let shouldGrowWidth = correctedSize.width > newHoverWindowSize.width + 1
+                let shouldGrowHeight = correctedSize.height > newHoverWindowSize.height + 1
+                if shouldGrowWidth || shouldGrowHeight {
+                    let finalSize = CGSize(
+                        width: max(correctedSize.width, newHoverWindowSize.width),
+                        height: max(correctedSize.height, newHoverWindowSize.height)
+                    )
+                    let correctedPosition = centerWindowOnScreen(size: finalSize, screen: mouseScreen)
+                    let correctedFrame = CGRect(origin: correctedPosition, size: finalSize)
                     setFrame(correctedFrame, display: true)
-                    cachedWindowSize = correctedSize
+                    cachedWindowSize = finalSize
                     cachedWindowCount = windowCount
                     cachedIsWindowSwitcher = isWindowSwitcher
                     cachedImageCount = imageCount
                     previousHoverWindowOrigin = correctedPosition
+                }
+            }
+
+            // Second deferred check after 300ms for SwiftUI views that settle late
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                guard let self, isVisible else { return }
+                hostingView.layoutSubtreeIfNeeded()
+                let lateFitting = hostingView.fittingSize
+                let intrinsic = hostingView.intrinsicContentSize
+                // let lateMsg = "📐 [LATE_CHECK] lateFitting=\(lateFitting), intrinsic=\(intrinsic), hostingFrame=\(hostingView.frame.size), panelFrame=\(frame.size)\n"
+                // if let existing = try? String(contentsOfFile: "/tmp/dockdoor_size.log", encoding: .utf8) {
+                //     try? (existing + lateMsg).write(toFile: "/tmp/dockdoor_size.log", atomically: false, encoding: .utf8)
+                // }
+                let lateSize = CGSize(
+                    width: min(lateFitting.width, mouseScreen.frame.width),
+                    height: min(lateFitting.height, mouseScreen.frame.height)
+                )
+                if abs(lateSize.width - frame.width) > 1 || abs(lateSize.height - frame.height) > 1 {
+                    let latePosition = centerWindowOnScreen(size: lateSize, screen: mouseScreen)
+                    setFrame(CGRect(origin: latePosition, size: lateSize), display: true)
+                    cachedWindowSize = lateSize
+                    cachedWindowCount = windowCount
+                    cachedIsWindowSwitcher = isWindowSwitcher
+                    cachedImageCount = imageCount
                 }
             }
         }

@@ -631,7 +631,7 @@ extension WindowImageSizingCalculations {
 
         let shouldReverse = (dockPosition == .bottom || dockPosition == .right) && !isWindowSwitcherActive
 
-        return navigateInGrid(
+        let result = navigateInGrid(
             from: currentIndex,
             direction: direction,
             totalItems: totalItems,
@@ -640,6 +640,16 @@ extension WindowImageSizingCalculations {
             maxRows: maxRows,
             reverse: shouldReverse
         )
+
+        // // Debug navigation grid
+        // let gridMsg = "🔑 [NAV_GRID] from=\(currentIndex) → \(result), dir=\(direction), total=\(totalItems), cols=\(maxColumns), rows=\(maxRows), horizontal=\(isHorizontalFlow), reverse=\(shouldReverse)\n"
+        // if let existing = try? String(contentsOfFile: "/tmp/dockdoor_nav.log", encoding: .utf8) {
+        //     try? (existing + gridMsg).write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+        // } else {
+        //     try? gridMsg.write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+        // }
+
+        return result
     }
 
     /// Navigates in a 2D grid

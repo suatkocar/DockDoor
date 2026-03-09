@@ -40,6 +40,9 @@ final class WindowSwitcherStateManager: ObservableObject, IndexManaging {
         }
 
         isActive = true
+        // // Log window names for debugging navigation
+        // let windowNames = newWindows.map { "\($0.app.localizedName ?? "?"):\($0.id)" }
+        // navLog("[INIT] \(newWindows.count) windows, currentIndex=\(currentIndex), windows=\(windowNames)")
     }
 
     func setSearchQuery(_ query: String, windows: [WindowInfo]) {
@@ -77,16 +80,28 @@ final class WindowSwitcherStateManager: ObservableObject, IndexManaging {
         }
     }
 
+    // private func navLog(_ msg: String) {
+    //     let line = "🔑 \(msg)\n"
+    //     if let existing = try? String(contentsOfFile: "/tmp/dockdoor_nav.log", encoding: .utf8) {
+    //         try? (existing + line).write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+    //     } else {
+    //         try? line.write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+    //     }
+    // }
+
     func cycleForward() {
         guard !windowIDs.isEmpty else { return }
 
         if hasActiveSearch {
+            // navLog("[CYCLE_FWD] hasActiveSearch=true, filteredIndices=\(filteredIndices)")
             cycleFilteredForward()
             return
         }
 
+        // let oldIndex = currentIndex
         if currentIndex < 0 {
             currentIndex = 0
+            // navLog("[CYCLE_FWD] was negative, set to 0")
             return
         }
 
@@ -97,6 +112,7 @@ final class WindowSwitcherStateManager: ObservableObject, IndexManaging {
             dockPosition: .bottom,
             isWindowSwitcherActive: true
         )
+        // navLog("[CYCLE_FWD] \(oldIndex) → \(currentIndex), totalItems=\(windowIDs.count)")
     }
 
     func cycleBackward() {
@@ -179,6 +195,26 @@ final class WindowSwitcherStateManager: ObservableObject, IndexManaging {
         }
 
         currentIndex = max(0, min(index, windowIDs.count - 1))
+    }
+
+    /// Sync windowIDs with the coordinator's current windows.
+    /// Called before cycling to ensure newly added windows are reachable by keyboard.
+    func syncWindowIDs(with windows: [WindowInfo]) {
+        let newIDs = windows.map(\.id)
+        if newIDs == windowIDs {
+            // navLog("[SYNC] no-op, counts match: stateManager=\(windowIDs.count), coordinator=\(windows.count)")
+            return
+        }
+        // navLog("[SYNC] updating: stateManager=\(windowIDs.count) → \(newIDs.count), coordinator=\(windows.count)")
+        windowIDs = newIDs
+        if !searchQuery.isEmpty {
+            recomputeFilteredIndices(windows: windows)
+        } else {
+            filteredIndices = Array(windowIDs.indices)
+        }
+        if currentIndex >= windowIDs.count {
+            currentIndex = windowIDs.isEmpty ? -1 : windowIDs.count - 1
+        }
     }
 
     func getCurrentWindow() -> WindowInfo? {

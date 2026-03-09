@@ -40,6 +40,17 @@ private class WindowSwitchingCoordinator {
         }
 
         if stateManager.isActive {
+            // Sync stateManager's windowIDs with coordinator in case addWindows() added
+            // windows after initialization (fixes keyboard unable to reach late-added windows)
+            // let coordWindows = previewCoordinator.windowSwitcherCoordinator.windows
+            // let navMsg = "🔑 [HANDLE_SYNC] stateManager.count=\(stateManager.windowIDs.count), coordinator.count=\(coordWindows.count), stateIdx=\(stateManager.currentIndex), uiIdx=\(previewCoordinator.windowSwitcherCoordinator.currIndex)\n"
+            // if let existing = try? String(contentsOfFile: "/tmp/dockdoor_nav.log", encoding: .utf8) {
+            //     try? (existing + navMsg).write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+            // } else {
+            //     try? navMsg.write(toFile: "/tmp/dockdoor_nav.log", atomically: false, encoding: .utf8)
+            // }
+            stateManager.syncWindowIDs(with: previewCoordinator.windowSwitcherCoordinator.windows)
+
             let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
             if uiIndex >= 0, uiIndex != stateManager.currentIndex {
                 stateManager.setIndex(uiIndex)
@@ -78,6 +89,10 @@ private class WindowSwitchingCoordinator {
         }
 
         if stateManager.isActive {
+            // Sync stateManager's windowIDs with coordinator in case addWindows() added
+            // windows after initialization (fixes keyboard unable to reach late-added windows)
+            stateManager.syncWindowIDs(with: previewCoordinator.windowSwitcherCoordinator.windows)
+
             // NOTE: Both coordinators now conform to IndexManaging protocol for unified index management
             // See: IndexManaging.swift for the shared protocol definition
             let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
@@ -413,6 +428,10 @@ private class WindowSwitchingCoordinator {
         backward: Bool
     ) {
         guard stateManager.isActive else { return }
+
+        // Sync windowIDs with coordinator in case addWindows() added windows
+        // after initialization (background refresh discovers new windows)
+        stateManager.syncWindowIDs(with: previewCoordinator.windowSwitcherCoordinator.windows)
 
         // Sync index if needed
         let uiIndex = previewCoordinator.windowSwitcherCoordinator.currIndex
