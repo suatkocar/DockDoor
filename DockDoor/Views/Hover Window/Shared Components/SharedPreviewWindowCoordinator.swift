@@ -238,6 +238,8 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         }
         contentView = hostingView
 
+        // Force layout pass before querying fittingSize
+        hostingView.layoutSubtreeIfNeeded()
         let fittingSize = hostingView.fittingSize
         // Clamp window size to screen bounds so content doesn't overflow
         let newHoverWindowSize = CGSize(
@@ -336,7 +338,10 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             // Use cached size for instant positioning
             newHoverWindowSize = cached
         } else {
-            // Calculate new size, clamp to screen bounds, and cache it
+            // Force layout pass before querying fittingSize to ensure SwiftUI has settled
+            // Without this, first-activation can return a too-small height because the
+            // view hierarchy hasn't completed its initial layout pass yet
+            hostingView.layoutSubtreeIfNeeded()
             let fittingSize = hostingView.fittingSize
             let clamped = CGSize(
                 width: min(fittingSize.width, mouseScreen.frame.width),
@@ -371,6 +376,34 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         let finalFrame = CGRect(origin: position, size: newHoverWindowSize)
         applyWindowFrame(finalFrame, animated: animated)
         previousHoverWindowOrigin = position
+
+        // Deferred size correction: on first activation, NSHostingView.fittingSize may return
+        // a too-small value because SwiftUI hasn't fully settled its layout. Re-check on the
+        // next run loop cycle and update the frame if the size changed.
+        if centerOnScreen {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, isVisible else { return }
+                hostingView.layoutSubtreeIfNeeded()
+                let correctedFitting = hostingView.fittingSize
+                let correctedSize = CGSize(
+                    width: min(correctedFitting.width, mouseScreen.frame.width),
+                    height: min(correctedFitting.height, mouseScreen.frame.height)
+                )
+                // Only update if the size actually changed (avoid unnecessary frame sets)
+                if abs(correctedSize.width - newHoverWindowSize.width) > 1 ||
+                    abs(correctedSize.height - newHoverWindowSize.height) > 1
+                {
+                    let correctedPosition = centerWindowOnScreen(size: correctedSize, screen: mouseScreen)
+                    let correctedFrame = CGRect(origin: correctedPosition, size: correctedSize)
+                    setFrame(correctedFrame, display: true)
+                    cachedWindowSize = correctedSize
+                    cachedWindowCount = windowCount
+                    cachedIsWindowSwitcher = isWindowSwitcher
+                    cachedImageCount = imageCount
+                    previousHoverWindowOrigin = correctedPosition
+                }
+            }
+        }
 
         // Now that the main panel has a valid frame, position the search window (if active)
         if windowSwitcherCoordinator.windowSwitcherActive, Defaults[.enableWindowSwitcherSearch] {

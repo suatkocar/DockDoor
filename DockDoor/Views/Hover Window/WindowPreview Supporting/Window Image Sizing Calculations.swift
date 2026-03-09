@@ -40,6 +40,7 @@ enum WindowImageSizingCalculations {
     private static var cachedWindowCount: Int = 0
     private static var cachedImageCount: Int = 0
     private static var cachedPanelSize: CGSize = .zero
+    private static var cachedSwitcherActive: Bool = false
 
     private static var precomputeCache: [Int: WindowDimensions]?
     private static var cachedPrecomputeWindowsHash: Int = 0
@@ -50,6 +51,7 @@ enum WindowImageSizingCalculations {
         overallMaxDimensionsCache = nil
         cachedWindowCount = 0
         cachedPanelSize = .zero
+        cachedSwitcherActive = false
         precomputeCache = nil
         cachedPrecomputeWindowsHash = 0
         cachedPrecomputeMaxDimensions = .zero
@@ -75,19 +77,21 @@ extension WindowImageSizingCalculations {
         isMockPreviewActive: Bool,
         sharedPanelWindowSize: CGSize
     ) -> CGPoint {
-        // Cache validation - include image availability to invalidate when thumbnails arrive
+        // Cache validation - include image availability and switcher state to invalidate correctly
         let isFirstRun = overallMaxDimensionsCache == nil
         let currentImageCount = windows.filter { $0.image != nil }.count
         let windowsChanged = windows.count != cachedWindowCount || currentImageCount != cachedImageCount
         let sizeChanged = sharedPanelWindowSize != cachedPanelSize
+        let switcherChanged = isWindowSwitcherActive != cachedSwitcherActive
 
-        if !isFirstRun, !windowsChanged, !sizeChanged, let cached = overallMaxDimensionsCache {
+        if !isFirstRun, !windowsChanged, !sizeChanged, !switcherChanged, let cached = overallMaxDimensionsCache {
             return cached
         }
 
         cachedWindowCount = windows.count
         cachedImageCount = currentImageCount
         cachedPanelSize = sharedPanelWindowSize
+        cachedSwitcherActive = isWindowSwitcherActive
 
         if Defaults[.allowDynamicImageSizing] {
             let thickness = max(WindowManagementConstants.minPreviewThickness,
