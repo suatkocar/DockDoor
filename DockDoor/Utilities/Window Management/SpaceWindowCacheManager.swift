@@ -27,10 +27,9 @@ class SpaceWindowCacheManager {
                 if let coordinator = SharedPreviewWindowCoordinator.activeInstance?.windowSwitcherCoordinator {
                     // Filter out windows for apps that are currently windowless
                     // This prevents ghost windows from appearing when an app's window was closed
-                    let windowlessBundleIds = Set(WindowUtil.cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
+                    let windowlessPids = Set(WindowUtil.cachedWindowlessApps.map(\.app.processIdentifier))
                     let filteredWindows = addedWindows.filter { window in
-                        guard let bundleId = window.app.bundleIdentifier else { return true }
-                        return !windowlessBundleIds.contains(bundleId)
+                        !windowlessPids.contains(window.app.processIdentifier)
                     }
                     if !filteredWindows.isEmpty {
                         coordinator.addWindows(Array(filteredWindows))

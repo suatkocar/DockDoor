@@ -386,21 +386,10 @@ extension WindowUtil {
             }
         }
 
-        var cgImage: CGImage
-        let connectionID = CGSMainConnectionID()
-        var windowIDUInt32 = UInt32(windowID)
-        let qualityOption: CGSWindowCaptureOptions = (Defaults[.windowImageCaptureQuality] == .best) ? .bestResolution : .nominalResolution
-        guard let capturedWindows = CGSHWCaptureWindowList(
-            connectionID,
-            &windowIDUInt32,
-            1,
-            [.ignoreGlobalClipShape, qualityOption]
-        ) as? [CGImage],
-            let capturedImage = capturedWindows.first
-        else {
+        guard let capturedImage = captureWindowImageWithFallbacks(windowID: windowID, pid: pid) else {
             throw captureError
         }
-        cgImage = capturedImage
+        var cgImage = capturedImage
 
         // Only scale down if previewScale is greater than 1
         let previewScale = Int(Defaults[.windowPreviewImageScale])
@@ -428,6 +417,67 @@ extension WindowUtil {
         }
 
         return cgImage
+    }
+
+    /// Tries multiple private CGS capture strategies. Chrome and other GPU-heavy browsers often fail
+    /// with the default option set after automation tools attach (DevTools MCP, remote debugging, etc.).
+    private static func captureWindowImageWithFallbacks(windowID: CGWindowID, pid: pid_t) -> CGImage? {
+        let connectionID = CGSMainConnectionID()
+        let preferredQuality: CGSWindowCaptureOptions = (Defaults[.windowImageCaptureQuality] == .best) ? .bestResolution : .nominalResolution
+        let optionSets: [CGSWindowCaptureOptions] = [
+            [.ignoreGlobalClipShape, preferredQuality],
+            [.ignoreGlobalClipShape, .bestResolution],
+            [.ignoreGlobalClipShape, .nominalResolution],
+            [.ignoreGlobalClipShape, .fullSize],
+            [preferredQuality],
+            .bestResolution,
+            .nominalResolution,
+        ]
+
+        for options in optionSets {
+            var windowIDUInt32 = UInt32(windowID)
+            if let capturedWindows = CGSHWCaptureWindowList(
+                connectionID,
+                &windowIDUInt32,
+                1,
+                options
+            ) as? [CGImage],
+                let image = capturedWindows.first
+            {
+                return image
+            }
+        }
+
+        return captureWindowImageViaWindowList(windowID: windowID, pid: pid)
+    }
+
+    /// Public API for one-shot capture (e.g. live preview fallback when ScreenCaptureKit omits a window).
+    static func captureWindowImageIfAvailable(windowID: CGWindowID, pid: pid_t) -> CGImage? {
+        guard hasScreenRecordingPermission() else { return nil }
+        return captureWindowImageWithFallbacks(windowID: windowID, pid: pid)
+    }
+
+    private static func captureWindowImageViaWindowList(windowID: CGWindowID, pid: pid_t) -> CGImage? {
+        if #available(macOS 15.0, *) {
+            return nil
+        }
+
+        let candidates = getCGWindowCandidates(for: pid)
+        guard let match = findCGEntry(for: windowID, in: candidates),
+              let boundsDict = match[kCGWindowBounds as String] as? [String: Any],
+              let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+              bounds.width >= AXMinWindowSize.width,
+              bounds.height >= AXMinWindowSize.height
+        else {
+            return nil
+        }
+
+        return CGWindowListCreateImage(
+            bounds,
+            .optionIncludingWindow,
+            windowID,
+            [.boundsIgnoreFraming, .bestResolution]
+        )
     }
 
     static func isValidElement(_ element: AXUIElement) -> Bool {
@@ -530,8 +580,7 @@ extension WindowUtil {
         // Get ALL current windows (don't exclude windowless apps yet)
         let allCurrentWindows = desktopSpaceWindowCacheManager.getAllWindows()
 
-        // Get bundle IDs of currently cached windowless apps
-        let windowlessBundleIds = Set(_cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
+        let windowlessPids = Set(_cachedWindowlessApps.map(\.app.processIdentifier))
 
         // PERFORMANCE: Removed Thread.sleep - it was blocking the main thread!
         // Window creation detection is handled by the cache manager instead
@@ -539,8 +588,8 @@ extension WindowUtil {
         let windowlessApps = getWindowlessApps(existingWindows: allCurrentWindows)
 
         // Only update cache if we found different windowless apps
-        let newWindowlessBundleIds = Set(windowlessApps.compactMap(\.app.bundleIdentifier))
-        if newWindowlessBundleIds != windowlessBundleIds {
+        let newWindowlessPids = Set(windowlessApps.map(\.app.processIdentifier))
+        if newWindowlessPids != windowlessPids {
             _cachedWindowlessApps = windowlessApps
             _windowlessAppsCacheTime = Date()
         }
@@ -594,12 +643,11 @@ extension WindowUtil {
                 }
             }
 
-            // Filter out cached windows for apps that are now windowless (ghost window prevention)
-            let windowlessBundleIds = Set(_cachedWindowlessApps.compactMap(\.app.bundleIdentifier))
-            if !windowlessBundleIds.isEmpty {
+            // Filter only the exact process that is currently considered windowless.
+            let windowlessPids = Set(_cachedWindowlessApps.map(\.app.processIdentifier))
+            if !windowlessPids.isEmpty {
                 windows = windows.filter { window in
-                    guard let bundleId = window.app.bundleIdentifier else { return true }
-                    return !windowlessBundleIds.contains(bundleId)
+                    !windowlessPids.contains(window.app.processIdentifier)
                 }
             }
 
@@ -621,26 +669,8 @@ extension WindowUtil {
             $0.activationPolicy == .regular && !$0.isTerminated && isActualApplication($0.processIdentifier, $0.bundleIdentifier)
         }
 
-        // Note: pidsWithWindows was removed as it's not used in current logic
-        // The hasVisibleCachedWindows check handles window detection more accurately
-
-        // Get current space IDs and window IDs in current spaces
-        let currentSpaceIDs = Set(getVisibleSpaceIDs())
-        let windowIDsInCurrentSpaces = windowIDsInSpaces(Array(currentSpaceIDs), includeInvisible: true)
-
-        // Get window info for windows in current spaces to find which PIDs have windows
-        let cgWindowListAll = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
-
         // PERFORMANCE: Pre-fetch on-screen window list once for all visibility checks
         let cgWindowListOnScreen = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
-
-        var pidsWithSystemWindows = Set<pid_t>()
-        for windowInfo in cgWindowListAll {
-            guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
-                  let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID,
-                  windowIDsInCurrentSpaces.contains(windowID) else { continue }
-            pidsWithSystemWindows.insert(pid)
-        }
 
         var windowlessEntries: [WindowInfo] = []
 
@@ -659,11 +689,12 @@ extension WindowUtil {
             // This handles apps like Claude that change PIDs frequently but should be consistently windowless when no visible windows
             // PERFORMANCE: Pass pre-fetched window list to avoid additional system calls
             let shouldTreatAsWindowless = shouldTreatAsWindowlessApp(for: app, existingWindows: existingWindows, cgWindowList: cgWindowListOnScreen)
+            let bundleHasVisibleSystemWindows = hasVisibleSystemWindowForBundle(bundleId, cgWindowList: cgWindowListOnScreen)
 
             // For regular apps like Claude, we should be more lenient about system windows
             // Many Electron apps have invisible background windows that shouldn't prevent windowless status
             // The key insight: if an app has no VISIBLE cached windows, it should be windowless
-            let shouldAddAsWindowless = shouldTreatAsWindowless || (!hasCachedWindows && isRegularApp)
+            let shouldAddAsWindowless = !bundleHasVisibleSystemWindows && (shouldTreatAsWindowless || (!hasCachedWindows && isRegularApp))
 
             if shouldAddAsWindowless {
                 let mockWindowProvider = MockWindowProvider(windowID: 0, title: app.localizedName ?? "Unknown", frame: CGRect.zero)
@@ -703,6 +734,30 @@ extension WindowUtil {
         }
 
         return false
+    }
+
+    private static func hasVisibleSystemWindowForBundle(_ bundleId: String, cgWindowList: [[String: Any]]) -> Bool {
+        let pids = Set(NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).map(\.processIdentifier))
+        return cgWindowList.contains { windowInfo in
+            guard let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t,
+                  pids.contains(pid)
+            else { return false }
+
+            return isVisibleSystemWindow(windowInfo)
+        }
+    }
+
+    private static func isVisibleSystemWindow(_ windowInfo: [String: Any]) -> Bool {
+        let layer = windowInfo[kCGWindowLayer as String] as? Int ?? 0
+        let alpha = windowInfo[kCGWindowAlpha as String] as? Double ?? 1.0
+        let bounds = windowInfo[kCGWindowBounds as String] as? [String: Any]
+        let width = bounds?["Width"] as? Double ?? 0
+        let height = bounds?["Height"] as? Double ?? 0
+
+        return layer == 0 &&
+            alpha >= WindowManagementConstants.minimumVisibleWindowAlpha &&
+            width >= WindowManagementConstants.minimumVisibleWindowDimension &&
+            height >= WindowManagementConstants.minimumVisibleWindowDimension
     }
 
     /// Checks if a window is truly user-visible by examining its layer and properties
@@ -982,6 +1037,7 @@ extension WindowUtil {
 
         let allWindowIDs = windowIDsInSpaces(allSpaces, includeInvisible: true)
         let cgCandidates = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+        let activeSpaceIDs = currentActiveSpaceIDs()
 
         var pidToWindowInfo: [pid_t: [(windowID: CGWindowID, title: String?, bounds: CGRect?)]] = [:]
 
@@ -1051,17 +1107,18 @@ extension WindowUtil {
                     // AX not accessible (other space) - capture screenshot via CGS
                     let spaceIds = windowID.cgsSpaces()
 
-                    // Capture screenshot using CGSHWCaptureWindowList (works across spaces)
-                    var windowIDUInt32 = UInt32(windowID)
-                    let screenshot: CGImage? = {
-                        guard let capturedWindows = CGSHWCaptureWindowList(
-                            CGSMainConnectionID(),
-                            &windowIDUInt32,
-                            1,
-                            [.ignoreGlobalClipShape, .bestResolution]
-                        ) as? [CGImage] else { return nil }
-                        return capturedWindows.first
-                    }()
+                    let cgEntry = cgCandidates.first(where: {
+                        ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value == windowID
+                    })
+                    let isOnscreen = (cgEntry?[kCGWindowIsOnscreen as String] as? NSNumber)?.boolValue ?? false
+                    let windowSpaces = Set(windowID.cgsSpaces().map { Int($0) })
+                    let isOnCurrentSpace = windowSpaces.isEmpty || !windowSpaces.isDisjoint(with: activeSpaceIDs)
+
+                    if !isOnscreen, isOnCurrentSpace {
+                        continue
+                    }
+
+                    let screenshot = captureWindowImageIfAvailable(windowID: windowID, pid: pid)
 
                     if screenshot == nil {
                         let trimmedTitle = (cgTitle ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1330,37 +1387,43 @@ extension WindowUtil {
         }
     }
 
-    /// Refresh images for windows discovered via AX fallback (no SCWindow available)
+    /// Re-captures thumbnails for any cached window missing an image (SCK-backed or AX-backed).
     private static func refreshAXFallbackWindowImages(for pid: pid_t, forceRefresh: Bool = false) async {
         let windows = desktopSpaceWindowCacheManager.readCache(pid: pid)
         guard !windows.isEmpty else { return }
 
         let group = LimitedTaskGroup<Void>(maxConcurrentTasks: 4)
 
-        for window in windows where window.scWindow == nil {
-            // Skip windowless apps - they don't have real windows to refresh
+        for window in windows where window.image == nil {
             if window.isWindowlessApp {
                 continue
             }
 
-            // Skip invalid AX elements but DON'T remove from cache
-            // The window might be temporarily inaccessible (dialog, sheet, etc.)
-            // Let purifyAppCache handle removal if window truly doesn't exist
-            if !isValidElement(window.axElement) {
-                continue
-            }
-
             await group.addTask {
-                if let image = try? await captureWindowImage(windowID: window.id, pid: pid, windowTitle: window.windowName, forceRefresh: forceRefresh) {
+                if let image = try? await captureWindowImage(
+                    windowID: window.id,
+                    pid: pid,
+                    windowTitle: window.windowName,
+                    forceRefresh: forceRefresh
+                ) {
                     var updated = window
                     updated.image = image
+                    updated.imageCapturedTime = Date()
                     updated.spaceID = window.id.cgsSpaces().first.map { Int($0) }
-                    updateDesktopSpaceWindowCache(with: updated)
+                    desktopSpaceWindowCacheManager.updateWindow(updated)
                 }
             }
         }
 
         _ = try? await group.waitForAll()
+    }
+
+    /// Refreshes missing thumbnails across every cached app (used after the window switcher opens).
+    static func refreshAllWindowsWithMissingImages(forceRefresh: Bool = true) async {
+        let pids = Set(desktopSpaceWindowCacheManager.getAllWindows().map(\.app.processIdentifier))
+        for pid in pids {
+            await refreshAXFallbackWindowImages(for: pid, forceRefresh: forceRefresh)
+        }
     }
 
     static func captureAndCacheWindowInfo(window: SCWindow, app: NSRunningApplication, forceRefresh: Bool = false) async throws {
@@ -1569,8 +1632,9 @@ extension WindowUtil {
             let allSpaces = getAllSpaceIDs()
             let systemWindowIDs = Set(windowIDsInSpaces(allSpaces, includeInvisible: true))
 
-            var purifiedSet = existingWindowsSet
-            for window in existingWindowsSet {
+            var purifiedSet = deduplicateWindowsByID(existingWindowsSet)
+
+            for window in Array(purifiedSet) {
                 // Windowless apps (id == 0) are placeholders - check if app is still valid and not filtered
                 if window.isWindowlessApp {
                     // Remove windowless app if the app is filtered or terminated
@@ -1602,8 +1666,34 @@ extension WindowUtil {
                     desktopSpaceWindowCacheManager.updateWindow(updatedWindow)
                 }
             }
+            if purifiedSet != existingWindowsSet {
+                desktopSpaceWindowCacheManager.writeCache(pid: pid, windowSet: purifiedSet)
+            }
             return purifiedSet
         }
+    }
+
+    /// When discovery paths disagree, keep the richest entry (image + real AX window) per window ID.
+    private static func deduplicateWindowsByID(_ windows: Set<WindowInfo>) -> Set<WindowInfo> {
+        var bestByID: [CGWindowID: WindowInfo] = [:]
+        for window in windows {
+            if let existing = bestByID[window.id] {
+                bestByID[window.id] = preferredWindowEntry(existing, window)
+            } else {
+                bestByID[window.id] = window
+            }
+        }
+        return Set(bestByID.values)
+    }
+
+    private static func preferredWindowEntry(_ lhs: WindowInfo, _ rhs: WindowInfo) -> WindowInfo {
+        if lhs.image != nil, rhs.image == nil { return lhs }
+        if rhs.image != nil, lhs.image == nil { return rhs }
+        if lhs.closeButton != nil, rhs.closeButton == nil { return lhs }
+        if rhs.closeButton != nil, lhs.closeButton == nil { return rhs }
+        if lhs.scWindow != nil, rhs.scWindow == nil { return lhs }
+        if rhs.scWindow != nil, lhs.scWindow == nil { return rhs }
+        return lhs.lastAccessedTime >= rhs.lastAccessedTime ? lhs : rhs
     }
 
     static func purgeAppCache(with pid: pid_t) {

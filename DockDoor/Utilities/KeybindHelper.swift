@@ -211,6 +211,7 @@ private class WindowSwitchingCoordinator {
             // This ensures switcher shows the most recent state for all apps
             await WindowUtil.updateAllWindowsInCurrentSpace(forceRefresh: true)
             await WindowUtil.discoverAllWindowsFromAllSpaces()
+            await WindowUtil.refreshAllWindowsWithMissingImages(forceRefresh: true)
         }
     }
 
@@ -231,6 +232,7 @@ private class WindowSwitchingCoordinator {
             // Immediately refresh thumbnails for all windows in the background
             await WindowUtil.updateAllWindowsInCurrentSpace(forceRefresh: true)
             await WindowUtil.discoverAllWindowsFromAllSpaces()
+            await WindowUtil.refreshAllWindowsWithMissingImages(forceRefresh: true)
         }
 
         // Apply space filter based on mode or default setting

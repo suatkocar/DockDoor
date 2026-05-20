@@ -83,6 +83,9 @@ enum ElectronAppRegistry {
         "bitwarden",
 
         // Browsers (Chromium-based)
+        "google.chrome",
+        "com.google.chrome",
+        "chrome",
         "brave",
         "vivaldi",
         "arc",
@@ -99,6 +102,8 @@ enum ElectronAppRegistry {
         "slack",
         "discord",
         "electron",
+        "google.chrome",
+        "chrome",
     ]
 
     // MARK: - Detection Methods

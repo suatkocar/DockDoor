@@ -153,12 +153,33 @@ final class WindowLiveCapture: ObservableObject {
             guard !isCancelled, stopGeneration == generationAtStart else { return }
 
             guard let scWindow = content.windows.first(where: { $0.windowID == windowID }) else {
+                await applyStaticCaptureFallback()
                 return
             }
             await startStream(for: scWindow, generationAtStart: generationAtStart)
         } catch {
             DebugLogger.log("LiveWindowCapture: Failed to get shareable content", details: error.localizedDescription)
         }
+    }
+
+    private func applyStaticCaptureFallback() async {
+        guard let pid = ownerPID(for: windowID) else { return }
+        guard let image = WindowUtil.captureWindowImageIfAvailable(windowID: windowID, pid: pid) else { return }
+        capturedImage = image
+        lastFrame = image
+    }
+
+    private func ownerPID(for windowID: CGWindowID) -> pid_t? {
+        guard let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+            return nil
+        }
+        for entry in list {
+            guard let wid = entry[kCGWindowNumber as String] as? CGWindowID,
+                  wid == windowID,
+                  let pid = entry[kCGWindowOwnerPID as String] as? pid_t else { continue }
+            return pid
+        }
+        return nil
     }
 
     private func startStream(for window: SCWindow, generationAtStart: Int) async {

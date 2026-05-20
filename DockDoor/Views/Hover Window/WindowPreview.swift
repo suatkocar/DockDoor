@@ -252,6 +252,25 @@ struct WindowPreview: View {
                 Image(decorative: cgImage, scale: 1.0)
                     .resizable()
                     .scaledToFit()
+            } else if let appIcon = windowInfo.app.icon {
+                // Capture failed (common for Chrome after DevTools/automation attach) — show icon until refresh completes
+                VStack {
+                    Spacer()
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFit()
+                        .frame(width: 96, height: 96)
+                        .opacity(0.85)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.3))
+                .task(id: windowInfo.id) {
+                    let pid = windowInfo.app.processIdentifier
+                    guard let image = WindowUtil.captureWindowImageIfAvailable(windowID: windowInfo.id, pid: pid) else { return }
+                    WindowUtil.updateCachedWindowImage(windowID: windowInfo.id, pid: pid, image: image)
+                }
             }
         }
         .markHidden(isHidden: inactive || (windowSwitcherActive && !isSelected))
